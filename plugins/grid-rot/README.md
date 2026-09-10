@@ -73,7 +73,7 @@ round-trip in presets. Older presets load with clustering disabled.
 
 | Preset | Character |
 | --- | --- |
-| Pin Pricks | Sparse, subtle defects |
+| Pin Pricks | Small, distinct punctures with sharp color edges |
 | Digital Dust | Fast, fine fragments |
 | Packet Loss | Coarse burst damage |
 | Swarm | One tight, restless cluster |
