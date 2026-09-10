@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="app.title">BROKEN FM — Signal Lab</title>
+  <script src="js/warning-gate.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
+    <symbol id="icon-pattern" viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h8v8h-8v-8zm2 2v4h4v-4h-4z"/></symbol>
+    <symbol id="icon-visibility" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+    <symbol id="icon-tune" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zM15 9h2V7h4V5h-4V3h-2v6z"/></symbol>
+    <symbol id="icon-equalizer" viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zm12 0h4V8h-4v12z"/></symbol>
+    <symbol id="icon-double-left" viewBox="0 0 24 24"><path d="M18.41 7.41 17 6l-6 6 6 6 1.41-1.41L13.83 12l4.58-4.59zm-7 0L10 6l-6 6 6 6 1.41-1.41L6.83 12l4.58-4.59z"/></symbol>
+    <symbol id="icon-double-right" viewBox="0 0 24 24"><path d="M5.59 7.41 7 6l6 6-6 6-1.41-1.41L10.17 12 5.59 7.41zm7 0L14 6l6 6-6 6-1.41-1.41L17.17 12l-4.58-4.59z"/></symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  </svg>
+  <section id="photosensitivity-warning" class="photosensitivity-warning" role="alertdialog" aria-modal="true" aria-labelledby="photosensitivity-title" aria-describedby="photosensitivity-description">
+    <div class="photosensitivity-card">
+      <svg class="material-icon photosensitivity-icon" aria-hidden="true"><use href="#icon-warning"/></svg>
+      <p class="photosensitivity-kicker" data-i18n="warning.kicker">Health &amp; safety</p>
+      <h1 id="photosensitivity-title" data-i18n="warning.title">Photosensitivity / epilepsy warning</h1>
+      <p id="photosensitivity-description" data-i18n="warning.description">BROKEN FM can produce flashing lights, rapid contrast changes, and moving patterns that may trigger seizures or discomfort in people with photosensitive epilepsy or other visual sensitivities.</p>
+      <p class="photosensitivity-advice" data-i18n="warning.advice">Stop using the application immediately if you feel unwell. Viewer discretion is advised.</p>
+      <form id="photosensitivity-form">
+        <label class="photosensitivity-choice">
+          <input id="photosensitivity-dismiss" type="checkbox">
+          <span data-i18n="warning.dontShowAgain">Do not show this warning again on this device</span>
+        </label>
+        <button id="photosensitivity-continue" type="submit" data-i18n="warning.continue">I understand — continue</button>
+      </form>
+    </div>
+  </section>
+  <header class="topbar">
+    <div class="brand">
+      <h1>BROKEN FM</h1>
+      <p data-i18n="app.subtitle">Real-time video frequency modulation</p>
+    </div>
+    <div class="source-toolbar" aria-label="Source" data-i18n-aria-label="section.source">
+      <label class="toolbar-button file-control">
+        <svg class="material-icon"><use href="#icon-upload"/></svg>
+        <span data-i18n="source.loadVideo">Load video</span>
+        <input id="video-file" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+      </label>
+      <button id="play-pause" class="icon-button" type="button" disabled data-i18n-aria-label="source.play" aria-label="Play">
+        <svg class="material-icon"><use href="#icon-play"/></svg>
+      </button>
+      <button id="use-test" class="toolbar-button active" type="button" aria-pressed="true">
+        <svg class="material-icon"><use href="#icon-pattern"/></svg>
+        <span data-i18n="source.testPattern">Test pattern</span>
+      </button>
+      <span id="status" class="source-status" data-i18n="status.testPattern">TEST PATTERN · 1920 × 1080</span>
+      <video id="source-video" muted loop playsinline hidden></video>
+    </div>
+    <div class="preset-toolbar" aria-label="Presets" data-i18n-aria-label="section.presets">
+      <button id="preset-previous" class="icon-button preset-step" type="button" disabled data-i18n-aria-label="preset.previous" aria-label="Previous preset">
+        <svg class="material-icon"><use href="#icon-double-left"/></svg>
+      </button>
+      <select id="preset-select" aria-label="Current preset" data-i18n-aria-label="preset.current" disabled>
+        <option value="custom" data-i18n="preset.custom">Current / custom</option>
+      </select>
+      <button id="preset-next" class="icon-button preset-step" type="button" disabled data-i18n-aria-label="preset.next" aria-label="Next preset">
+        <svg class="material-icon"><use href="#icon-double-right"/></svg>
+      </button>
+      <label class="icon-button file-control" aria-label="Load JSON" data-i18n-aria-label="preset.load">
+        <svg class="material-icon"><use href="#icon-upload"/></svg>
+        <input id="preset-file" type="file" accept="application/json,.json">
+      </label>
+      <button id="save-preset" class="icon-button" type="button" aria-label="Save JSON" data-i18n-aria-label="preset.save">
+        <svg class="material-icon"><use href="#icon-download"/></svg>
+      </button>
+      <span id="preset-status" class="preset-status" data-i18n="preset.unsaved">Current settings</span>
+    </div>
+    <div class="header-status">
+      <button id="open-osc" class="toolbar-button routing-button" type="button" data-i18n-aria-label="osc.open" aria-label="Open oscillator">
+        <svg class="material-icon"><use href="#icon-equalizer"/></svg>
+        <span data-i18n="osc.button">OSC</span>
+      </button>
+      <button id="open-routing" class="toolbar-button routing-button" type="button" data-i18n-aria-label="routing.open" aria-label="Open setup">
+        <svg class="material-icon"><use href="#icon-tune"/></svg>
+        <span data-i18n="routing.button">Setup</span>
+      </button>
+      <button id="toggle-debug" class="icon-button" type="button" aria-pressed="false" data-i18n-aria-label="debug.show" aria-label="Show debug view">
+        <svg class="material-icon"><use href="#icon-visibility"/></svg>
+      </button>
+      <div class="perf" aria-live="polite"><span id="fps" data-i18n="perf.fpsPending">-- fps</span><span id="frame-time" data-i18n="perf.frameTimePending">-- ms</span></div>
+    </div>
+  </header>
+  <div id="host-session" class="host-session" hidden>
+    <span><strong data-i18n="host.editing">Editing Resolve OFX instance</strong><small data-i18n="host.capability">Native v0.1 · audio resources and temporal history pending</small></span>
+    <button id="host-apply" type="button" data-i18n="host.apply">Apply to Resolve</button>
+    <button id="host-cancel" type="button" data-i18n="host.cancel">Cancel</button>
+  </div>
+
+  <main>
+    <section class="preview-panel" aria-label="Preview" data-i18n-aria-label="preview.label">
+      <canvas id="preview"></canvas>
+      <div id="debug-overlay" class="debug-overlay" hidden>
+        <label><span data-i18n="view.debug">Debug view</span>
+          <select id="view-mode">
+            <option value="pm-line" data-i18n="view.pmLine">Output · Line</option>
+            <option value="pm-raw" data-i18n="view.pmRaw">Output · Raw sine</option>
+            <option value="input" data-i18n="view.input">Input</option>
+            <option value="luma" data-i18n="view.luma">Luma</option>
+            <option value="modulation" data-i18n="view.modulation">Modulation</option>
+            <option value="edges" data-i18n="view.edges">Edges</option>
+            <option value="local-contrast" data-i18n="view.localContrast">Local contrast</option>
+            <option value="carrier-line" data-i18n="view.carrierLine">Carrier · Line</option>
+            <option value="carrier-raw" data-i18n="view.carrierRaw">Carrier · Raw sine</option>
+            <option value="phase" data-i18n="view.phase">Phase field</option>
+            <option value="feedback" data-i18n="view.feedback">Feedback state</option>
+          </select>
+        </label>
+      </div>
+      <pre id="error-panel" class="error-panel" hidden></pre>
+    </section>
+
+    <aside class="controls">
+      <section>
+        <h2 data-i18n="section.modulation">Modulation</h2>
+        <label><span data-i18n="control.source">Source</span>
+          <select id="mod-source">
+            <option value="luma" data-i18n="mod.luma">Luma</option>
+            <option value="inverted-luma" data-i18n="mod.invertedLuma">Inverted luma</option>
+            <option value="edges" data-i18n="mod.edges">Edges</option>
+            <option value="local-contrast" data-i18n="mod.localContrast">Local contrast</option>
+            <option value="luma-edges" data-i18n="mod.lumaEdges">Luma + edges</option>
+          </select>
+        </label>
+        <label><span data-i18n="control.lumaGain">Luma gain</span> <output id="luma-gain-value"></output>
+          <input id="luma-gain" type="range" min="0" max="3" step="0.01" value="1" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.lumaBias">Luma bias</span> <output id="luma-bias-value"></output>
+          <input id="luma-bias" type="range" min="-1" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.edgeGain">Edge gain</span> <output id="edge-gain-value"></output>
+          <input id="edge-gain" type="range" min="0" max="8" step="0.05" value="2.5" data-snap-step="0.5">
+        </label>
+        <label><span data-i18n="control.localContrastGain">Local contrast gain</span> <output id="local-contrast-gain-value"></output>
+          <input id="local-contrast-gain" type="range" min="0" max="8" step="0.05" value="4" data-snap-step="0.5">
+        </label>
+        <label><span data-i18n="control.modThreshold">Threshold</span> <output id="mod-threshold-value"></output>
+          <input id="mod-threshold" type="range" min="0" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.modSoftness">Soft threshold</span> <output id="mod-softness-value"></output>
+          <input id="mod-softness" type="range" min="0" max="1" step="0.01" value="0.1" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.modulationGain">Modulation gain</span> <output id="mod-gain-value"></output>
+          <input id="mod-gain" type="range" min="0" max="3" step="0.01" value="1" data-snap-step="0.25">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.carrier">Carrier / PM</h2>
+        <label><span data-i18n="control.mode">Mode</span>
+          <select id="signal-mode">
+            <option value="pm" data-i18n="mode.pm">Phase modulation (PM)</option>
+            <option value="fm" data-i18n="mode.fm">Frequency modulation (FM)</option>
+          </select>
+        </label>
+        <label><span data-i18n="control.phaseDepth">Phase depth</span> <output id="phase-depth-value"></output>
+          <input id="phase-depth" type="range" min="0" max="4" step="0.01" value="0.8" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.frequencyDeviation">Frequency deviation</span> <output id="frequency-deviation-value"></output>
+          <input id="frequency-deviation" type="range" min="-12" max="12" step="0.1" value="4" data-snap-step="1">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.lineShaping">Line shaping</h2>
+        <label><span data-i18n="control.lineWidth">Line width</span> <output id="line-width-value"></output>
+          <input id="line-width" type="range" min="0.25" max="5" step="0.05" value="1.2" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.lineSoftness">Line softness</span> <output id="line-softness-value"></output>
+          <input id="line-softness" type="range" min="0" max="3" step="0.05" value="0.75" data-snap-step="0.25">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.instability">Instability</h2>
+        <label><span data-i18n="control.instability">Instability</span> <output id="instability-value"></output>
+          <input id="instability" type="range" min="0" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.phaseJitter">Phase jitter</span> <output id="phase-jitter-value"></output>
+          <input id="phase-jitter" type="range" min="0" max="1" step="0.01" value="0.18" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.signalNoise">Signal noise</span> <output id="signal-noise-value"></output>
+          <input id="signal-noise" type="range" min="0" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.frequencyDrift">Frequency drift</span> <output id="frequency-drift-value"></output>
+          <input id="frequency-drift" type="range" min="0" max="8" step="0.1" value="1.5" data-snap-step="0.5">
+        </label>
+        <label><span data-i18n="control.horizontalDrift">Horizontal drift</span> <output id="horizontal-drift-value"></output>
+          <input id="horizontal-drift" type="range" min="0" max="120" step="0.25" value="0" data-snap-step="5">
+        </label>
+        <label><span data-i18n="control.verticalDrift">Vertical drift</span> <output id="vertical-drift-value"></output>
+          <input id="vertical-drift" type="range" min="0" max="120" step="0.25" value="0" data-snap-step="5">
+        </label>
+        <label><span data-i18n="control.driftRate">Drift rate</span> <output id="drift-rate-value"></output>
+          <input id="drift-rate" type="range" min="0.01" max="5" step="0.01" value="0.22" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.timeJitter">Time jitter</span> <output id="time-jitter-value"></output>
+          <input id="time-jitter" type="range" min="0" max="30" step="0.1" value="0" data-snap-step="1">
+        </label>
+        <label><span data-i18n="control.lineJitter">Line jitter</span> <output id="line-jitter-value"></output>
+          <input id="line-jitter" type="range" min="0" max="40" step="0.25" value="5" data-snap-step="1">
+        </label>
+        <label><span data-i18n="control.lineJitterScale">Line jitter scale</span> <output id="line-jitter-scale-value"></output>
+          <input id="line-jitter-scale" type="range" min="1" max="128" step="1" value="2" data-snap-step="8">
+        </label>
+        <label><span data-i18n="control.lineJitterSpeed">Line jitter speed</span> <output id="line-jitter-speed-value"></output>
+          <input id="line-jitter-speed" type="range" min="0" max="30" step="0.1" value="7" data-snap-step="1">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.signalFailure">Signal failure</h2>
+        <label><span data-i18n="control.dropout">Dropout</span> <output id="dropout-value"></output>
+          <input id="dropout" type="range" min="0" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.dropoutAngle">Dropout angle</span> <output id="dropout-angle-value"></output>
+          <input id="dropout-angle" type="range" min="-180" max="180" step="1" value="0" data-snap-step="15">
+        </label>
+        <label><span data-i18n="control.lineTear">Line tear</span> <output id="line-tear-value"></output>
+          <input id="line-tear" type="range" min="0" max="120" step="0.5" value="0" data-snap-step="5">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.feedback">Feedback</h2>
+        <label><span data-i18n="control.feedbackAmount">Amount</span> <output id="feedback-amount-value"></output>
+          <input id="feedback-amount" type="range" min="0" max="1" step="0.01" value="0" data-snap-step="0.1">
+        </label>
+        <label><span data-i18n="control.feedbackDecay">Decay</span> <output id="feedback-decay-value"></output>
+          <input id="feedback-decay" type="range" min="0" max="0.99" step="0.01" value="0.9" data-snap-step="0.05">
+        </label>
+        <label><span data-i18n="control.feedbackDisplacement">Displacement</span> <output id="feedback-displacement-value"></output>
+          <input id="feedback-displacement" type="range" min="0" max="64" step="0.25" value="0" data-snap-step="4">
+        </label>
+        <label><span data-i18n="control.feedbackDisplacementAngle">Displacement angle</span> <output id="feedback-displacement-angle-value"></output>
+          <input id="feedback-displacement-angle" type="range" min="-180" max="180" step="1" value="0" data-snap-step="15">
+        </label>
+        <label><span data-i18n="control.feedbackPhase">Feedback phase</span> <output id="feedback-phase-value"></output>
+          <input id="feedback-phase" type="range" min="-1" max="1" step="0.001" value="0" data-snap-step="0.125">
+        </label>
+        <button id="reset-feedback" class="compact-button" type="button" data-i18n="feedback.reset">Reset feedback</button>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.color">Color</h2>
+        <label><span data-i18n="control.colorMode">Mode</span>
+          <select id="color-mode">
+            <option value="mono" data-i18n="color.mono">Mono</option>
+            <option value="input-color" data-i18n="color.input">Input color</option>
+            <option value="rgb-phase" data-i18n="color.rgbPhase">RGB phase</option>
+          </select>
+        </label>
+        <label><span data-i18n="control.rgbPhaseOffset">RGB phase offset</span> <output id="rgb-phase-offset-value"></output>
+          <input id="rgb-phase-offset" type="range" min="0" max="0.5" step="0.001" value="0.035" data-snap-step="0.025">
+        </label>
+      </section>
+
+      <section>
+        <h2 data-i18n="section.output">Output</h2>
+        <label><span data-i18n="control.blackLevel">Black level</span> <output id="black-level-value"></output>
+          <input id="black-level" type="range" min="-0.5" max="0.5" step="0.005" value="0" data-snap-step="0.05">
+        </label>
+        <label><span data-i18n="control.signalGamma">Signal gamma</span> <output id="signal-gamma-value"></output>
+          <input id="signal-gamma" type="range" min="0.25" max="4" step="0.01" value="1" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.brightness">Brightness</span> <output id="brightness-value"></output>
+          <input id="brightness" type="range" min="0" max="3" step="0.01" value="1" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.contrast">Contrast</span> <output id="contrast-value"></output>
+          <input id="contrast" type="range" min="0.25" max="4" step="0.01" value="1" data-snap-step="0.25">
+        </label>
+        <label><span data-i18n="control.phosphorPersistence">Phosphor persistence</span> <output id="phosphor-persistence-value"></output>
+          <input id="phosphor-persistence" type="range" min="0" max="3000" step="10" value="0" data-snap-step="100">
+        </label>
+      </section>
+
+    </aside>
+  </main>
+
+  <dialog id="osc-dialog" class="routing-dialog osc-dialog" aria-labelledby="osc-title">
+    <header class="routing-header">
+      <div>
+        <h2 id="osc-title" data-i18n="osc.title">Oscillator / LFO</h2>
+        <p data-i18n="osc.intro">Carrier generation and audio-derived modulation.</p>
+      </div>
+      <button id="close-osc" class="icon-button" type="button" data-i18n-aria-label="osc.close" aria-label="Close oscillator">×</button>
+    </header>
+    <div class="osc-content">
+      <div class="osc-preview-shell">
+        <canvas id="osc-preview" width="900" height="150" aria-label="Oscillator waveform preview" data-i18n-aria-label="osc.previewLabel"></canvas>
+        <span id="osc-preview-caption">SINE · PWM 0.500</span>
+      </div>
+      <section class="osc-section">
+        <h3 data-i18n="osc.carrier">Carrier</h3>
+        <div class="osc-grid">
+          <label><span data-i18n="control.carrierShape">Shape</span>
+            <select id="carrier-shape">
+              <option value="sine" data-i18n="carrier.sine">Sine</option>
+              <option value="triangle" data-i18n="carrier.triangle">Triangle</option>
+              <option value="saw" data-i18n="carrier.saw">Saw</option>
+              <option value="square" data-i18n="carrier.square">Square</option>
+              <option value="noise" data-i18n="carrier.noise">Noise</option>
+              <option value="wavetable" data-i18n="carrier.wavetable">Wavetable</option>
+              <option value="audio" data-i18n="carrier.audio">Audio</option>
+            </select>
+          </label>
+          <label><span data-i18n="control.signalRender">Signal render</span>
+            <select id="signal-render">
+              <option value="line" data-i18n="render.line">Line</option>
+              <option value="waveform" data-i18n="render.waveform">Waveform</option>
+            </select>
+          </label>
+          <label><span data-i18n="control.frequency">Frequency</span> <output id="frequency-value"></output>
+            <input id="frequency" type="range" min="0.5" max="30" step="0.1" value="8" data-snap-step="1">
+          </label>
+          <label><span data-i18n="control.carrierPhase">Carrier phase</span> <output id="carrier-phase-value"></output>
+            <input id="carrier-phase" type="range" min="-1" max="1" step="0.001" value="0" data-snap-step="0.125">
+          </label>
+          <label><span data-i18n="control.scanAngle">Scan angle</span> <output id="scan-angle-value"></output>
+            <input id="scan-angle" type="range" min="-180" max="180" step="1" value="0" data-snap-step="15">
+          </label>
+          <label id="pwm-control"><span data-i18n="control.pwm">PWM / skew</span> <output id="pwm-value"></output>
+            <input id="pwm" type="range" min="0.05" max="0.95" step="0.005" value="0.5" data-snap-step="0.05">
+          </label>
+          <label id="noise-detail-control"><span data-i18n="control.noiseDetail">Noise detail</span> <output id="noise-detail-value"></output>
+            <input id="noise-detail" type="range" min="0.25" max="8" step="0.05" value="2" data-snap-step="0.5">
+          </label>
+          <label id="wavetable-control"><span data-i18n="control.wavetable">Internal table</span>
+            <select id="wavetable">
+              <option value="harmonic" data-i18n="wavetable.harmonic">Harmonic</option>
+              <option value="folded" data-i18n="wavetable.folded">Folded</option>
+              <option value="formant" data-i18n="wavetable.formant">Formant</option>
+              <option value="custom" data-i18n="wavetable.custom">Imported</option>
+            </select>
+          </label>
+        </div>
+      </section>
+      <section class="osc-section">
+        <div class="osc-section-heading">
+          <h3 data-i18n="osc.lfos">Low-frequency oscillators</h3>
+          <button id="retrigger-lfos" class="compact-button" type="button" data-i18n="lfo.retrigger">Retrigger LFOs</button>
+        </div>
+        <div class="lfo-grid">
+          <fieldset class="lfo-card" data-lfo="1">
+            <legend>LFO 1</legend>
+            <label><span data-i18n="lfo.shape">Shape</span>
+              <select id="lfo-1-shape">
+                <option value="sine" data-i18n="carrier.sine">Sine</option>
+                <option value="triangle" data-i18n="carrier.triangle">Triangle</option>
+                <option value="saw" data-i18n="carrier.saw">Saw</option>
+                <option value="square" data-i18n="carrier.square">Square</option>
+                <option value="sample-hold" data-i18n="lfo.sampleHold">Sample &amp; hold</option>
+                <option value="smooth-noise" data-i18n="lfo.smoothNoise">Smooth noise</option>
+              </select>
+            </label>
+            <label><span data-i18n="lfo.rateMode">Rate mode</span>
+              <select id="lfo-1-rate-mode"><option value="hz">Hz</option><option value="bpm">BPM</option></select>
+            </label>
+            <label><span data-i18n="lfo.sync">Sync</span>
+              <select id="lfo-1-sync"><option value="timeline" data-i18n="lfo.timeline">Timeline</option><option value="transport" data-i18n="lfo.transport">Transport</option></select>
+            </label>
+            <label class="lfo-hz-control"><span data-i18n="lfo.rate">Rate</span> <output id="lfo-1-rate-hz-value"></output><input id="lfo-1-rate-hz" type="range" min="0.01" max="20" step="0.01" value="0.25" data-snap-step="0.25"></label>
+            <label class="lfo-bpm-control"><span data-i18n="lfo.tempo">Tempo</span> <output id="lfo-1-bpm-value"></output><input id="lfo-1-bpm" type="range" min="20" max="300" step="1" value="120" data-snap-step="5"></label>
+            <label class="lfo-bpm-control"><span data-i18n="lfo.division">Division</span>
+              <select id="lfo-1-division"><option value="2-bars" data-i18n="lfo.twoBars">2 bars</option><option value="1-bar" data-i18n="lfo.oneBar">1 bar</option><option value="1-2">1/2</option><option value="1-4" selected>1/4</option><option value="1-8">1/8</option><option value="1-16">1/16</option><option value="1-32">1/32</option></select>
+            </label>
+            <label><span data-i18n="lfo.phase">Phase</span> <output id="lfo-1-phase-value"></output><input id="lfo-1-phase" type="range" min="0" max="1" step="0.001" value="0" data-snap-step="0.125"></label>
+            <label><span data-i18n="lfo.polarity">Polarity</span><select id="lfo-1-polarity"><option value="bipolar" data-i18n="lfo.bipolar">Bipolar</option><option value="unipolar" data-i18n="lfo.unipolar">Unipolar</option></select></label>
+            <div class="lfo-meter" aria-hidden="true"><span id="lfo-1-meter"></span></div>
+          </fieldset>
+          <fieldset class="lfo-card" data-lfo="2">
+            <legend>LFO 2</legend>
+            <label><span data-i18n="lfo.shape">Shape</span>
+              <select id="lfo-2-shape">
+                <option value="sine" data-i18n="carrier.sine">Sine</option>
+                <option value="triangle" data-i18n="carrier.triangle">Triangle</option>
+                <option value="saw" data-i18n="carrier.saw">Saw</option>
+                <option value="square" data-i18n="carrier.square">Square</option>
+                <option value="sample-hold" data-i18n="lfo.sampleHold">Sample &amp; hold</option>
+                <option value="smooth-noise" data-i18n="lfo.smoothNoise">Smooth noise</option>
+              </select>
+            </label>
+            <label><span data-i18n="lfo.rateMode">Rate mode</span>
+              <select id="lfo-2-rate-mode"><option value="hz">Hz</option><option value="bpm">BPM</option></select>
+            </label>
+            <label><span data-i18n="lfo.sync">Sync</span>
+              <select id="lfo-2-sync"><option value="timeline" data-i18n="lfo.timeline">Timeline</option><option value="transport" data-i18n="lfo.transport">Transport</option></select>
+            </label>
+            <label class="lfo-hz-control"><span data-i18n="lfo.rate">Rate</span> <output id="lfo-2-rate-hz-value"></output><input id="lfo-2-rate-hz" type="range" min="0.01" max="20" step="0.01" value="0.1" data-snap-step="0.25"></label>
+            <label class="lfo-bpm-control"><span data-i18n="lfo.tempo">Tempo</span> <output id="lfo-2-bpm-value"></output><input id="lfo-2-bpm" type="range" min="20" max="300" step="1" value="120" data-snap-step="5"></label>
+            <label class="lfo-bpm-control"><span data-i18n="lfo.division">Division</span>
+              <select id="lfo-2-division"><option value="2-bars" data-i18n="lfo.twoBars">2 bars</option><option value="1-bar" selected data-i18n="lfo.oneBar">1 bar</option><option value="1-2">1/2</option><option value="1-4">1/4</option><option value="1-8">1/8</option><option value="1-16">1/16</option><option value="1-32">1/32</option></select>
+            </label>
+            <label><span data-i18n="lfo.phase">Phase</span> <output id="lfo-2-phase-value"></output><input id="lfo-2-phase" type="range" min="0" max="1" step="0.001" value="0.25" data-snap-step="0.125"></label>
+            <label><span data-i18n="lfo.polarity">Polarity</span><select id="lfo-2-polarity"><option value="bipolar" data-i18n="lfo.bipolar">Bipolar</option><option value="unipolar" data-i18n="lfo.unipolar">Unipolar</option></select></label>
+            <div class="lfo-meter" aria-hidden="true"><span id="lfo-2-meter"></span></div>
+          </fieldset>
+        </div>
+      </section>
+      <section class="osc-section">
+        <h3 data-i18n="osc.audioAnalysis">Audio analysis / modulation matrix</h3>
+        <div class="analysis-controls">
+          <label><span data-i18n="control.audioAttack">Attack</span> <output id="audio-attack-value"></output><input id="audio-attack" type="range" min="0" max="500" step="1" value="25" data-snap-step="25"></label>
+          <label><span data-i18n="control.audioRelease">Release</span> <output id="audio-release-value"></output><input id="audio-release" type="range" min="0" max="2000" step="5" value="180" data-snap-step="50"></label>
+        </div>
+        <div class="analysis-meters" aria-live="off">
+          <span>LEVEL <output id="audio-level">0.00</output></span><span>LOW <output id="audio-low">0.00</output></span><span>MID <output id="audio-mid">0.00</output></span><span>HIGH <output id="audio-high">0.00</output></span><span>TRANSIENT <output id="audio-transient">0.00</output></span>
+        </div>
+        <div id="mod-matrix" class="mod-matrix"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="routing-dialog" class="routing-dialog" aria-labelledby="routing-title">
+    <header class="routing-header">
+      <div>
+        <h2 id="routing-title" data-i18n="routing.title">Setup</h2>
+        <p data-i18n="routing.intro">The render order stays fixed. Dropout and feedback move between defined signal-domain connection points.</p>
+      </div>
+      <button id="close-routing" class="icon-button" type="button" data-i18n-aria-label="routing.close" aria-label="Close setup">×</button>
+    </header>
+    <div class="routing-controls">
+      <div class="setup-assets">
+        <label class="toolbar-button file-control"><span data-i18n="audio.load">Load audio</span><input id="audio-file" type="file" accept="audio/*"></label>
+        <label class="toolbar-button file-control"><span data-i18n="wavetable.load">Import wavetable</span><input id="wavetable-file" type="file" accept="audio/*"></label>
+        <span id="audio-status" class="asset-status" data-i18n="audio.demo">Internal demo signal</span>
+      </div>
+      <div class="audio-monitor-row">
+        <label class="monitor-toggle"><input id="monitor-audio" type="checkbox" disabled> <span data-i18n="audio.monitor">Monitor audio</span></label>
+        <label><span data-i18n="audio.monitorLevel">Monitor level</span> <output id="monitor-level-value">70%</output><input id="monitor-level" type="range" min="0" max="1" step="0.01" value="0.7"></label>
+        <audio id="carrier-audio" loop hidden></audio>
+      </div>
+      <label><span data-i18n="control.feedbackModel">Feedback model</span>
+        <select id="feedback-model">
+          <option value="sequential" data-i18n="feedback.sequential" selected>Sequential loop</option>
+          <option value="finite" data-i18n="feedback.finite">Finite window</option>
+        </select>
+      </label>
+      <label id="feedback-window-control"><span data-i18n="control.feedbackWindow">Window length</span> <output id="feedback-window-value"></output>
+        <input id="feedback-window" type="range" min="1" max="8" step="1" value="4" data-snap-step="1">
+      </label>
+      <label><span data-i18n="control.dropoutStage">Dropout stage</span>
+        <select id="dropout-stage">
+          <option value="modulator" data-i18n="dropout.modulator">Modulator</option>
+          <option value="signal-loop" data-i18n="dropout.signalLoop" selected>Signal loop</option>
+          <option value="output" data-i18n="dropout.output">Output</option>
+        </select>
+      </label>
+      <label><span data-i18n="control.feedbackInjection">Feedback injection</span>
+        <select id="feedback-injection">
+          <option value="phase" data-i18n="feedback.phase" selected>Phase</option>
+          <option value="modulation" data-i18n="feedback.modulation">Modulation</option>
+        </select>
+      </label>
+      <label class="routing-seed"><span data-i18n="control.seed">Seed</span> <output id="seed-value"></output>
+        <input id="seed" type="range" min="0" max="9999" step="1" value="0" data-snap-step="100">
+      </label>
+    </div>
+    <p id="feedback-model-note" class="routing-model-note"></p>
+    <div class="route-graph" aria-label="Signal routing diagram" data-i18n-aria-label="routing.diagramLabel">
+      <div class="route-spine">
+        <div class="route-node"><span data-i18n="routing.source">Source</span></div><span class="route-arrow">→</span>
+        <div class="route-node" data-feedback-point="modulation">
+          <span data-i18n="routing.modulator">Modulator</span>
+          <small class="route-badge dropout-badge" data-dropout-point="modulator" data-i18n="routing.dropoutHere">Dropout</small>
+          <small class="route-badge feedback-badge" data-feedback-badge="modulation" data-i18n="routing.feedbackHere">Feedback</small>
+        </div><span class="route-arrow">→</span>
+        <div class="route-node"><span data-i18n="routing.integration">PM / FM integration</span></div><span class="route-arrow">→</span>
+        <div class="route-node" data-feedback-point="phase">
+          <span data-i18n="routing.phase">Phase</span>
+          <small class="route-badge feedback-badge" data-feedback-badge="phase" data-i18n="routing.feedbackHere">Feedback</small>
+        </div><span class="route-arrow">→</span>
+        <div class="route-node">
+          <span data-i18n="routing.signalLoop">Carrier / signal state</span>
+          <small class="route-badge dropout-badge" data-dropout-point="signal-loop" data-i18n="routing.dropoutHere">Dropout</small>
+        </div><span class="route-arrow">→</span>
+        <div class="route-node">
+          <span data-i18n="routing.output">Output</span>
+          <small class="route-badge dropout-badge" data-dropout-point="output" data-i18n="routing.dropoutHere">Dropout</small>
+        </div>
+      </div>
+      <div class="feedback-return"><span id="routing-history-label" data-i18n="routing.previousState">Previous-frame signal state</span><span>↩</span><strong id="routing-feedback-target"></strong></div>
+    </div>
+    <p id="routing-summary" class="routing-summary"></p>
+    <div class="routing-notes">
+      <p><strong data-i18n="dropout.modulator">Modulator</strong><span data-i18n="routing.modulatorNote">Removes image modulation; the base carrier remains.</span></p>
+      <p><strong data-i18n="dropout.signalLoop">Signal loop</strong><span data-i18n="routing.signalLoopNote">Removes carrier energy and weakens the stored feedback state.</span></p>
+      <p><strong data-i18n="dropout.output">Output</strong><span data-i18n="routing.outputNote">Blacks the visible result while feedback continues underneath.</span></p>
+    </div>
+    <p class="routing-ofx-note"><strong data-i18n="routing.ofxTarget">OFX target</strong><span data-i18n="routing.ofxNote">OFX maps the finite dry history to explicit frames t−1…t−N, making the result independent of host render order.</span></p>
+    <div class="routing-meta">
+      <span data-i18n="slider.ctrlSnap">Ctrl-drag sliders for coarse snapping.</span>
+      <span data-i18n="scope.note">PM + FM + signal failure + feedback + RGB phase</span>
+    </div>
+  </dialog>
+
+  <script>window.addEventListener('error', (event) => { document.querySelector('#error-panel').textContent = `${event.message} @ ${event.filename}:${event.lineno}`; document.querySelector('#error-panel').hidden = false; });</script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

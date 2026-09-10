@@ -1,0 +1,15 @@
+{
+  "name": "crt-sim-companion",
+  "private": true,
+  "version": "0.7.0",
+  "type": "module",
+  "scripts": {
+    "stage": "node scripts/stage_frontend.mjs",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  },
+  "license": "SEE LICENSE IN ../../../LICENSE"
+}

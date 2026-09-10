@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.24)
+project(RewiredVfxFreeCollection VERSION 0.1.0 LANGUAGES CXX)
+
+option(REWIRED_BUILD_BROKEN_FM "Build BROKEN FM (requires CUDA)" ON)
+option(REWIRED_BUILD_CRT_SIM "Build CRT Lab" ON)
+include(CTest)
+
+if(REWIRED_BUILD_BROKEN_FM)
+  add_subdirectory(plugins/broken-fm)
+endif()
+if(REWIRED_BUILD_CRT_SIM)
+  add_subdirectory(plugins/crt-sim)
+endif()

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRT SIM — Signal Lab</title>
+<link rel="stylesheet" href="css/style.css">
+</head><body>
+<svg class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
+    <symbol id="icon-pattern" viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h8v8h-8v-8zm2 2v4h4v-4h-4z"/></symbol>
+    <symbol id="icon-visibility" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+    <symbol id="icon-tune" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zM15 9h2V7h4V5h-4V3h-2v6z"/></symbol>
+    <symbol id="icon-equalizer" viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zm12 0h4V8h-4v12z"/></symbol>
+    <symbol id="icon-double-left" viewBox="0 0 24 24"><path d="M18.41 7.41 17 6l-6 6 6 6 1.41-1.41L13.83 12l4.58-4.59zm-7 0L10 6l-6 6 6 6 1.41-1.41L6.83 12l4.58-4.59z"/></symbol>
+    <symbol id="icon-double-right" viewBox="0 0 24 24"><path d="M5.59 7.41 7 6l6 6-6 6-1.41-1.41L10.17 12 5.59 7.41zm7 0L14 6l6 6-6 6-1.41-1.41L17.17 12l-4.58-4.59z"/></symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  </svg>
+<section id="photosensitivity-warning" class="photosensitivity-warning" role="alertdialog" aria-modal="true" aria-labelledby="photosensitivity-title" aria-describedby="photosensitivity-description">
+    <div class="photosensitivity-card">
+      <svg class="material-icon photosensitivity-icon" aria-hidden="true"><use href="#icon-warning"/></svg>
+      <p class="photosensitivity-kicker">Health &amp; safety</p>
+      <h1 id="photosensitivity-title">Photosensitivity / epilepsy warning</h1>
+      <p id="photosensitivity-description">CRT SIM can produce flashing lights, rapid contrast changes, and moving patterns that may trigger seizures or discomfort in people with photosensitive epilepsy or other visual sensitivities.</p>
+      <p class="photosensitivity-advice">Stop using the application immediately if you feel unwell. Viewer discretion is advised.</p>
+      <form id="photosensitivity-form">
+        <label class="photosensitivity-choice">
+          <input id="photosensitivity-dismiss" type="checkbox">
+          <span>Do not show this warning again on this device</span>
+        </label>
+        <button id="photosensitivity-continue" type="submit">I understand — continue</button>
+      </form>
+    </div>
+  </section>
+<header class="topbar">
+<div class="brand"><h1>CRT SIM</h1><p>Real-time CRT and pixel simulation</p></div>
+<div class="source-toolbar" aria-label="Source">
+<button id="load" class="toolbar-button"><svg class="material-icon"><use href="#icon-upload"/></svg>Load media</button>
+<button id="play" class="icon-button" aria-label="Pause">Ⅱ</button>
+<button id="use-test" class="toolbar-button active">Test pattern</button>
+<span id="filename" class="source-status">TEST PATTERN</span>
+<input id="media-file" type="file" accept="image/*,video/*" hidden>
+</div>
+<div class="preset-toolbar" aria-label="Presets">
+<button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset"><svg class="material-icon"><use href="#icon-double-left"/></svg></button>
+<select id="preset-select" aria-label="Current preset"></select>
+<button id="preset-next" class="icon-button preset-step" aria-label="Next preset"><svg class="material-icon"><use href="#icon-double-right"/></svg></button>
+<label class="icon-button file-control" aria-label="Load JSON"><svg class="material-icon"><use href="#icon-upload"/></svg><input id="preset-file" type="file" accept="application/json,.json"></label>
+<button id="save-preset" class="icon-button" aria-label="Save JSON"><svg class="material-icon"><use href="#icon-download"/></svg></button>
+<span id="preset-status" class="preset-status" role="status"></span>
+</div>
+<div class="header-status"><button id="reset" class="toolbar-button">Reset</button><button id="maximize" class="toolbar-button" aria-pressed="false">Maximize</button><div class="perf"><span id="fps">-- FPS</span></div></div>
+</header>
+<div id="host-session" class="host-session" hidden><span><strong>Editing Resolve OFX instance</strong><small id="host-preview-status">SDR look preview · color management remains in Resolve</small></span><button id="host-apply">Apply to Resolve</button><button id="host-cancel">Cancel</button></div>
+<main id="app">
+<section class="preview-panel" aria-label="Preview"><div id="monitor"><canvas id="preview" width="1280" height="960" aria-label="CRT Preview"></canvas></div>
+<div id="error" class="error-panel" role="alert" hidden></div>
+</section>
+<aside id="controls" class="controls"><section><h2>Preset</h2><p id="preset-description" class="preset-description"></p></section></aside>
+</main><script type="module" src="src/main.js"></script>
+</body></html>

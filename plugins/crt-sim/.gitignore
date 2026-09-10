@@ -1,0 +1,6 @@
+/dist/
+/.vs/
+/native/build*/
+/releases/
+/companion/src-tauri/target/
+/companion/src-tauri/gen/schemas/

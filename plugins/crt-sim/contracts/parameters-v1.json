@@ -1,0 +1,388 @@
+{
+  "schema": "crt-sim/parameter-contract",
+  "version": 1,
+  "preset_schema_version": 1,
+  "mask_count": 12,
+  "parameters": [
+    {
+      "id": "noiseSeed",
+      "label": "Seed",
+      "group": "Signal",
+      "min": 0,
+      "max": 16777215,
+      "step": 1,
+      "default": 0,
+      "type": "integer"
+    },
+    {
+      "id": "pixelEnabled",
+      "label": "Enable Pixel / Sci-Fi",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 1,
+      "default": 1,
+      "type": "boolean"
+    },
+    {
+      "id": "tubeEnabled",
+      "label": "Enable CRT",
+      "group": "CRT",
+      "min": 0,
+      "max": 1,
+      "step": 1,
+      "default": 1,
+      "type": "boolean"
+    },
+    {
+      "id": "pixelMix",
+      "label": "Pixel Mix",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0,
+      "type": "double"
+    },
+    {
+      "id": "pixelPattern",
+      "label": "Raster Shape",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 7,
+      "step": 1,
+      "default": 0,
+      "type": "choice"
+    },
+    {
+      "id": "pixelPalette",
+      "label": "Palette",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 0,
+      "type": "choice"
+    },
+    {
+      "id": "pixelSize",
+      "label": "Cell Size (px)",
+      "group": "Pixel / Sci-Fi",
+      "min": 3,
+      "max": 64,
+      "step": 0.5,
+      "default": 10,
+      "type": "double"
+    },
+    {
+      "id": "pixelAspect",
+      "label": "Cell Aspect",
+      "group": "Pixel / Sci-Fi",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.01,
+      "default": 1,
+      "type": "double"
+    },
+    {
+      "id": "pixelFill",
+      "label": "Cell Fill",
+      "group": "Pixel / Sci-Fi",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.85,
+      "type": "double"
+    },
+    {
+      "id": "pixelResponse",
+      "label": "Luminance Response",
+      "group": "Pixel / Sci-Fi",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.01,
+      "default": 1,
+      "type": "double"
+    },
+    {
+      "id": "pixelSoftness",
+      "label": "Edge Softness",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 0.25,
+      "step": 0.005,
+      "default": 0.025,
+      "type": "double"
+    },
+    {
+      "id": "pixelLevels",
+      "label": "Tonal Levels",
+      "group": "Pixel / Sci-Fi",
+      "min": 2,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "type": "double"
+    },
+    {
+      "id": "pixelQuantize",
+      "label": "Quantization",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0,
+      "type": "double"
+    },
+    {
+      "id": "pixelBackground",
+      "label": "Background Emission",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 0.15,
+      "step": 0.001,
+      "default": 0.006,
+      "type": "double"
+    },
+    {
+      "id": "lines",
+      "label": "Raster Lines",
+      "group": "CRT",
+      "min": 120,
+      "max": 1080,
+      "step": 1,
+      "default": 360,
+      "type": "double"
+    },
+    {
+      "id": "scan",
+      "label": "Scanline Strength",
+      "group": "CRT",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.45,
+      "type": "double"
+    },
+    {
+      "id": "mask",
+      "label": "Phosphor Mask",
+      "group": "CRT",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.65,
+      "type": "double"
+    },
+    {
+      "id": "pitch",
+      "label": "Mask Pitch (px)",
+      "group": "CRT",
+      "min": 2,
+      "max": 12,
+      "step": 0.1,
+      "default": 3,
+      "type": "double"
+    },
+    {
+      "id": "beam",
+      "label": "Beam Width",
+      "group": "CRT",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.65,
+      "type": "double"
+    },
+    {
+      "id": "bloom",
+      "label": "Bloom",
+      "group": "Light & Color",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.01,
+      "default": 0.3,
+      "type": "double"
+    },
+    {
+      "id": "exposure",
+      "label": "Exposure (EV)",
+      "group": "Light & Color",
+      "min": -2,
+      "max": 2,
+      "step": 0.01,
+      "default": 0.2,
+      "type": "double"
+    },
+    {
+      "id": "saturation",
+      "label": "Saturation",
+      "group": "Light & Color",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 1.1,
+      "type": "double"
+    },
+    {
+      "id": "black",
+      "label": "Black Level",
+      "group": "Light & Color",
+      "min": 0,
+      "max": 0.15,
+      "step": 0.001,
+      "default": 0.005,
+      "type": "double"
+    },
+    {
+      "id": "gamma",
+      "label": "CRT Gamma",
+      "group": "Light & Color",
+      "min": 1.5,
+      "max": 3,
+      "step": 0.01,
+      "default": 2.2,
+      "type": "double"
+    },
+    {
+      "id": "curve",
+      "label": "Curvature",
+      "group": "Optics",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.001,
+      "default": 0.06,
+      "type": "double"
+    },
+    {
+      "id": "vignette",
+      "label": "Vignette",
+      "group": "Optics",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.25,
+      "type": "double"
+    },
+    {
+      "id": "convergence",
+      "label": "RGB Convergence (px)",
+      "group": "Optics",
+      "min": 0,
+      "max": 8,
+      "step": 0.1,
+      "default": 0.6,
+      "type": "double"
+    },
+    {
+      "id": "noiseType",
+      "label": "Noise Type",
+      "group": "Signal",
+      "min": 0,
+      "max": 9,
+      "step": 1,
+      "default": 0,
+      "type": "choice"
+    },
+    {
+      "id": "noise",
+      "label": "Noise Amount",
+      "group": "Signal",
+      "min": 0,
+      "max": 1,
+      "step": 0.001,
+      "default": 0.015,
+      "type": "double"
+    },
+    {
+      "id": "noiseSize",
+      "label": "Noise Thread Length",
+      "group": "Signal",
+      "min": 0.25,
+      "max": 4,
+      "step": 0.05,
+      "default": 1.2,
+      "type": "double"
+    },
+    {
+      "id": "noiseClump",
+      "label": "Noise Clustering",
+      "group": "Signal",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.65,
+      "type": "double"
+    },
+    {
+      "id": "noiseClumpSpeed",
+      "label": "Cluster Evolution",
+      "group": "Signal",
+      "min": 0,
+      "max": 3,
+      "step": 0.01,
+      "default": 0.35,
+      "type": "double"
+    },
+    {
+      "id": "noiseBands",
+      "label": "Interference Bands",
+      "group": "Signal",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.5,
+      "type": "double"
+    },
+    {
+      "id": "noiseSpeed",
+      "label": "Noise Speed",
+      "group": "Signal",
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "default": 1,
+      "type": "double"
+    },
+    {
+      "id": "noiseChroma",
+      "label": "Chroma Noise",
+      "group": "Signal",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.15,
+      "type": "double"
+    },
+    {
+      "id": "jitter",
+      "label": "Line Jitter (px)",
+      "group": "Signal",
+      "min": 0,
+      "max": 12,
+      "step": 0.1,
+      "default": 0.15,
+      "type": "double"
+    },
+    {
+      "id": "tracking",
+      "label": "Tracking",
+      "group": "Signal",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0,
+      "type": "double"
+    },
+    {
+      "id": "flicker",
+      "label": "Flicker",
+      "group": "Signal",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.001,
+      "default": 0.008,
+      "type": "double"
+    }
+  ]
+}

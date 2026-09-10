@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BROKEN FM User Manual 0.1.0</title>
+<style>
+:root{--ink:#dce9e5;--muted:#8ea09b;--accent:#78f5d2;--warning:#ffb14a;--panel:#111918;--line:#293734;--paper:#09100f}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 Inter,Segoe UI,Arial,sans-serif}a{color:var(--accent)}.cover{min-height:70vh;padding:9vw;display:grid;align-content:end;background:radial-gradient(circle at 80% 20%,#174238 0,transparent 38%),linear-gradient(135deg,#0c1513,#050808)}.eyebrow,dt{font:700 11px/1.2 Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(54px,9vw,136px);line-height:.86;margin:.15em 0;letter-spacing:.08em}h2{font-size:32px;letter-spacing:.04em;margin:1.8em 0 .7em}h3{margin:0;font-size:17px}.cover p{max-width:780px;font-size:20px;color:#b8c9c4}.meta{font:12px Consolas,monospace;color:var(--muted);letter-spacing:.08em}.content{max-width:1380px;margin:auto;padding:56px}.notice{border-left:3px solid var(--accent);background:#10221d;padding:18px 22px;margin:30px 0;color:#bed1cc}.warning{border-color:var(--warning);background:#281b0d;color:#f5d5aa}.toc{position:sticky;top:0;z-index:5;background:#0b1211eF;border-block:1px solid var(--line);display:flex;gap:8px;overflow:auto;padding:12px 24px;backdrop-filter:blur(12px)}.toc a{white-space:nowrap;text-decoration:none;border:1px solid var(--line);padding:6px 10px;color:#b8c9c4}.shots{display:grid;grid-template-columns:1fr 1fr;gap:22px}.shot{margin:0;background:var(--panel);border:1px solid var(--line);padding:10px}.shot:first-child{grid-column:1/-1}.shot img{width:100%;display:block}.shot figcaption{padding:10px 4px 3px;color:var(--muted)}.steps{counter-reset:step;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.step{background:var(--panel);border:1px solid var(--line);padding:20px}.step:before{counter-increment:step;content:counter(step,decimal-leading-zero);display:block;color:var(--accent);font:700 12px Consolas;margin-bottom:8px}.step h3{margin-bottom:6px}.parameter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.parameter-card{background:var(--panel);border:1px solid var(--line);padding:18px;break-inside:avoid}.parameter-card header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}.parameter-card code{color:var(--accent);font-size:11px}.parameter-card dl{display:grid;grid-template-columns:2fr 1fr;margin:12px 0}.parameter-card dl div{padding-right:12px}.parameter-card dt{color:var(--muted)}.parameter-card dd{margin:3px 0;font:12px Consolas,monospace}.parameter-card p{margin:0;color:#b8c9c4}.prose{max-width:900px}.footer{margin-top:70px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted)}
+@media(max-width:800px){.content{padding:28px 18px}.shots,.steps,.parameter-grid{grid-template-columns:1fr}.shot:first-child{grid-column:auto}h1{font-size:52px}.cover{padding:50px 24px}.toc{position:static}}
+@media print{body{background:white;color:#17201e;font-size:9.5pt}.cover{min-height:240mm;color:white;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.toc{display:none}.content{max-width:none;padding:12mm}.notice,.parameter-card,.step,.shot{background:#f5f8f7;border-color:#cad4d1;color:#17201e}.shots{display:block}.shot{margin:0 0 9mm;page-break-inside:avoid}.shot:first-child img{max-height:125mm;object-fit:contain}.shot img{max-height:105mm;object-fit:contain}.steps{display:block}.step{margin-bottom:4mm}.reference{page-break-before:always}.parameter-grid{display:block}.parameter-card{margin-bottom:4mm}.parameter-card p,.shot figcaption{color:#384743}h2{margin-top:0}.footer{page-break-before:always}}
+</style></head><body>
+<header class="cover"><div class="eyebrow">End-user documentation</div><h1>BROKEN<br>FM</h1><p>BROKEN FM turns image structure into a generated electronic signal. It is not a displacement, crop, or scaling effect: source pixels are analyzed as modulation while the carrier is built in output pixel space. This manual describes the English Companion UI and the matching version-1 parameter contract for BROKEN FM 0.1.0.</p><div class="meta">VERSION 0.1.0 / EN / 82 PARAMETERS / 56 FACTORY PRESETS</div></header>
+<nav class="toc"><a href="#safety">Safety</a><a href="#tour">Interface</a><a href="#quick">Quick start</a><a href="#modulation">Modulation source</a><a href="#carrier">Carrier and PM/FM</a><a href="#line">Line shaping</a><a href="#instability">Instability</a><a href="#failure">Signal failure</a><a href="#feedback">Feedback</a><a href="#color">Color</a><a href="#output">Output</a><a href="#audio">Audio analysis</a><a href="#lfo">Low-frequency oscillators</a><a href="#matrix">Modulation matrix</a><a href="#other">Setup</a><a href="#details">Details</a></nav>
+<main class="content">
+<section id="safety"><div class="notice warning"><strong>Photosensitivity warning.</strong> BROKEN FM can generate flashing, flickering, and high-contrast moving patterns. A photosensitivity warning appears before the renderer or test pattern starts. Select its checkbox to suppress future warnings on the same device; clear the application's local storage to show it again.</div></section>
+<div class="notice"><strong>Native OFX v0.1 capability note.</strong> PM/FM, procedural carriers, LFO routing, instability, dropout, color, and output shaping run natively. Audio carrier/analysis, imported custom wavetable payloads, feedback history, and phosphor history remain parity gates. The Companion session disables unsupported choices where possible; shared Resolve enum and matrix controls may still expose combinations that the native renderer rejects instead of approximating.</div>
+<section id="tour"><h2>Interface tour</h2><div class="shots"><figure class="shot"><img src="assets/01-main-interface.png" alt="Main interface at 1920 x 1080, using 20 COLORED RAZORWIRE."><figcaption>Main interface at 1920 x 1080, using 20 COLORED RAZORWIRE.</figcaption></figure><figure class="shot"><img src="assets/02-osc-lfo.png" alt="OSC/LFO modal with carrier preview, two LFOs, and the modulation matrix."><figcaption>OSC/LFO modal with carrier preview, two LFOs, and the modulation matrix.</figcaption></figure><figure class="shot"><img src="assets/03-setup-routing.png" alt="Setup modal showing the active dropout and feedback connection points."><figcaption>Setup modal showing the active dropout and feedback connection points.</figcaption></figure><figure class="shot"><img src="assets/04-debug-overlay.png" alt="Optional lower-right Debug View overlay; it never replaces the main result."><figcaption>Optional lower-right Debug View overlay; it never replaces the main result.</figcaption></figure></div></section>
+<section id="quick"><h2>Quick start</h2><div class="steps"><article class="step"><h3>Start from a preset</h3><p>Choose a factory preset in the header and step through the library with the previous/next buttons. Presets are complete effect states and are the fastest way to learn the available range.</p></article><article class="step"><h3>Choose the source</h3><p>After the safety warning is acknowledged, Test pattern is active and highlighted by default. Loading a video enables Play. Selecting Test pattern pauses the loaded video; pressing Play resumes the video and makes it the source.</p></article><article class="step"><h3>Shape the modulation</h3><p>Choose Mod Source, then balance its gain/bias and optional threshold. Set Modulation Gain to 0 whenever you want to inspect the dry carrier.</p></article><article class="step"><h3>Choose PM or FM</h3><p>PM is local and immediate. FM accumulates change along Scan Angle and is usually more folded, torn, and direction-dependent.</p></article><article class="step"><h3>Add motion deliberately</h3><p>Use Instability for signal failure, or open OSC to route deterministic LFO/audio sources to explicit destinations. A changing destination shows base value -&gt; effective value.</p></article><article class="step"><h3>Save or apply</h3><p>Save JSON writes effect parameters only. In a Resolve OFX editing session, Apply to Resolve returns the current settings; Cancel leaves the plugin instance unchanged.</p></article></div></section>
+<section><h2>Header and control behavior</h2><div class="prose"><p><strong>Load video</strong> opens a local source. Test pattern is active and highlighted by default; selecting it pauses loaded video. Play resumes video and makes it active. The preset controls step through 56 factory presets or load/save schema-16 JSON. OSC contains carrier/LFO/matrix controls. Setup contains session assets, Seed, and signal routing. Debug View is an optional lower-right overlay.</p><p>Normal dragging is fine-grained. Hold <strong>Ctrl while dragging</strong> for meaningful coarse snapping. Gray controls are inactive in the current mode. A matrix-modulated control shows <strong>base -&gt; effective</strong> when its effective value differs.</p></div></section>
+<section><h2>Signal path</h2><div class="prose"><p>Source analysis -&gt; threshold/gain -&gt; PM or scan-integrated FM -&gt; carrier rendering -&gt; color/output. Dropout can act at Modulator, Signal loop, or Output. Feedback can return into Modulation or Phase. Phosphor persistence is a display-only afterglow and never feeds the signal loop.</p></div></section>
+
+  <section class="reference" id="modulation">
+    <h2>Modulation source</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Mod Source</h3><code>modSource</code></header>
+        <dl><div><dt>Values</dt><dd>luma, inverted-luma, edges, local-contrast, luma-edges</dd></div><div><dt>Default</dt><dd>luma</dd></div></dl>
+        <p>Chooses the image feature that drives modulation: luminance, inverted luminance, edges, local contrast, or a luminance-plus-edge blend.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Luma Gain</h3><code>lumaGain</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 3</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Multiplies source luminance before centering it around the neutral midpoint. Higher values make tonal differences drive the carrier more strongly.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Luma Bias</h3><code>lumaBias</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Offsets luminance before it becomes a modulation signal. Use it to choose which tonal region sits near the neutral carrier state.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Edge Gain</h3><code>edgeGain</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 8</dd></div><div><dt>Default</dt><dd>2.5</dd></div></dl>
+        <p>Sets the strength of the extracted edge signal. It is most obvious with Edges or Luma + edges as Mod Source.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Local Contrast Gain</h3><code>localContrastGain</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 8</dd></div><div><dt>Default</dt><dd>4</dd></div></dl>
+        <p>Sets the strength of local brightness differences. Higher values emphasize texture and small regional changes rather than overall exposure.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Mod Threshold</h3><code>modThreshold</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Suppresses modulation below the selected level. A value of 0 is an exact bypass; higher values isolate progressively stronger source features.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Mod Softness</h3><code>modSoftness</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0.1</dd></div></dl>
+        <p>Controls the transition width around Mod Threshold. At 0 the threshold is hard; higher values create a smoother gate. It has no visible effect when Threshold is 0.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Modulation Gain</h3><code>modulationGain</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 3</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Master gain for the conditioned image modulation before PM or FM. At 0 the source contributes no information to the generated signal.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="carrier">
+    <h2>Carrier and PM/FM</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Mode</h3><code>mode</code></header>
+        <dl><div><dt>Values</dt><dd>pm, fm</dd></div><div><dt>Default</dt><dd>pm</dd></div></dl>
+        <p>Selects the signal model. PM adds the source value directly to carrier phase. FM integrates source-driven frequency changes along the selected scan direction, producing folds and accumulated bends.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Frequency</h3><code>frequency</code></header>
+        <dl><div><dt>Values</dt><dd>0.5 to 30 cy/100px</dd></div><div><dt>Default</dt><dd>8 cy/100px</dd></div></dl>
+        <p>Base carrier density in cycles per 100 output pixels along Scan Angle. Higher values create more closely spaced lines or waveform cycles.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Carrier Phase</h3><code>carrierPhase</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1 turns</dd></div><div><dt>Default</dt><dd>0 turns</dd></div></dl>
+        <p>Offsets the carrier by whole turns without moving source pixels. Animate it to make the generated signal travel through the image.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Carrier Shape</h3><code>carrierShape</code></header>
+        <dl><div><dt>Values</dt><dd>sine, triangle, saw, square, noise, wavetable, audio</dd></div><div><dt>Default</dt><dd>sine</dd></div></dl>
+        <p>Selects Sine, Triangle, Saw, Square, Noise, Wavetable, or Audio as the carrier. Audio requires a loaded audio source in the Companion preview.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Signal Render</h3><code>signalRender</code></header>
+        <dl><div><dt>Values</dt><dd>line, waveform</dd></div><div><dt>Default</dt><dd>line</dd></div></dl>
+        <p>Line draws narrow contours at repeating carrier phases. Waveform displays the continuous bipolar signal as image intensity.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Pwm</h3><code>pwm</code></header>
+        <dl><div><dt>Values</dt><dd>0.05 to 0.95</dd></div><div><dt>Default</dt><dd>0.5</dd></div></dl>
+        <p>Changes duty cycle for Square and skew/symmetry for Triangle and Saw-derived shapes. 0.5 is centered and symmetrical.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Noise Detail</h3><code>noiseDetail</code></header>
+        <dl><div><dt>Values</dt><dd>0.25 to 8</dd></div><div><dt>Default</dt><dd>2</dd></div></dl>
+        <p>Controls spatial detail for the Noise carrier. Low values make broad variations; high values make finer, faster-changing structure.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Wavetable</h3><code>wavetable</code></header>
+        <dl><div><dt>Values</dt><dd>harmonic, folded, formant, custom</dd></div><div><dt>Default</dt><dd>harmonic</dd></div></dl>
+        <p>Selects the internal Harmonic, Folded, or Formant table, or the session-only imported Custom table. Custom data is not embedded in preset JSON.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Phase Depth</h3><code>phaseDepth</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 4 turns</dd></div><div><dt>Default</dt><dd>0.8 turns</dd></div></dl>
+        <p>PM depth in full turns. It controls how far image modulation bends carrier phase; 0 removes PM influence even if Modulation Gain is non-zero.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Frequency Deviation</h3><code>frequencyDeviation</code></header>
+        <dl><div><dt>Values</dt><dd>-12 to 12 cy/100px</dd></div><div><dt>Default</dt><dd>4 cy/100px</dd></div></dl>
+        <p>FM deviation in cycles per 100 pixels at full-scale modulation. Positive and negative values reverse the direction of accumulated frequency bending. Active only in FM mode.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Scan Angle</h3><code>scanAngle</code></header>
+        <dl><div><dt>Values</dt><dd>-180 to 180 degrees</dd></div><div><dt>Default</dt><dd>0 degrees</dd></div></dl>
+        <p>Direction in which the carrier and FM integral travel, from -180 degrees to 180 degrees. It rotates the signal coordinate, not the source image.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="line">
+    <h2>Line shaping</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Line Width</h3><code>lineWidth</code></header>
+        <dl><div><dt>Values</dt><dd>0.25 to 5 px</dd></div><div><dt>Default</dt><dd>1.2 px</dd></div></dl>
+        <p>Approximate on-screen thickness of Line render contours in pixels.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Line Softness</h3><code>lineSoftness</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 3 px</dd></div><div><dt>Default</dt><dd>0.75 px</dd></div></dl>
+        <p>Antialiasing and edge softness around Line render contours. 0 is crisp; larger values create broader, softer edges.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="instability">
+    <h2>Instability</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Instability</h3><code>instability</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Master amount for drift and jitter contributions. At 0 the clean PM/FM path is restored even when the individual instability controls have non-zero setup values.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Phase Jitter</h3><code>phaseJitter</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1 turns</dd></div><div><dt>Default</dt><dd>0.18 turns</dd></div></dl>
+        <p>Adds smooth, deterministic disturbance directly to carrier phase. It roughens and wriggles the signal without adding a visible noise overlay.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Signal Noise</h3><code>signalNoise</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Injects deterministic broadband disturbance into signal phase. It produces RF-like breakup while remaining part of the carrier calculation.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Frequency Drift</h3><code>frequencyDrift</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 8 cy/100px</dd></div><div><dt>Default</dt><dd>1.5 cy/100px</dd></div></dl>
+        <p>Maximum slow variation of carrier frequency in cycles per 100 pixels. Its motion rate is controlled by Drift Rate.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Horizontal Drift</h3><code>horizontalDrift</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 120 px</dd></div><div><dt>Default</dt><dd>0 px</dd></div></dl>
+        <p>Moves generated signal coordinates horizontally in pixel space. The source image is not resampled or translated.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Vertical Drift</h3><code>verticalDrift</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 120 px</dd></div><div><dt>Default</dt><dd>0 px</dd></div></dl>
+        <p>Moves generated signal coordinates vertically in pixel space. Combine it with Horizontal Drift for wandering two-axis motion.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Drift Rate</h3><code>driftRate</code></header>
+        <dl><div><dt>Values</dt><dd>0.01 to 5 Hz</dd></div><div><dt>Default</dt><dd>0.22 Hz</dd></div></dl>
+        <p>Speed in hertz of frequency and coordinate drift fields. Low values wander slowly; high values hunt rapidly.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Time Jitter</h3><code>timeJitter</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 30 frames</dd></div><div><dt>Default</dt><dd>0 frames</dd></div></dl>
+        <p>Perturbs the internal signal clock by an amount expressed in frames. It affects procedural motion and failure timing, but does not select a different source-video frame.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Line Jitter</h3><code>lineJitter</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 40 px</dd></div><div><dt>Default</dt><dd>5 px</dd></div></dl>
+        <p>Maximum displacement of scan-line bands in pixels. This is the amplitude of horizontal-sync-like line movement.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Line Jitter Scale</h3><code>lineJitterScale</code></header>
+        <dl><div><dt>Values</dt><dd>1 to 128 px</dd></div><div><dt>Default</dt><dd>2 px</dd></div></dl>
+        <p>Width of the bands affected by Line Jitter. Small values produce fine buzzing lines; large values shift broader blocks together.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Line Jitter Speed</h3><code>lineJitterSpeed</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 30 Hz</dd></div><div><dt>Default</dt><dd>7 Hz</dd></div></dl>
+        <p>Temporal speed in hertz of the Line Jitter pattern. 0 freezes the pattern for a given frame state.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="failure">
+    <h2>Signal failure</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Dropout</h3><code>dropout</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Probability/intensity of deterministic missing-signal bands. The affected signal-domain location is selected by Dropout Stage.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Dropout Angle</h3><code>dropoutAngle</code></header>
+        <dl><div><dt>Values</dt><dd>-180 to 180 degrees</dd></div><div><dt>Default</dt><dd>0 degrees</dd></div></dl>
+        <p>Orientation of dropout bands, independent of Scan Angle. Use a different angle to cross-cut the carrier structure.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Line Tear</h3><code>lineTear</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 120 px</dd></div><div><dt>Default</dt><dd>0 px</dd></div></dl>
+        <p>Maximum discontinuous jump of the scan coordinate in pixels. It tears carrier phase and FM lookup together instead of shifting the finished image.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Dropout Stage</h3><code>dropoutStage</code></header>
+        <dl><div><dt>Values</dt><dd>modulator, signal-loop, output</dd></div><div><dt>Default</dt><dd>modulator</dd></div></dl>
+        <p>Chooses where dropout enters the route: Modulator removes source modulation, Signal loop removes carrier energy and weakens stored feedback, and Output blacks only the visible result.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="feedback">
+    <h2>Feedback</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Feedback Amount</h3><code>feedbackAmount</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Coupling strength of the stored signal returned to the current frame. 0 disables feedback.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Decay</h3><code>feedbackDecay</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 0.99</dd></div><div><dt>Default</dt><dd>0.9</dd></div></dl>
+        <p>Retention applied to older signal state. Values near 1 create longer, more persistent echoes.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Displacement</h3><code>feedbackDisplacement</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 64 px/frame</dd></div><div><dt>Default</dt><dd>0 px/frame</dd></div></dl>
+        <p>Moves stored signal by pixels per age step before reinjection. It creates trails, conveyors, and drifting memory rather than a simple overlay.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Displacement Angle</h3><code>feedbackDisplacementAngle</code></header>
+        <dl><div><dt>Values</dt><dd>-180 to 180 degrees</dd></div><div><dt>Default</dt><dd>0 degrees</dd></div></dl>
+        <p>Direction of feedback displacement from -180 degrees to 180 degrees.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Phase</h3><code>feedbackPhase</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1 turns</dd></div><div><dt>Default</dt><dd>0 turns</dd></div></dl>
+        <p>Rotates the stored waveform and quadrature pair in turns before reinjection. This changes echo phase and polarity without disguising the operation as gain.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Injection</h3><code>feedbackInjection</code></header>
+        <dl><div><dt>Values</dt><dd>phase, modulation</dd></div><div><dt>Default</dt><dd>phase</dd></div></dl>
+        <p>Phase injects stored state after PM/FM integration. Modulation returns it before integration, so FM can accumulate and reshape the feedback.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Model</h3><code>feedbackModel</code></header>
+        <dl><div><dt>Values</dt><dd>sequential, finite</dd></div><div><dt>Default</dt><dd>sequential</dd></div></dl>
+        <p>Sequential loop recursively uses the previous wet state and depends on linear playback. Finite window combines a bounded set of previous dry frames for a deterministic history length.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Feedback Window</h3><code>feedbackWindow</code></header>
+        <dl><div><dt>Values</dt><dd>1 to 8</dd></div><div><dt>Default</dt><dd>4</dd></div></dl>
+        <p>Number of previous dry frames, 1 through 8, used by Finite window. It is disabled for Sequential loop.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="color">
+    <h2>Color</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Color Mode</h3><code>colorMode</code></header>
+        <dl><div><dt>Values</dt><dd>mono, input-color, rgb-phase</dd></div><div><dt>Default</dt><dd>mono</dd></div></dl>
+        <p>Mono outputs one signal in all channels. Input color applies normalized source chroma to signal energy. RGB phase evaluates red, green, and blue at different carrier phases.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Rgb Phase Offset</h3><code>rgbPhaseOffset</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 0.5 turns</dd></div><div><dt>Default</dt><dd>0.035 turns</dd></div></dl>
+        <p>Phase separation in turns between RGB channels. Active only in RGB phase mode; larger offsets create stronger color splitting.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="output">
+    <h2>Output</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Black Level</h3><code>blackLevel</code></header>
+        <dl><div><dt>Values</dt><dd>-0.5 to 0.5</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Adds or removes output pedestal before contrast, gamma, and brightness shaping. Negative values crush low signal; positive values lift black.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Signal Gamma</h3><code>signalGamma</code></header>
+        <dl><div><dt>Values</dt><dd>0.25 to 4</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Nonlinear response of the generated signal. Values below 1 brighten mid-levels; values above 1 darken them.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Brightness</h3><code>brightness</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 3</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Final output gain after black level, contrast, and gamma. At 0 the visible output is black.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Contrast</h3><code>contrast</code></header>
+        <dl><div><dt>Values</dt><dd>0.25 to 4</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Expands or compresses output around mid-gray before gamma. 1 is neutral.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Phosphor Persistence</h3><code>phosphorPersistence</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 3000 ms</dd></div><div><dt>Default</dt><dd>0 ms</dd></div></dl>
+        <p>Peak-hold afterglow half-life in milliseconds. It stores bright RGB emission while decaying older light; it never feeds back into the carrier or modulation path.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="audio">
+    <h2>Audio analysis</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Audio Attack</h3><code>audioAttack</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 500 ms</dd></div><div><dt>Default</dt><dd>25 ms</dd></div></dl>
+        <p>Rise time in milliseconds for Level, Low, Mid, High, and Transient analysis. Short attack follows hits quickly; long attack smooths their onset.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Release</h3><code>audioRelease</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 2000 ms</dd></div><div><dt>Default</dt><dd>180 ms</dd></div></dl>
+        <p>Fall time in milliseconds for audio analysis. Long release holds energy after a sound; short release makes modulation drop quickly.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="lfo">
+    <h2>Low-frequency oscillators</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Lfo1 Shape</h3><code>lfo1Shape</code></header>
+        <dl><div><dt>Values</dt><dd>sine, triangle, saw, square, sample-hold, smooth-noise</dd></div><div><dt>Default</dt><dd>sine</dd></div></dl>
+        <p>Waveform generated by LFO 1: Sine, Triangle, Saw, Square, stepped Sample &amp; hold, or interpolated Smooth noise.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Rate Mode</h3><code>lfo1RateMode</code></header>
+        <dl><div><dt>Values</dt><dd>hz, bpm</dd></div><div><dt>Default</dt><dd>hz</dd></div></dl>
+        <p>Chooses free-running Hz or tempo-based BPM timing for LFO 1. Only the controls for the selected rate mode affect its speed.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Sync</h3><code>lfo1Sync</code></header>
+        <dl><div><dt>Values</dt><dd>timeline, transport</dd></div><div><dt>Default</dt><dd>timeline</dd></div></dl>
+        <p>Timeline evaluates LFO 1 from absolute host time. Transport subtracts the most recent retrigger origin so playback/retrigger can restart its cycle.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Rate Hz</h3><code>lfo1RateHz</code></header>
+        <dl><div><dt>Values</dt><dd>0.01 to 20 Hz</dd></div><div><dt>Default</dt><dd>0.25 Hz</dd></div></dl>
+        <p>Free-running speed of LFO 1 in cycles per second. Active when Rate mode is Hz.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Bpm</h3><code>lfo1Bpm</code></header>
+        <dl><div><dt>Values</dt><dd>20 to 300 BPM</dd></div><div><dt>Default</dt><dd>120 BPM</dd></div></dl>
+        <p>Tempo used by LFO 1 for musical timing. Active when Rate mode is BPM.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Division</h3><code>lfo1Division</code></header>
+        <dl><div><dt>Values</dt><dd>2-bars, 1-bar, 1-2, 1-4, 1-8, 1-16, 1-32</dd></div><div><dt>Default</dt><dd>2-bars</dd></div></dl>
+        <p>Musical cycle length for LFO 1, from two bars to 1/32. In 4/4, 1/4 produces one cycle per beat.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Phase</h3><code>lfo1Phase</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1 turns</dd></div><div><dt>Default</dt><dd>0 turns</dd></div></dl>
+        <p>Starting phase of LFO 1 in turns. 0.25 is a quarter-cycle offset and 0.5 is half a cycle.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo1 Polarity</h3><code>lfo1Polarity</code></header>
+        <dl><div><dt>Values</dt><dd>bipolar, unipolar</dd></div><div><dt>Default</dt><dd>bipolar</dd></div></dl>
+        <p>Bipolar maps LFO 1 to -1...+1 for motion around the base value. Unipolar maps it to 0...+1 for one-direction modulation.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Shape</h3><code>lfo2Shape</code></header>
+        <dl><div><dt>Values</dt><dd>sine, triangle, saw, square, sample-hold, smooth-noise</dd></div><div><dt>Default</dt><dd>sine</dd></div></dl>
+        <p>Waveform generated by LFO 2: Sine, Triangle, Saw, Square, stepped Sample &amp; hold, or interpolated Smooth noise.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Rate Mode</h3><code>lfo2RateMode</code></header>
+        <dl><div><dt>Values</dt><dd>hz, bpm</dd></div><div><dt>Default</dt><dd>hz</dd></div></dl>
+        <p>Chooses free-running Hz or tempo-based BPM timing for LFO 2. Only the controls for the selected rate mode affect its speed.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Sync</h3><code>lfo2Sync</code></header>
+        <dl><div><dt>Values</dt><dd>timeline, transport</dd></div><div><dt>Default</dt><dd>timeline</dd></div></dl>
+        <p>Timeline evaluates LFO 2 from absolute host time. Transport subtracts the most recent retrigger origin so playback/retrigger can restart its cycle.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Rate Hz</h3><code>lfo2RateHz</code></header>
+        <dl><div><dt>Values</dt><dd>0.01 to 20 Hz</dd></div><div><dt>Default</dt><dd>0.1 Hz</dd></div></dl>
+        <p>Free-running speed of LFO 2 in cycles per second. Active when Rate mode is Hz.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Bpm</h3><code>lfo2Bpm</code></header>
+        <dl><div><dt>Values</dt><dd>20 to 300 BPM</dd></div><div><dt>Default</dt><dd>120 BPM</dd></div></dl>
+        <p>Tempo used by LFO 2 for musical timing. Active when Rate mode is BPM.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Division</h3><code>lfo2Division</code></header>
+        <dl><div><dt>Values</dt><dd>2-bars, 1-bar, 1-2, 1-4, 1-8, 1-16, 1-32</dd></div><div><dt>Default</dt><dd>2-bars</dd></div></dl>
+        <p>Musical cycle length for LFO 2, from two bars to 1/32. In 4/4, 1/4 produces one cycle per beat.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Phase</h3><code>lfo2Phase</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 1 turns</dd></div><div><dt>Default</dt><dd>0.25 turns</dd></div></dl>
+        <p>Starting phase of LFO 2 in turns. 0.25 is a quarter-cycle offset and 0.5 is half a cycle.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Lfo2 Polarity</h3><code>lfo2Polarity</code></header>
+        <dl><div><dt>Values</dt><dd>bipolar, unipolar</dd></div><div><dt>Default</dt><dd>bipolar</dd></div></dl>
+        <p>Bipolar maps LFO 2 to -1...+1 for motion around the base value. Unipolar maps it to 0...+1 for one-direction modulation.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="matrix">
+    <h2>Modulation matrix</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Audio Source1</h3><code>audioSource1</code></header>
+        <dl><div><dt>Values</dt><dd>off, level, low, mid, high, transient, lfo-1, lfo-2</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Source for modulation slot 1: Off, audio Level/Low/Mid/High/Transient analysis, LFO 1, or LFO 2. Audio sources require audio in the Companion preview.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Destination1</h3><code>audioDestination1</code></header>
+        <dl><div><dt>Values</dt><dd>off, frequency, pwm, phase, phase-depth, feedback, scan-angle, dropout, phase-jitter, frequency-drift, line-jitter, feedback-displacement, feedback-displacement-angle, horizontal-drift, vertical-drift, time-jitter, phosphor-persistence, signal-noise, line-jitter-scale, line-jitter-speed, feedback-phase</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Parameter controlled by modulation slot 1. Off disconnects the slot. A destination can receive multiple slots, which are summed before clamping.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Amount1</h3><code>audioAmount1</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Signed depth of modulation slot 1. Positive values follow the source; negative values invert it. 0 disables the slot without changing its source/destination choices.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Source2</h3><code>audioSource2</code></header>
+        <dl><div><dt>Values</dt><dd>off, level, low, mid, high, transient, lfo-1, lfo-2</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Source for modulation slot 2: Off, audio Level/Low/Mid/High/Transient analysis, LFO 1, or LFO 2. Audio sources require audio in the Companion preview.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Destination2</h3><code>audioDestination2</code></header>
+        <dl><div><dt>Values</dt><dd>off, frequency, pwm, phase, phase-depth, feedback, scan-angle, dropout, phase-jitter, frequency-drift, line-jitter, feedback-displacement, feedback-displacement-angle, horizontal-drift, vertical-drift, time-jitter, phosphor-persistence, signal-noise, line-jitter-scale, line-jitter-speed, feedback-phase</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Parameter controlled by modulation slot 2. Off disconnects the slot. A destination can receive multiple slots, which are summed before clamping.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Amount2</h3><code>audioAmount2</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Signed depth of modulation slot 2. Positive values follow the source; negative values invert it. 0 disables the slot without changing its source/destination choices.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Source3</h3><code>audioSource3</code></header>
+        <dl><div><dt>Values</dt><dd>off, level, low, mid, high, transient, lfo-1, lfo-2</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Source for modulation slot 3: Off, audio Level/Low/Mid/High/Transient analysis, LFO 1, or LFO 2. Audio sources require audio in the Companion preview.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Destination3</h3><code>audioDestination3</code></header>
+        <dl><div><dt>Values</dt><dd>off, frequency, pwm, phase, phase-depth, feedback, scan-angle, dropout, phase-jitter, frequency-drift, line-jitter, feedback-displacement, feedback-displacement-angle, horizontal-drift, vertical-drift, time-jitter, phosphor-persistence, signal-noise, line-jitter-scale, line-jitter-speed, feedback-phase</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Parameter controlled by modulation slot 3. Off disconnects the slot. A destination can receive multiple slots, which are summed before clamping.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Amount3</h3><code>audioAmount3</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Signed depth of modulation slot 3. Positive values follow the source; negative values invert it. 0 disables the slot without changing its source/destination choices.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Source4</h3><code>audioSource4</code></header>
+        <dl><div><dt>Values</dt><dd>off, level, low, mid, high, transient, lfo-1, lfo-2</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Source for modulation slot 4: Off, audio Level/Low/Mid/High/Transient analysis, LFO 1, or LFO 2. Audio sources require audio in the Companion preview.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Destination4</h3><code>audioDestination4</code></header>
+        <dl><div><dt>Values</dt><dd>off, frequency, pwm, phase, phase-depth, feedback, scan-angle, dropout, phase-jitter, frequency-drift, line-jitter, feedback-displacement, feedback-displacement-angle, horizontal-drift, vertical-drift, time-jitter, phosphor-persistence, signal-noise, line-jitter-scale, line-jitter-speed, feedback-phase</dd></div><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Parameter controlled by modulation slot 4. Off disconnects the slot. A destination can receive multiple slots, which are summed before clamping.</p>
+      </article>
+<article class="parameter-card">
+        <header><h3>Audio Amount4</h3><code>audioAmount4</code></header>
+        <dl><div><dt>Values</dt><dd>-1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Signed depth of modulation slot 4. Positive values follow the source; negative values invert it. 0 disables the slot without changing its source/destination choices.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="reference" id="other">
+    <h2>Setup</h2>
+    <div class="parameter-grid">
+      <article class="parameter-card">
+        <header><h3>Seed</h3><code>seed</code></header>
+        <dl><div><dt>Values</dt><dd>0 to 9999</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Changes all deterministic random fields used by noise, jitter, dropout, and related modulation. The same seed, frame, input, and parameters reproduce the same result.</p>
+      </article>
+    </div>
+  </section>
+<section id="details" class="footer"><h2>Operational details</h2><div class="prose"><h3>Presets</h3><p>Preset JSON stores all 82 effect parameters, but no source files, imported samples, monitoring state, playback position, Debug View, retrigger origin, or temporal buffers. Loading a preset resets temporal history and retriggers Transport LFOs.</p><h3>LFO timing</h3><p>Timeline sync uses absolute host time. Transport sync uses a session retrigger origin. In 4/4, 1/4 is one cycle per beat, 1/8 is two cycles per beat, and 1 bar is one cycle per four beats.</p><h3>Current OFX limits</h3><p>PM/FM, procedural carriers, LFO routing, instability, dropout, color, and output shaping run natively. Audio carrier/analysis, imported custom wavetable payloads, feedback history, and phosphor history remain parity gates. The Companion session disables unsupported choices where possible; shared Resolve enum and matrix controls may still expose combinations that the native renderer rejects instead of approximating. Time Jitter changes internal signal time and is not video time remapping.</p><p class="meta">GENERATED FROM PARAMETERS-V1.JSON / CONTRACT 1 / PRESET SCHEMA 16</p></div></section>
+</main></body></html>

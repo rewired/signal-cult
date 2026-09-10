@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+const root=path.resolve(import.meta.dirname,'../..');
+execFileSync(process.execPath,[path.join(root,'scripts/sync-master-ui.mjs')],{stdio:'inherit'});
+execFileSync(process.execPath,[path.join(root,'tools/generate-parameter-contract.mjs')],{stdio:'inherit'});
+const destination=path.join(root,'dist/build/windows-x64/frontend');
+if(!destination.startsWith(root+path.sep))throw new Error('Staging path outside CRT plugin');
+fs.rmSync(destination,{recursive:true,force:true});
+fs.mkdirSync(destination,{recursive:true});
+for(const entry of ['index.html','css','js','src','lib','presets'])fs.cpSync(path.join(root,entry),path.join(destination,entry),{recursive:true});
+const index=path.join(destination,'index.html');
+fs.writeFileSync(index,fs.readFileSync(index,'utf8').replace('<head>','<head>\n<meta name="crt-sim-runtime" content="companion">'));
+console.log('Staged CRT SIM frontend for Tauri.');

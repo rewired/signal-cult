@@ -1,0 +1,33 @@
+import './generate-color-matrices.mjs';
+import fs from 'node:fs';
+import {controls,maskTypes,noiseTypes,choiceTypes,toggleIds,integerIds,presets,presetStyles} from '../lib/crt-params.js';
+import {fragment} from '../lib/crt-renderer.js';
+const out='native/generated/';
+const quote=s=>JSON.stringify(s);
+let params='#pragma once\n#include <cstddef>\nstruct Parameters {\n';
+for(const c of controls)params+=` float ${c[1]} = ${Number(c[6]).toFixed(6)}f;\n`;
+params+=' float maskType=0; float time=0; float bypass=0; float split=0;\n};\n';
+params+='struct ParameterDef {const char* id; const char* label; const char* group; double min,max,step,initial; size_t offset; bool choice; bool toggle; bool integer;};\n';
+params+='inline const ParameterDef parameterDefs[]={\n'+controls.map(c=>`{${quote(c[1])},${quote(c[2])},${quote(c[0])},${c[3]},${c[4]},${c[5]},${c[6]},offsetof(Parameters,${c[1]}),${Object.hasOwn(choiceTypes,c[1])},${toggleIds.includes(c[1])},${integerIds.includes(c[1])}},`).join('\n')+'\n};\n';
+params+='inline const char* maskNames[]={'+maskTypes.map(t=>quote(t.name)).join(',')+'};\n';
+params+='inline const char* noiseNames[]={'+noiseTypes.map(t=>quote(t.name)).join(',')+'};\n';
+for(const id of ['pixelPattern','pixelPalette'])params+='inline const char* '+id+'Names[]={'+choiceTypes[id].map(t=>quote(t.name)).join(',')+'};\n';
+params+='struct PresetDef {const char* name; float mask; float values['+controls.length+'];};\n';
+params+='inline const PresetDef presetDefs[]={\n'+Object.entries(presets).map(([name,p])=>`{${quote(name)},${presetStyles[name].maskType},{${controls.map(c=>Number(p[c[1]]).toFixed(6)+'f').join(',')}}},`).join('\n')+'\n};\n';
+fs.writeFileSync(out+'parameters.hpp',params);
+let shader=fragment.slice(fragment.indexOf('float hash'));
+shader=shader.replace(/float maskCoverage\(float distanceToEdge\)\{[\s\S]*?\n\}/,`float maskCoverage(float distanceToEdge){
+ float aa=max(.35/max(pitch,1.),.001);
+ return 1.-smoothstep(-aa,aa,distanceToEdge);
+}`);
+shader=shader.replace('color=vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);return;','return vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);');
+shader=shader.replace('void main(){','vec4 shade(vec2 uv,vec2 gl_FragCoord){');
+shader=shader.replaceAll('gl_FragCoord.xy','gl_FragCoord').replaceAll('.rgb','.rgb()');
+shader=shader.replace('color=texture(source,p);return;','return texture(source,p);').replace('color=vec4(0,0,0,1);return;','return vec4(0,0,0,0);');
+shader=shader.replace('color=vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);','return vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);');
+shader=shader.replace(/^(float|vec[234]) (\w+)\(/gm,'HD $1 $2(');
+// Native color-managed modes operate directly in signed linear working RGB.
+shader=shader.replace('return pow(max(texture(source,clamp(p,0.,1.)).rgb(),vec3(0)),vec3(2.2));','if(managed)return texture(source,clamp(p,0.,1.)).rgb();return pow(max(texture(source,clamp(p,0.,1.)).rgb(),vec3(0)),vec3(2.2));');
+shader=shader.replace('return vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);','return managed?vec4(sampleLinear(p),1):vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);');
+shader=shader.replace('return vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);','return managed?vec4(signedPower(c,2.2f/gamma),1):vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);');
+fs.writeFileSync(out+'shader.inc','// Generated from lib/crt-renderer.js; do not edit.\n'+shader);

@@ -1,0 +1,7 @@
+/dist/
+/.vs/
+**/node_modules/
+*.log
+*.user
+CMakeUserPresets.json
+.DS_Store

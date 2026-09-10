@@ -1,0 +1,226 @@
+[
+  {
+    "id": "clean-pm",
+    "file": "01-clean-pm.json"
+  },
+  {
+    "id": "clean-fm",
+    "file": "02-clean-fm.json"
+  },
+  {
+    "id": "broken-signal",
+    "file": "03-broken-signal.json"
+  },
+  {
+    "id": "ghost-feedback",
+    "file": "04-ghost-feedback.json"
+  },
+  {
+    "id": "hard-edges",
+    "file": "05-hard-edges.json"
+  },
+  {
+    "id": "melting-carrier",
+    "file": "06-melting-carrier.json"
+  },
+  {
+    "id": "rgb-phase-clean",
+    "file": "07-rgb-phase-clean.json"
+  },
+  {
+    "id": "source-chroma",
+    "file": "08-source-chroma.json"
+  },
+  {
+    "id": "acid-fm",
+    "file": "09-acid-fm.json"
+  },
+  {
+    "id": "prism-ghost",
+    "file": "10-prism-ghost.json"
+  },
+  {
+    "id": "edge-rain",
+    "file": "11-edge-rain.json"
+  },
+  {
+    "id": "overdrive",
+    "file": "12-overdrive.json"
+  },
+  {
+    "id": "modulator-void",
+    "file": "13-modulator-void.json"
+  },
+  {
+    "id": "transmission-cuts",
+    "file": "14-transmission-cuts.json"
+  },
+  {
+    "id": "finite-bloom",
+    "file": "15-finite-bloom.json"
+  },
+  {
+    "id": "memory-fold-fm",
+    "file": "16-memory-fold-fm.json"
+  },
+  {
+    "id": "cross-scan-break",
+    "file": "17-cross-scan-break.json"
+  },
+  {
+    "id": "chroma-resonance",
+    "file": "18-chroma-resonance.json"
+  },
+  {
+    "id": "razorwire",
+    "file": "19-razorwire.json"
+  },
+  {
+    "id": "colored-razorwire",
+    "file": "20-colored-razorwire.json"
+  },
+  {
+    "id": "pwm-sine",
+    "file": "21-pwm-sine.json"
+  },
+  {
+    "id": "skewed-triangle",
+    "file": "22-skewed-triangle.json"
+  },
+  {
+    "id": "ripped-saw",
+    "file": "23-ripped-saw.json"
+  },
+  {
+    "id": "duty-crush",
+    "file": "24-duty-crush.json"
+  },
+  {
+    "id": "bandlimited-noise",
+    "file": "25-bandlimited-noise.json"
+  },
+  {
+    "id": "harmonic-table",
+    "file": "26-harmonic-table.json"
+  },
+  {
+    "id": "folded-table",
+    "file": "27-folded-table.json"
+  },
+  {
+    "id": "audio-trace",
+    "file": "28-audio-trace.json"
+  },
+  {
+    "id": "audio-reactor",
+    "file": "29-audio-reactor.json"
+  },
+  {
+    "id": "phase-tide",
+    "file": "30-phase-tide.json"
+  },
+  {
+    "id": "bpm-pulse-width",
+    "file": "31-bpm-pulse-width.json"
+  },
+  {
+    "id": "scan-pendulum",
+    "file": "32-scan-pendulum.json"
+  },
+  {
+    "id": "dual-clock-drift",
+    "file": "33-dual-clock-drift.json"
+  },
+  {
+    "id": "signal-conveyor",
+    "file": "34-signal-conveyor.json"
+  },
+  {
+    "id": "rising-ghosts",
+    "file": "35-rising-ghosts.json"
+  },
+  {
+    "id": "diagonal-memory",
+    "file": "36-diagonal-memory.json"
+  },
+  {
+    "id": "wandering-memory",
+    "file": "37-wandering-memory.json"
+  },
+  {
+    "id": "horizontal-lock-loss",
+    "file": "38-horizontal-lock-loss.json"
+  },
+  {
+    "id": "vertical-roll-drift",
+    "file": "39-vertical-roll-drift.json"
+  },
+  {
+    "id": "timebase-stutter",
+    "file": "40-timebase-stutter.json"
+  },
+  {
+    "id": "dual-axis-wander",
+    "file": "41-dual-axis-wander.json"
+  },
+  {
+    "id": "phosphor-trace",
+    "file": "42-phosphor-trace.json"
+  },
+  {
+    "id": "long-afterglow",
+    "file": "43-long-afterglow.json"
+  },
+  {
+    "id": "chroma-memory",
+    "file": "44-chroma-memory.json"
+  },
+  {
+    "id": "breathing-phosphor",
+    "file": "45-breathing-phosphor.json"
+  },
+  {
+    "id": "phase-static",
+    "file": "46-phase-static.json"
+  },
+  {
+    "id": "rf-fracture",
+    "file": "47-rf-fracture.json"
+  },
+  {
+    "id": "wide-sync-hunt",
+    "file": "48-wide-sync-hunt.json"
+  },
+  {
+    "id": "fine-sync-buzz",
+    "file": "49-fine-sync-buzz.json"
+  },
+  {
+    "id": "quadrature-loop",
+    "file": "50-quadrature-loop.json"
+  },
+  {
+    "id": "rotating-feedback-phase",
+    "file": "51-rotating-feedback-phase.json"
+  },
+  {
+    "id": "threshold-cut",
+    "file": "52-threshold-cut.json"
+  },
+  {
+    "id": "soft-gate-bloom",
+    "file": "53-soft-gate-bloom.json"
+  },
+  {
+    "id": "transport-pwm-pulse",
+    "file": "54-transport-pwm-pulse.json"
+  },
+  {
+    "id": "retriggered-scan-sweep",
+    "file": "55-retriggered-scan-sweep.json"
+  },
+  {
+    "id": "effective-matrix-lab",
+    "file": "56-effective-matrix-lab.json"
+  }
+]

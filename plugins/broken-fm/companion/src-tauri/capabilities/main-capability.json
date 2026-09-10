@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-capability",
+  "description": "Minimal APIs for the BROKEN FM editor.",
+  "windows": ["main"],
+  "permissions": ["core:app:default", "core:webview:default", "core:window:default"]
+}

@@ -1,0 +1,4 @@
+/dist/
+/.vs/
+/companion/src-tauri/target/
+/companion/src-tauri/gen/schemas/
