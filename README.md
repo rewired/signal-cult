@@ -1,3 +1,5 @@
+![signal cult | rewired VFX](docs/signal-cult_rewired-vfx_horizontal_negativ.svg)
+
 # rewired-vfx SIGNAL CULT
 
 Free video effects for DaVinci Resolve, with local browser tools and Windows OpenFX plugins.
