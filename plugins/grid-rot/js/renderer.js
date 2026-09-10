@@ -6,7 +6,7 @@ precision highp float;
 in vec2 uv;out vec4 color;
 uniform sampler2D image;uniform vec2 grid,size;
 uniform vec4 regions[16];uniform vec2 traits[16];uniform float regionCount;
-uniform float amount,shift,split,crush,overlay;
+uniform float amount,shift,split,crush,overlay,fractureDepth,fractureAmount;
 float noise(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 void main(){
  vec4 fresh=texture(image,uv);vec2 cell=floor(vec2(uv.x,1.-uv.y)*grid);
@@ -16,15 +16,26 @@ void main(){
   vec2 local=mod(cell-regions[i].xy+grid,grid);
   if(local.x<regions[i].z&&local.y<regions[i].w&&traits[i].x>strength){affected=true;strength=traits[i].x;tick=traits[i].y;}
  }
+ float scale=1.;
+ if(affected){for(int level=1;level<=3;level++){
+  if(float(level)>fractureDepth)break;
+  float seed=mod(floor(tick),997.);
+  float n=mod(cell.x*73.+cell.y*151.+seed*199.+float(level)*37.,997.);
+  float chance=mod(n*n+31.*n+17.,997.)/997.;
+  if(chance>=fractureAmount)break;
+  scale*=2.;
+ }}
+ vec2 fineGrid=grid*scale;
+ cell=floor(vec2(uv.x,1.-uv.y)*fineGrid);
  color=fresh;
  if(affected&&amount>0.){
-  float n=noise(cell+floor(tick)*.137);vec2 d=vec2(n-.5,noise(cell+17.)-.5)*2.*shift/grid;
-  vec2 p=uv+d;vec2 rgb=vec2(split/grid.x,0);
+  float n=noise(cell+floor(tick)*.137);vec2 d=vec2(n-.5,noise(cell+17.)-.5)*2.*shift/fineGrid;
+  vec2 p=uv+d;vec2 rgb=vec2(split/fineGrid.x,0);
   vec3 damaged=vec3(texture(image,p+rgb).r,texture(image,p).g,texture(image,p-rgb).b);
   float levels=mix(256.,3.,crush);damaged=floor(damaged*(levels-1.)+.5)/(levels-1.);damaged*=1.-crush*n*.6;
   color=vec4(mix(fresh.rgb,damaged,amount*strength),fresh.a);
  }
- if(overlay>.5){vec2 f=fract(vec2(uv.x,1.-uv.y)*grid);vec2 px=grid/size;float line=1.-step(px.x,f.x)*step(px.y,f.y);color.rgb=mix(color.rgb,affected?vec3(.9,.5,1.):vec3(.35,.65,.55),line*.65);}
+ if(overlay>.5){vec2 f=fract(vec2(uv.x,1.-uv.y)*fineGrid);vec2 px=fineGrid/size;float line=1.-step(px.x,f.x)*step(px.y,f.y);color.rgb=mix(color.rgb,affected?vec3(.9,.5,1.):vec3(.35,.65,.55),line*.65);}
 }`;
 export class GridRenderer {
  constructor(canvas){this.canvas=canvas;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw new Error('WebGL 2 is unavailable. Enable browser hardware acceleration.');this.programs=[];this.textures=[];this.time=0;this.offset=0;this.sourceWidth=960;this.sourceHeight=540;this.overlay=false;try{this.display=this.program(fragment);this.upload=this.texture();}catch(error){this.destroy();throw error;}}
@@ -53,6 +64,6 @@ export class GridRenderer {
  reset(){this.offset=-this.time*(this.mode==='drops'?8:(this.params?.rate||0));}
  update(source,params,mode,time){this.params=params;this.mode=mode;this.time=time;const gl=this.gl;gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.upload);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);this.valid=true;}
  state(){const grid=gridFor(this.sourceWidth,this.sourceHeight,this.params.density);return {grid,areas:activeAreas(grid,this.params,this.mode,this.time,this.offset)};}
- present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state();const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,overlay:!bypass&&amount>0&&this.overlay?1:0});}
+ present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state();const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,fractureDepth:this.params.fractureDepth??0,fractureAmount:this.params.fractureAmount??0.65,overlay:!bypass&&amount>0&&this.overlay?1:0});}
  destroy(){for(const t of this.textures)this.gl.deleteTexture(t);for(const p of this.programs)this.gl.deleteProgram(p.program);this.textures=[];this.programs=[];}
 }

@@ -7,6 +7,8 @@ export const fields = [
  {key:'dropLife',label:'Drop lifetime',min:0.1,max:3,step:0.05,value:0.8,unit:'s',hint:'Typical lifetime before a drop disappears and reappears elsewhere.'},
  {key:'dropSpread',label:'Drop variation',min:0,max:1,step:0.01,value:0.75,hint:'Vary size, strength, lifetime and the gaps between drops.'},
  {key:'dropSeed',label:'Random seed',min:0,max:9999,step:1,value:7,hint:'Choose another reproducible arrangement of drops.'},
+ {key:'fractureDepth',label:'Fracture depth',min:0,max:3,step:1,value:0,hint:'Split affected cells into 2 × 2, 4 × 4 or 8 × 8 subcells. Zero disables fracture.'},
+ {key:'fractureAmount',label:'Fracture spread',min:0,max:1,step:0.01,value:0.65,hint:'Chance of each further split. Lower values mix coarse and fine cells.'},
  {key:'shift',label:'Displacement',min:0,max:2,step:0.01,value:0.5,unit:'cells',hint:'Local horizontal and vertical image offsets.'},
  {key:'split',label:'Color separation',min:0,max:1,step:0.01,value:0.25,unit:'cells',hint:'Separate RGB channels inside the active area.'},
  {key:'crush',label:'Tone damage',min:0,max:1,step:0.01,value:0.35,hint:'Reduce color levels and darken individual cells.'},
@@ -15,6 +17,7 @@ export const fields = [
 export const defaults=Object.fromEntries(fields.map(f=>[f.key,f.value]));
 export const modes=['step-right','step-left','random','lfo','drops'];
 export const presets=[
+ {id:'shattered-drops',name:'Shattered Drops',description:'Random patches break into a mix of coarse cells and fine fragments.',mode:'drops',params:{...defaults,density:2,spanX:5,spanY:4,fractureDepth:3,fractureAmount:0.7,shift:1.2,split:0.5}},
  {id:'random-drops',name:'Random Drops',description:'Independent patches flicker in and out, with varied size and strength.',mode:'drops',params:{...defaults,density:2,spanX:5,spanY:4,shift:0.8,split:0.4}},
  {id:'grid-crawl',name:'Grid Crawl',description:'A moving patch fractures the live image, cell by cell.',mode:'step-right',params:{...defaults}},
  {id:'scatter',name:'Scatter',description:'Small, sharp disturbances jump across the current frame.',mode:'random',params:{...defaults,density:2,spanX:3,spanY:2,rate:12,shift:1,split:0.5}},
@@ -60,7 +63,19 @@ export function activeAreas(grid,params,mode,time,offset=0){
  }
  return areas;
 }
+// Small integer hash is identical in JavaScript and GLSL, including on mobile GPUs.
+export function fractureScale(x,y,params,tick){
+ let scale=1;
+ for(let level=1;level<=(params.fractureDepth??0);level++){
+  const seed=wrap(Math.floor(tick)%65536,997);
+  const n=wrap(x*73+y*151+seed*199+level*37,997);
+  const chance=((n*n+31*n+17)%997)/997;
+  if(chance>=(params.fractureAmount??0.65))break;
+  scale*=2;
+ }
+ return scale;
+}
 export function containsCell(x,y,area,grid){return wrap(x-area.x,grid.columns)<area.width&&wrap(y-area.y,grid.rows)<area.height;}
-export function parsePreset(text){const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||p.version!==1)throw new Error('Expected a GRID ROT version 1 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');const params={};for(const f of fields){const n=p.params?.[f.key]===undefined&&f.key.startsWith('drop')?defaults[f.key]:p.params?.[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}return {format:p.format,version:1,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params};}
+export function parsePreset(text){const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||p.version!==1)throw new Error('Expected a GRID ROT version 1 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');const params={};for(const f of fields){const n=p.params?.[f.key]===undefined&&(f.key.startsWith('drop')||f.key.startsWith('fracture'))?defaults[f.key]:p.params?.[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}return {format:p.format,version:1,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params};}
 export {nextPreset} from '../../signal-rot/js/params.js';
 export function previewSize(width,height){const scale=Math.min(1,1920/width,1080/height);return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};}

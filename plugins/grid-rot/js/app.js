@@ -1,10 +1,10 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 const $=id=>document.getElementById(id);
 const events=new AbortController();
 const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:events.signal});
-let params={...presets[0].params},mode='drops',presetId='random-drops',presetName='Random Drops';
+let params={...presets.find(p=>p.id==='random-drops').params},mode='drops',presetId='random-drops',presetName='Random Drops';
 let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0;
 let generation=0,mediaFrame=0,needsFrame=true,sourceTime=0;
 let demoTime=0,lastRAF=0,lastDemo=-1,statsTime=0,statsFrames=0;
@@ -17,7 +17,7 @@ function present(){if(renderer){renderer.params=params;renderer.mode=mode;render
 function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.reset();}needsFrame=true;present();}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
- for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('drop')?mode!=='drops':f.key==='rate'&&mode==='drops';c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
+ for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
 }
 function apply(preset,id='custom'){
  params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;
@@ -32,7 +32,7 @@ for(const f of fields){
  const number=document.createElement('input');number.type='number';number.setAttribute('aria-label',f.label+' value');
  const range=document.createElement('input');range.type='range';range.id='range-'+f.key;
  for(const el of [number,range]){el.min=f.min;el.max=f.max;el.step=f.step;el.value=params[f.key];}
- const update=value=>{if(!Number.isFinite(value))return;params[f.key]=Math.min(f.max,Math.max(f.min,f.step===1?Math.round(value):value));range.value=number.value=params[f.key];custom();present();};
+ const update=value=>{if(!Number.isFinite(value))return;params[f.key]=Math.min(f.max,Math.max(f.min,f.step===1?Math.round(value):value));range.value=number.value=params[f.key];custom();sync();present();};
  on(range,'input',()=>update(Number(range.value)));on(number,'input',()=>{if(number.value!=='')update(number.valueAsNumber);});on(number,'blur',()=>number.value=params[f.key]);on(range,'dblclick',()=>update(f.value));
  range.dataset.snapStep=String(f.step*10);enableCtrlDragSnapping(range);
  const hint=document.createElement('p');hint.className='hint';hint.textContent=f.hint;
@@ -96,12 +96,18 @@ const map=$('grid-map'),mapCtx=map.getContext('2d');
 function syncGrid(){
  const grid=gridFor(renderer?.sourceWidth||960,renderer?.sourceHeight||540,params.density);
  const areas=activeAreas(grid,params,mode,renderer?.time||0,renderer?.offset||0);
- $('grid-label').textContent=grid.columns+' × '+grid.rows;
+ $('grid-label').textContent=grid.columns+' × '+grid.rows+(params.fractureDepth?' · ÷'+2**params.fractureDepth:'');
  $('grid-status').textContent=(grid.approximate?'≈ ':'')+grid.baseColumns+':'+grid.baseRows+' base · ×'+params.density+(mode==='drops'?' · '+areas.length+'/'+params.dropCount+' drops':' · area '+areas[0].width+' × '+areas[0].height+' cells');
  map.width=384;map.height=Math.max(40,Math.round(384*grid.rows/grid.columns));
  const w=map.width/grid.columns,h=map.height/grid.rows;
  mapCtx.fillStyle='#101818';mapCtx.fillRect(0,0,map.width,map.height);
- for(let y=0;y<grid.rows;y++)for(let x=0;x<grid.columns;x++){mapCtx.fillStyle=areas.some(area=>containsCell(x,y,area,grid))?'#8dffd8':'#233431';mapCtx.fillRect(x*w,y*h,Math.max(.5,w-1),Math.max(.5,h-1));}
+ for(let y=0;y<grid.rows;y++)for(let x=0;x<grid.columns;x++){
+  let hit;for(const area of areas)if(containsCell(x,y,area,grid)&&(!hit||area.strength>hit.strength))hit=area;
+  mapCtx.fillStyle=hit?'#8dffd8':'#233431';mapCtx.fillRect(x*w,y*h,Math.max(.5,w-1),Math.max(.5,h-1));
+  const scale=hit?fractureScale(x,y,params,hit.tick):1;
+  if(scale>1&&w/scale>=1&&h/scale>=1){mapCtx.strokeStyle='#304d45';mapCtx.lineWidth=.6;mapCtx.beginPath();for(let i=1;i<scale;i++){mapCtx.moveTo(x*w+i*w/scale,y*h);mapCtx.lineTo(x*w+i*w/scale,(y+1)*h);mapCtx.moveTo(x*w,y*h+i*h/scale);mapCtx.lineTo((x+1)*w,y*h+i*h/scale);}mapCtx.stroke();}
+ }
+
 }
 on($('show-grid'),'change',()=>{if(renderer)renderer.overlay=$('show-grid').checked;present();});
 on($('step-clock'),'click',()=>{if(playing||!renderer)return;renderer.offset++;present();});
@@ -140,6 +146,6 @@ const key='grid-rot.photosensitivity-warning.dismissed';let accepted=false;try{a
 on($('warning-form'),'submit',event=>{event.preventDefault();if($('dismiss-warning').checked)try{localStorage.setItem(key,'true');}catch{}$('photosensitivity-warning').hidden=true;start();});
 if(accepted){$('photosensitivity-warning').hidden=true;start();}
 on(window,'pagehide',event=>{if(event.persisted)return;disposed=true;generation++;cancelAnimationFrame(raf);release(source);if(objectURL)URL.revokeObjectURL(objectURL);renderer?.destroy();events.abort();});
-sync();$('preset-description').textContent=presets[0].description;
+sync();$('preset-description').textContent=presets.find(p=>p.id===presetId).description;
 
 syncGrid();

@@ -1,4 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,parsePreset,presets} from '../js/params.js';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {fractureScale,baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,parsePreset,presets} from '../js/params.js';
 test('source ratios and independent integer density',()=>{for(const [w,h,c,r] of [[1920,1080,16,9],[1080,1920,9,16],[1440,1080,4,3],[1000,1000,1,1]]){const g=gridFor(w,h,3);assert.equal(g.columns,c*3);assert.equal(g.rows,r*3);}const b=baseGrid(2048,1080);assert.ok(b.columns<=24&&b.rows<=24);assert.ok(Math.abs(b.columns/b.rows-2048/1080)<.02);assert.throws(()=>baseGrid(0,10));});
 test('footprint wraps without altering grid density',()=>{const g=gridFor(1920,1080,1);const a=activeArea(g,{...defaults,spanX:4,spanY:3},'step-left',1/8);assert.equal(a.x,15);assert.equal(a.y,8);assert.ok(containsCell(0,0,a,g));assert.ok(!containsCell(4,0,a,g));assert.equal(activeArea(g,{...defaults,spanX:32},'step-right',0).width,16);});
 test('motion is bounded and reproducible',()=>{const g=gridFor(1080,1920,2);for(const mode of ['step-right','step-left','random','lfo'])for(const t of [0,.3,12,1000]){const a=activeArea(g,defaults,mode,t);assert.deepEqual(a,activeArea(g,defaults,mode,t));assert.ok(a.x>=0&&a.x<g.columns&&a.y>=0&&a.y<g.rows);}assert.equal(activeArea(g,defaults,'step-right',0,1).x,1);});
@@ -18,4 +18,15 @@ test('legacy presets gain drop defaults and reject invalid new fields',()=>{
  const params={...defaults};for(const key of Object.keys(params))if(key.startsWith('drop'))delete params[key];
  const data={format:'grid-rot-preset',version:1,mode:'step-right',params};assert.deepEqual(parsePreset(JSON.stringify(data)).params,defaults);
  for(const value of [null,0,17,1.5])assert.throws(()=>parsePreset(JSON.stringify({...data,params:{...params,dropCount:value}})));
+});
+
+test('fracture depth, probability and legacy imports preserve coarse cells',()=>{
+ const p={...defaults,fractureDepth:3,fractureAmount:1};
+ assert.equal(fractureScale(2,3,p,10),8);
+ assert.equal(fractureScale(2,3,{...p,fractureDepth:0},10),1);
+ assert.equal(fractureScale(2,3,{...p,fractureAmount:0},10),1);
+ const values=new Set();for(let x=0;x<32;x++){const n=fractureScale(x,2,{...p,fractureAmount:.65},127);assert.ok([1,2,4,8].includes(n));values.add(n);}assert.equal(values.size,4);
+ const params={...defaults};delete params.fractureDepth;delete params.fractureAmount;
+ assert.deepEqual(parsePreset(JSON.stringify({format:'grid-rot-preset',version:1,mode:'drops',params})).params,defaults);
+ for(const fractureDepth of [-1,1.5,4,null])assert.throws(()=>parsePreset(JSON.stringify({format:'grid-rot-preset',version:1,mode:'drops',params:{...params,fractureDepth}})));
 });

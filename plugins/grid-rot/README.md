@@ -40,3 +40,17 @@ selects a reproducible arrangement. Pause, Step motion (1/8 second per click)
 and Reset motion work without advancing the source frame. Overlapping drops
 use the strongest local drop rather than stacking damage. The inspector shows
 all visible patches. Older version 1 presets load with default drop settings.
+
+## Fracture modifier
+
+Fracture depth subdivides affected cells locally: 0 disables it, 1 allows 2×2,
+2 allows 4×4, and 3 allows 8×8 subcells. Fracture spread is the probability
+of each further split. At 1 every affected cell reaches the selected depth;
+at 0 all remain coarse. Intermediate values mix resolutions. Each subcell
+has its own damage; displacement and color separation scale with its smaller
+size. The source aspect and footprint in base cells stay the same.
+
+The map and Show grid display local subdivisions (the small map omits lines
+closer than one pixel). Fractures follow the active drop or route and stay
+stable while paused. Try the Shattered Drops preset. Older presets load with
+fracture disabled.
