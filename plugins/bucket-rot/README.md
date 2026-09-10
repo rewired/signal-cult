@@ -12,11 +12,16 @@ Click a cell to select its output tap. The pink border marks the selected stage;
 a white inset border shows the most recent trigger position. Filled cells contain
 stored images; an empty output tap temporarily shows the live source.
 
-**Final stage only** locks the output and feedback tap to the end of the signal
-chain: stage 64 for rightward travel, stage 01 for leftward travel. Matrix selection
-is disabled while locked. Switching it off restores the previously selected tap.
-An empty final stage stays black and is labelled as filling, rather than showing
-the live input. The switch is saved in JSON presets; older presets default to an unlocked output.
+**Final stage only** solos the end of the signal chain: stage 64 for rightward
+travel, stage 01 for leftward travel. It displays only that delayed image, without
+live-input blending or recirculating feedback. Matrix selection, Amount and
+Feedback are disabled while soloed; their values are retained for switching back.
+Modulation damage still applies to the final image, including chroma separation.
+
+Enabling solo clears memory to remove previously baked-in feedback echoes. The
+preview stays black and is labelled as filling until the final stage receives an
+image (64 transfers for an empty chain). View input remains an explicit bypass.
+The switch is saved in JSON presets; older presets default to an unlocked output.
 
 - **Orange / Carry modulation with the image:** a disturbance is attached to an
   image packet. It follows that packet through subsequent stages in the signal

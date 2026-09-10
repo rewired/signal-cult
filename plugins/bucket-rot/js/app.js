@@ -18,7 +18,7 @@ function clearMemory(){renderer?.reset();needsFrame=true;lastMediaTime=null;}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
  $('final-stage').checked=Boolean(params.finalOnly);$('signal-direction').value=params.signalDirection;$('wave-direction').value=params.waveDirection;$('ride-signal').checked=Boolean(params.ride);$('stage-wave').checked=Boolean(params.wave);
- for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key==='lfoRate'&&mode!=='lfo';c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
+ for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key==='lfoRate'&&mode!=='lfo'||Boolean(params.finalOnly)&&['amount','feedback'].includes(f.key);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
 }
 function apply(preset,id='custom'){
  params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;
@@ -110,7 +110,7 @@ function syncMatrix(){
  $('delay-label').textContent=(params.finalOnly?'FINAL ':'TAP ')+String(tap).padStart(2,'0')+' / ~'+(transfers/params.clock).toFixed(2)+' s';
  $('matrix-status').textContent='Tick '+(chain?.ticks??0)+' · '+(chain?.slots.filter(s=>s.filled).length??0)+'/64 filled · '+(chain?.waves.length??0)+' waves · '+(renderer?.bw??640)+' × '+(renderer?.bh??360);
 }
-on($('final-stage'),'change',()=>{params.finalOnly=Number($('final-stage').checked);custom();present();});
+on($('final-stage'),'change',()=>{params.finalOnly=Number($('final-stage').checked);custom();sync();if(params.finalOnly)clearMemory();present();});
 for(const [id,key]of [['signal-direction','signalDirection'],['wave-direction','waveDirection']])on($(id),'change',()=>{params[key]=Number($(id).value);custom();present();});
 for(const [id,key]of [['ride-signal','ride'],['stage-wave','wave']])on($(id),'change',()=>{
  params[key]=Number($(id).checked);if(!params[key]&&renderer){if(key==='wave')renderer.chain.waves=[];else for(const slot of renderer.chain.slots)slot.carrier=null;}custom();present();

@@ -55,12 +55,12 @@ export class BucketRenderer{
  }
  draw(p,textures,values){const gl=this.gl;gl.useProgram(p.program);let unit=0;for(const [name,[texture,target]]of Object.entries(textures)){gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(target??gl.TEXTURE_2D,texture);gl.uniform1i(p.uniforms[name],unit++);}for(const [name,value]of Object.entries(values))gl.uniform1f(p.uniforms[name],value);gl.drawArrays(gl.TRIANGLES,0,3);}
  reset(){this.chain.reset();this.accumulator=0;this.ready=false;}
- upload(media,p,mode){this.setMemoryScale(p.memoryScale);const gl=this.gl;gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.source);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,media);this.params=p;this.mode=mode;this.ready=true;}
+ upload(media,p,mode){if(p.finalOnly&&!this.solo)this.reset();this.solo=Boolean(p.finalOnly);this.setMemoryScale(p.memoryScale);const gl=this.gl;gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.source);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,media);this.params=p;this.mode=mode;this.ready=true;}
  tick(){if(!this.ready)return;const p=this.params;const slot=this.chain.step(p,this.mode);
-  this.bindTarget('bucket',slot);this.draw(this.captureProgram,{source:[this.source],previousOutput:[this.wet]},{feedback:this.chain.ticks>1?p.feedback:0});this.renderWet();
+  this.bindTarget('bucket',slot);this.draw(this.captureProgram,{source:[this.source],previousOutput:[this.wet]},{feedback:!p.finalOnly&&this.chain.ticks>1?p.feedback:0});this.renderWet();
  }
  update(media,p,mode,dt){this.upload(media,p,mode);this.accumulator+=Math.max(0,Math.min(dt,.25));let count=0;while(this.accumulator>=1/p.clock&&count<8){this.accumulator-=1/p.clock;this.tick();count++;}this.renderWet();}
  renderWet(){if(!this.ready)return;const p=this.params;const index=outputTap(p)-1;const packet=this.chain.slots[index];const levels=this.chain.levels(p);this.bindTarget('wet');this.draw(this.stageProgram,{source:[this.source],buckets:[this.buckets,this.gl.TEXTURE_2D_ARRAY]},{slot:packet.slot,filled:Number(packet.filled),carrier:levels.carrier[index],wave:levels.wave[index],damage:p.intensity,tick:this.chain.ticks,areaScale:p.areaScale,carrierCell:packet.carrier?.origin??index,waveCell:index,emptyBlack:p.finalOnly});}
- present(amount,bypass=false){if(!this.ready)return;this.renderWet();this.bindTarget('screen');this.draw(this.displayProgram,{source:[this.source],wet:[this.wet]},{amount:bypass?0:amount});}
+ present(amount,bypass=false){if(!this.ready)return;this.renderWet();this.bindTarget('screen');this.draw(this.displayProgram,{source:[this.source],wet:[this.wet]},{amount:bypass?0:this.params.finalOnly?1:amount});}
  destroy(){const gl=this.gl;for(const t of this.textures)gl.deleteTexture(t);for(const p of this.programs)gl.deleteProgram(p.program);gl.deleteFramebuffer(this.fb);}
 }
