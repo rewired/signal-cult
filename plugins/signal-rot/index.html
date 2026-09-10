@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIGNAL ROT — SIGNAL CULT</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section id="photosensitivity-warning" class="photosensitivity-warning" role="alertdialog" aria-modal="true" aria-labelledby="warning-title" aria-describedby="warning-description">
+ <div class="photosensitivity-card">
+  <p class="photosensitivity-kicker">Health &amp; safety</p><h1 id="warning-title">Photosensitivity / epilepsy warning</h1>
+  <p id="warning-description">SIGNAL ROT can produce flashing lights, rapid contrast changes and moving patterns that may trigger seizures or discomfort in people with photosensitive epilepsy or other visual sensitivities.</p>
+  <p class="photosensitivity-advice">Stop using the application if you feel unwell.</p>
+  <form id="warning-form"><label class="photosensitivity-choice"><input id="dismiss-warning" type="checkbox">Do not show again on this device</label><button id="photosensitivity-continue" type="submit">I understand — continue</button></form>
+ </div>
+</section>
+<header class="topbar">
+ <div class="brand"><a href="../" aria-label="Back to SIGNAL CULT">SIGNAL CULT / 03</a><h1>SIGNAL ROT</h1></div>
+ <div class="source-toolbar" aria-label="Source">
+  <label class="file-control toolbar-button">Load media<input id="media-file" type="file" accept="video/*,image/*"></label>
+  <button id="play" class="toolbar-button" aria-label="Pause" aria-pressed="false">Pause</button>
+  <button id="demo" class="toolbar-button active">Test signal</button>
+ </div>
+ <div class="preset-toolbar" aria-label="Presets">
+  <button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset">«</button>
+  <select id="preset-select" aria-label="Current preset"><option value="custom">Current / custom</option></select>
+  <button id="preset-next" class="icon-button preset-step" aria-label="Next preset">»</button>
+  <label class="file-control icon-button" aria-label="Load JSON" title="Load JSON">↑<input id="preset-file" type="file" accept="application/json,.json"></label>
+  <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
+  <span id="preset-status" class="preset-status" role="status">Applied: Motion Melt</span>
+ </div>
+ <div class="header-status"><span id="fps" class="perf">READY</span></div>
+</header>
+<main id="app">
+ <section class="preview-panel" aria-label="Preview">
+  <canvas id="preview" width="960" height="540" aria-label="SIGNAL ROT output"></canvas>
+  <span class="preview-tag">BROWSER STUDY / 01</span><span id="view-label" class="view-label">OUTPUT</span>
+  <div id="error" class="error-panel" role="alert" hidden></div>
+ </section>
+ <aside class="controls">
+  <section><h2>Signal memory</h2><p id="preset-description" class="description"></p>
+   <label>Character<select id="mode"><option value="melt">Motion Melt</option><option value="block">Block Rot</option><option value="ghost">Contour Ghost</option></select></label>
+   <div class="button-row"><button id="clear-memory" type="button">Clear memory</button><button id="bypass" type="button" aria-pressed="false">View input</button></div>
+  </section>
+  <section id="parameters"><h2>Degradation</h2></section>
+  <section><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
+   <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>
+   <p class="interaction-note">Drop a video or image anywhere. Motion drives the effect; video gives the most expressive results. Images can be used to inspect the contour look.</p>
+  </section>
+  <p class="scope-note">Browser preview · Local processing</p>
+ </aside>
+</main>
+<script type="module" src="js/app.js"></script>
+</body></html>

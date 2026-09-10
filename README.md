@@ -17,14 +17,15 @@ See the [Commons Clause explanation](https://commonsclause.com/) and
 their own licenses.
 
 Canonical repository: [rewired/signal-cult](https://github.com/rewired/signal-cult).
-Both effects are maintained here; the former standalone repositories are no longer required.
+The collection is maintained here; the former standalone repositories are no longer required.
 
-Two independent Windows OpenFX plugins in one repository:
+Two Windows OpenFX plugins and one browser-only effect study:
 
 | Plugin | Sources and documentation | Processing |
 | --- | --- | --- |
 | BROKEN FM | [plugins/broken-fm](plugins/broken-fm/README.md) | PM/FM video-signal effects, CUDA |
 | CRT SIM | [plugins/crt-sim](plugins/crt-sim/README.md) | CRT and Pixel / Sci-Fi, CUDA with CPU fallback |
+| SIGNAL ROT | [plugins/signal-rot](plugins/signal-rot/README.md) | Motion-driven feedback, WebGL 2 browser preview |
 
 ## Repository structure
 
@@ -32,6 +33,7 @@ Two independent Windows OpenFX plugins in one repository:
 plugins/
   broken-fm/       # Renderer, OFX host, companion, presets, tests and manual
   crt-sim/         # Renderer, OFX host, reference web UI, presets and tests
+  signal-rot/      # Browser-only motion-feedback study
 scripts/
   build-native.ps1 # Build and test either plugin or both
   test.ps1         # Run both plugins' JavaScript regression suites
@@ -41,7 +43,7 @@ CMakeLists.txt     # Shared native build entry
 dist/             # Ignored collection build artifacts and local dependencies
 ```
 
-Each plugin owns its `CMakeLists.txt`, `README.md`, `native/`, `presets/`,
+Each native plugin owns its `CMakeLists.txt`, `README.md`, `native/`, `presets/`,
 `tests/` and `scripts/`. Plugin-specific internal layouts stay with their owners:
 BROKEN FM's companion and GLSL shaders are separate from CRT's generated shader
 pipeline. Shared code should only be extracted when both plugins actually use it.
@@ -78,8 +80,9 @@ One local Python server serves the menu and every tool:
 
 - [BROKEN FM](http://localhost:8080/broken-fm/)
 - [CRT SIM](http://localhost:8080/crt-sim/)
+- [SIGNAL ROT preview](http://localhost:8080/signal-rot/)
 
-Both can be open at the same time. Stop the server with Ctrl+C. The plugin-local
+All tools can be open at the same time. Stop the server with Ctrl+C. The plugin-local
 `start.bat` shortcuts also start the whole collection. Any future tool with an
 `index.html` under `plugins/<name>/` is automatically available at `/<name>/`.
 
