@@ -54,3 +54,36 @@ The map and Show grid display local subdivisions (the small map omits lines
 closer than one pixel). Fractures follow the active drop or route and stay
 stable while paused. Try the Shattered Drops preset. Older presets load with
 fracture disabled.
+
+## Clusters
+
+Cluster strength chooses what share of Random drops gathers around shared
+centers; zero preserves free scattering. Cluster centers sets 1–6 independent
+centers, renewed every four typical drop lifetimes. Cluster radius controls
+the distance of drop origins from their center in base cells. Drop footprints
+can extend beyond that radius and wrap at image edges. Each drop samples its
+center at birth and stays there for its lifetime, so old and new clusters
+can briefly coexist. Lifetimes, sizes, strengths and fractures remain independent.
+
+Try Cluster Bloom for 14 drops around two centers with mixed fracture depths.
+Cluster settings use the existing Random seed, work with pause and step, and
+round-trip in presets. Older presets load with clustering disabled.
+
+## Preset palette
+
+| Preset | Character |
+| --- | --- |
+| Pin Pricks | Sparse, subtle defects |
+| Digital Dust | Fast, fine fragments |
+| Packet Loss | Coarse burst damage |
+| Swarm | One tight, restless cluster |
+| Chromatic Islands | Three slower RGB clusters |
+| Glass Rain | Tall, narrow shards |
+| Scan Rip | A backward-moving horizontal tear |
+| Slow Collapse | Large, persistent areas with heavy damage |
+| Cluster Bloom | Two loose islands with mixed fractures |
+| Shattered Drops | Scattered patches with mixed cell sizes |
+| Random Drops | Independent defects of varied size and duration |
+| Grid Crawl | A single steady moving patch |
+| Scatter | Small patches jumping across the grid |
+| Wide Wave | A broad oscillating area |

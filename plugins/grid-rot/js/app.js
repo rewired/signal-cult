@@ -17,7 +17,7 @@ function present(){if(renderer){renderer.params=params;renderer.mode=mode;render
 function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.reset();}needsFrame=true;present();}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
- for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
+ for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('cluster')?(mode!=='drops'||f.key!=='clusterAmount'&&params.clusterAmount===0):f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
 }
 function apply(preset,id='custom'){
  params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;
@@ -97,7 +97,7 @@ function syncGrid(){
  const grid=gridFor(renderer?.sourceWidth||960,renderer?.sourceHeight||540,params.density);
  const areas=activeAreas(grid,params,mode,renderer?.time||0,renderer?.offset||0);
  $('grid-label').textContent=grid.columns+' × '+grid.rows+(params.fractureDepth?' · ÷'+2**params.fractureDepth:'');
- $('grid-status').textContent=(grid.approximate?'≈ ':'')+grid.baseColumns+':'+grid.baseRows+' base · ×'+params.density+(mode==='drops'?' · '+areas.length+'/'+params.dropCount+' drops':' · area '+areas[0].width+' × '+areas[0].height+' cells');
+ $('grid-status').textContent=(grid.approximate?'≈ ':'')+grid.baseColumns+':'+grid.baseRows+' base · ×'+params.density+(mode==='drops'?' · '+areas.length+'/'+params.dropCount+' drops'+(params.clusterAmount?' · '+params.clusterCount+' cluster centers':''):' · area '+areas[0].width+' × '+areas[0].height+' cells');
  map.width=384;map.height=Math.max(40,Math.round(384*grid.rows/grid.columns));
  const w=map.width/grid.columns,h=map.height/grid.rows;
  mapCtx.fillStyle='#101818';mapCtx.fillRect(0,0,map.width,map.height);

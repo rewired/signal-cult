@@ -7,6 +7,9 @@ export const fields = [
  {key:'dropLife',label:'Drop lifetime',min:0.1,max:3,step:0.05,value:0.8,unit:'s',hint:'Typical lifetime before a drop disappears and reappears elsewhere.'},
  {key:'dropSpread',label:'Drop variation',min:0,max:1,step:0.01,value:0.75,hint:'Vary size, strength, lifetime and the gaps between drops.'},
  {key:'dropSeed',label:'Random seed',min:0,max:9999,step:1,value:7,hint:'Choose another reproducible arrangement of drops.'},
+ {key:'clusterAmount',label:'Cluster strength',min:0,max:1,step:0.01,value:0,hint:'Share of drops grouped around common centers. Zero keeps free scattering.'},
+ {key:'clusterCount',label:'Cluster centers',min:1,max:6,step:1,value:2,hint:'Number of shared random centers. Centers renew after four drop lifetimes.'},
+ {key:'clusterRadius',label:'Cluster radius',min:0,max:16,step:1,value:3,unit:'cells',hint:'Maximum distance of drop origins from their center. Smaller values create tight clusters.'},
  {key:'fractureDepth',label:'Fracture depth',min:0,max:3,step:1,value:0,hint:'Split affected cells into 2 × 2, 4 × 4 or 8 × 8 subcells. Zero disables fracture.'},
  {key:'fractureAmount',label:'Fracture spread',min:0,max:1,step:0.01,value:0.65,hint:'Chance of each further split. Lower values mix coarse and fine cells.'},
  {key:'shift',label:'Displacement',min:0,max:2,step:0.01,value:0.5,unit:'cells',hint:'Local horizontal and vertical image offsets.'},
@@ -17,6 +20,15 @@ export const fields = [
 export const defaults=Object.fromEntries(fields.map(f=>[f.key,f.value]));
 export const modes=['step-right','step-left','random','lfo','drops'];
 export const presets=[
+ {"id":"pin-pricks","name":"Pin Pricks","description":"Sparse, tiny defects with long quiet gaps and subtle color damage.","mode":"drops","params":{...defaults,"density":4,"spanX":1,"spanY":2,"dropCount":3,"dropLife":0.25,"dropSpread":1,"shift":0.2,"split":0.15,"crush":0.3,"amount":0.65}},
+ {"id":"digital-dust","name":"Digital Dust","description":"Fine, short-lived fragments scattered across the image.","mode":"drops","params":{...defaults,"density":4,"spanX":3,"spanY":3,"dropCount":16,"dropLife":0.15,"dropSpread":0.8,"fractureDepth":2,"fractureAmount":0.9,"shift":0.7,"split":0.6,"crush":0.65}},
+ {"id":"packet-loss","name":"Packet Loss","description":"Coarse blocks fail in uneven bursts around three loose centers.","mode":"drops","params":{...defaults,"density":1,"spanX":3,"spanY":2,"dropCount":10,"dropLife":0.4,"dropSpread":0.85,"clusterAmount":0.7,"clusterCount":3,"clusterRadius":3,"shift":1.4,"split":0.1,"crush":0.9}},
+ {"id":"swarm","name":"Swarm","description":"A tight island of restless fragments changes location slowly.","mode":"drops","params":{...defaults,"density":3,"spanX":3,"spanY":3,"dropCount":16,"dropLife":0.65,"dropSpread":0.7,"clusterAmount":1,"clusterCount":1,"clusterRadius":2,"fractureDepth":2,"fractureAmount":0.75,"shift":1.1,"split":0.6,"crush":0.45}},
+ {"id":"chromatic-islands","name":"Chromatic Islands","description":"Three broad clusters pull colors apart with gentle tonal damage.","mode":"drops","params":{...defaults,"density":2,"spanX":5,"spanY":4,"dropCount":15,"dropLife":1.6,"dropSpread":0.5,"clusterAmount":1,"clusterCount":3,"clusterRadius":2,"fractureDepth":1,"fractureAmount":0.35,"shift":0.15,"split":1,"crush":0.08}},
+ {"id":"glass-rain","name":"Glass Rain","description":"Tall, narrow shards flicker in a loose vertical rain.","mode":"drops","params":{...defaults,"density":3,"spanX":1,"spanY":12,"dropCount":12,"dropLife":0.3,"dropSpread":0.7,"fractureDepth":2,"fractureAmount":0.6,"shift":1.8,"split":0.55,"crush":0.25}},
+ {"id":"scan-rip","name":"Scan Rip","description":"A thin strip tears backward through the image at a steady pace.","mode":"step-left","params":{...defaults,"density":1,"spanX":32,"spanY":1,"rate":22,"fractureDepth":1,"fractureAmount":0.45,"shift":0.9,"split":0.7,"crush":0.3}},
+ {"id":"slow-collapse","name":"Slow Collapse","description":"Large, persistent islands break into mixed resolutions and heavy damage.","mode":"drops","params":{...defaults,"density":1,"spanX":8,"spanY":6,"dropCount":8,"dropLife":2.5,"dropSpread":0.55,"clusterAmount":0.85,"clusterCount":2,"clusterRadius":3,"fractureDepth":3,"fractureAmount":0.6,"shift":1.6,"split":0.8,"crush":0.85}},
+ {id:'cluster-bloom',name:'Cluster Bloom',description:'Drops gather into changing islands of coarse and fractured cells.',mode:'drops',params:{...defaults,density:2,spanX:4,spanY:3,dropCount:14,clusterAmount:0.9,clusterCount:2,clusterRadius:3,fractureDepth:2,fractureAmount:0.6,shift:0.9,split:0.4}},
  {id:'shattered-drops',name:'Shattered Drops',description:'Random patches break into a mix of coarse cells and fine fragments.',mode:'drops',params:{...defaults,density:2,spanX:5,spanY:4,fractureDepth:3,fractureAmount:0.7,shift:1.2,split:0.5}},
  {id:'random-drops',name:'Random Drops',description:'Independent patches flicker in and out, with varied size and strength.',mode:'drops',params:{...defaults,density:2,spanX:5,spanY:4,shift:0.8,split:0.4}},
  {id:'grid-crawl',name:'Grid Crawl',description:'A moving patch fractures the live image, cell by cell.',mode:'step-right',params:{...defaults}},
@@ -45,6 +57,10 @@ export function activeArea(grid,params,mode,time,offset=0){
 }
 // Each lane has its own period and phase. A fixed cycle gives reproducible seeks
 // without keeping history; per-cycle randomness varies its visible lifetime.
+export function clusterCenter(grid,seed,group,epoch){
+ const key=seed*313+group*3571+epoch*104729;
+ return {x:Math.floor(random01(key+51)*grid.columns),y:Math.floor(random01(key+52)*grid.rows)};
+}
 export function activeAreas(grid,params,mode,time,offset=0){
  if(mode!=='drops')return [{...activeArea(grid,params,mode,time,offset),strength:1}];
  const count=params.dropCount??defaults.dropCount,life=params.dropLife??defaults.dropLife;
@@ -56,7 +72,17 @@ export function activeAreas(grid,params,mode,time,offset=0){
   const key=lane+cycle*7919,visible=1-spread*(.1+random01(key+2)*.3);
   if(age>=visible)continue;
   const scale=n=>1-spread*random01(key+n)*.8;
-  areas.push({x:Math.floor(random01(key+3)*grid.columns),y:Math.floor(random01(key+4)*grid.rows),
+  let x=Math.floor(random01(key+3)*grid.columns),y=Math.floor(random01(key+4)*grid.rows);
+  if(random01(key+20)<(params.clusterAmount??0)){
+   // Sample the center at this drop's birth so it never jumps during its life.
+   const birth=(cycle-random01(lane+1))*period;
+   const epoch=Math.floor(birth/(life*4)),group=i%(params.clusterCount??2);
+   const center=clusterCenter(grid,seed,group,epoch);
+   const angle=random01(key+21)*Math.PI*2,radius=Math.sqrt(random01(key+22))*(params.clusterRadius??3);
+   x=wrap(center.x+Math.round(Math.cos(angle)*radius),grid.columns);
+   y=wrap(center.y+Math.round(Math.sin(angle)*radius),grid.rows);
+  }
+  areas.push({x,y,
    width:Math.min(grid.columns,Math.max(1,Math.round(params.spanX*scale(5)))),
    height:Math.min(grid.rows,Math.max(1,Math.round(params.spanY*scale(6)))),
    strength:1-spread*random01(key+7)*.7,tick:key});
@@ -76,6 +102,6 @@ export function fractureScale(x,y,params,tick){
  return scale;
 }
 export function containsCell(x,y,area,grid){return wrap(x-area.x,grid.columns)<area.width&&wrap(y-area.y,grid.rows)<area.height;}
-export function parsePreset(text){const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||p.version!==1)throw new Error('Expected a GRID ROT version 1 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');const params={};for(const f of fields){const n=p.params?.[f.key]===undefined&&(f.key.startsWith('drop')||f.key.startsWith('fracture'))?defaults[f.key]:p.params?.[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}return {format:p.format,version:1,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params};}
+export function parsePreset(text){const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||p.version!==1)throw new Error('Expected a GRID ROT version 1 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');const params={};for(const f of fields){const n=p.params?.[f.key]===undefined&&(f.key.startsWith('drop')||f.key.startsWith('fracture')||f.key.startsWith('cluster'))?defaults[f.key]:p.params?.[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}return {format:p.format,version:1,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params};}
 export {nextPreset} from '../../signal-rot/js/params.js';
 export function previewSize(width,height){const scale=Math.min(1,1920/width,1080/height);return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};}
