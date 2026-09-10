@@ -28,7 +28,7 @@
   <button id="preset-next" class="icon-button preset-step" aria-label="Next preset">»</button>
   <label class="file-control icon-button" aria-label="Load JSON" title="Load JSON">↑<input id="preset-file" type="file" accept="application/json,.json"></label>
   <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
-  <span id="preset-status" class="preset-status" role="status">Applied: Grid Crawl</span>
+  <span id="preset-status" class="preset-status" role="status">Applied: Random Drops</span>
  </div>
  <div class="header-status"><span id="fps" class="perf">READY</span></div>
 </header>
@@ -47,8 +47,8 @@
    <div class="button-row"><button id="reset-motion">Reset motion</button><button id="step-clock" disabled>Step motion</button></div>
    <button id="bypass" class="wide-button" aria-pressed="false">View input</button>
   </section>
-  <section><h2>Movement</h2><label>Route<select id="mode"><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label>
-   <p class="interaction-note">Moves row by row across the image. Pause to inspect; Step motion advances the area on the frozen frame.</p></section>
+  <section><h2>Movement</h2><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label>
+   <p class="interaction-note">Random drops appear independently across the image. Step routes move row by row. Pause and Step motion inspect changes on a frozen frame.</p></section>
   <section id="parameters"><h2>Grid, area &amp; damage</h2></section>
   <section><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
    <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>

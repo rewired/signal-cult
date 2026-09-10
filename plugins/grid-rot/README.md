@@ -27,3 +27,16 @@ Presets use their own grid-rot-preset version 1 format and the collection's
 previous/next, JSON import/export workflow. BUCKET ROT and SIGNAL ROT are separate.
 
 Original code uses the collection [license](../../LICENSE).
+
+## Random drops
+
+Random Drops is the initial look. Choose Random drops under Movement for up to
+16 independent patches. Drop count sets the number of independent lanes; brief
+gaps mean fewer can be visible at once. Area width/height are maximum sizes.
+Drop variation randomizes size, strength, timing and gaps; zero gives equal-sized,
+full-strength drops without gaps. Drop lifetime controls their typical duration
+in seconds, independently of Motion speed (disabled in this mode). Random seed
+selects a reproducible arrangement. Pause, Step motion (1/8 second per click)
+and Reset motion work without advancing the source frame. Overlapping drops
+use the strongest local drop rather than stacking damage. The inspector shows
+all visible patches. Older version 1 presets load with default drop settings.

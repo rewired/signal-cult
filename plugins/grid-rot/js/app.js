@@ -1,10 +1,10 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeArea,containsCell} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 const $=id=>document.getElementById(id);
 const events=new AbortController();
 const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:events.signal});
-let params={...defaults},mode='step-right',presetId='grid-crawl',presetName='Grid Crawl';
+let params={...presets[0].params},mode='drops',presetId='random-drops',presetName='Random Drops';
 let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0;
 let generation=0,mediaFrame=0,needsFrame=true,sourceTime=0;
 let demoTime=0,lastRAF=0,lastDemo=-1,statsTime=0,statsFrames=0;
@@ -17,7 +17,7 @@ function present(){if(renderer){renderer.params=params;renderer.mode=mode;render
 function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.reset();}needsFrame=true;present();}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
- for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=false;c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
+ for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('drop')?mode!=='drops':f.key==='rate'&&mode==='drops';c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
 }
 function apply(preset,id='custom'){
  params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;
@@ -95,13 +95,13 @@ on($('save-preset'),'click',()=>{
 const map=$('grid-map'),mapCtx=map.getContext('2d');
 function syncGrid(){
  const grid=gridFor(renderer?.sourceWidth||960,renderer?.sourceHeight||540,params.density);
- const area=activeArea(grid,params,mode,renderer?.time||0,renderer?.offset||0);
+ const areas=activeAreas(grid,params,mode,renderer?.time||0,renderer?.offset||0);
  $('grid-label').textContent=grid.columns+' × '+grid.rows;
- $('grid-status').textContent=(grid.approximate?'≈ ':'')+grid.baseColumns+':'+grid.baseRows+' base · ×'+params.density+' · area '+area.width+' × '+area.height+' cells';
+ $('grid-status').textContent=(grid.approximate?'≈ ':'')+grid.baseColumns+':'+grid.baseRows+' base · ×'+params.density+(mode==='drops'?' · '+areas.length+'/'+params.dropCount+' drops':' · area '+areas[0].width+' × '+areas[0].height+' cells');
  map.width=384;map.height=Math.max(40,Math.round(384*grid.rows/grid.columns));
  const w=map.width/grid.columns,h=map.height/grid.rows;
  mapCtx.fillStyle='#101818';mapCtx.fillRect(0,0,map.width,map.height);
- for(let y=0;y<grid.rows;y++)for(let x=0;x<grid.columns;x++){mapCtx.fillStyle=containsCell(x,y,area,grid)?'#8dffd8':'#233431';mapCtx.fillRect(x*w,y*h,Math.max(.5,w-1),Math.max(.5,h-1));}
+ for(let y=0;y<grid.rows;y++)for(let x=0;x<grid.columns;x++){mapCtx.fillStyle=areas.some(area=>containsCell(x,y,area,grid))?'#8dffd8':'#233431';mapCtx.fillRect(x*w,y*h,Math.max(.5,w-1),Math.max(.5,h-1));}
 }
 on($('show-grid'),'change',()=>{if(renderer)renderer.overlay=$('show-grid').checked;present();});
 on($('step-clock'),'click',()=>{if(playing||!renderer)return;renderer.offset++;present();});
