@@ -11,6 +11,7 @@ The main branch starts from one consolidated source snapshot of both effects.
 - `plugins/crt-sim/` owns CRT SIM sources, browser UI, CPU/CUDA core, OFX adapter,
   Companion, source generators, presets, tests and dependency notices.
 - `plugins/signal-rot/` owns a browser-only motion-feedback prototype. It has no native build or Companion.
+- `plugins/bucket-rot/` owns a browser-only 64-stage video delay and modulation matrix.
 - Each native plugin has a top-level CMake entry and can build independently.
 - `scripts/` contains collection-wide commands. Product packaging and installation
   scripts stay with their plugin.

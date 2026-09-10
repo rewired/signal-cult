@@ -19,13 +19,14 @@ their own licenses.
 Canonical repository: [rewired/signal-cult](https://github.com/rewired/signal-cult).
 The collection is maintained here; the former standalone repositories are no longer required.
 
-Two Windows OpenFX plugins and one browser-only effect study:
+Two Windows OpenFX plugins and two browser-only effect studies:
 
 | Plugin | Sources and documentation | Processing |
 | --- | --- | --- |
 | BROKEN FM | [plugins/broken-fm](plugins/broken-fm/README.md) | PM/FM video-signal effects, CUDA |
 | CRT SIM | [plugins/crt-sim](plugins/crt-sim/README.md) | CRT and Pixel / Sci-Fi, CUDA with CPU fallback |
 | SIGNAL ROT | [plugins/signal-rot](plugins/signal-rot/README.md) | Motion-driven feedback, WebGL 2 browser preview |
+| BUCKET ROT | [plugins/bucket-rot](plugins/bucket-rot/README.md) | 64-stage delay and modulation matrix, browser preview |
 
 ## Repository structure
 
@@ -34,6 +35,7 @@ plugins/
   broken-fm/       # Renderer, OFX host, companion, presets, tests and manual
   crt-sim/         # Renderer, OFX host, reference web UI, presets and tests
   signal-rot/      # Browser-only motion-feedback study
+  bucket-rot/      # Browser-only 64-stage delay matrix
 scripts/
   build-native.ps1 # Build and test either plugin or both
   test.ps1         # Run both plugins' JavaScript regression suites
@@ -81,6 +83,7 @@ One local Python server serves the menu and every tool:
 - [BROKEN FM](http://localhost:8080/broken-fm/)
 - [CRT SIM](http://localhost:8080/crt-sim/)
 - [SIGNAL ROT preview](http://localhost:8080/signal-rot/)
+- [BUCKET ROT preview](http://localhost:8080/bucket-rot/)
 
 All tools can be open at the same time. Stop the server with Ctrl+C. The plugin-local
 `start.bat` shortcuts also start the whole collection. Any future tool with an

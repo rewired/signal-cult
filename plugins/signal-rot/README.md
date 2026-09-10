@@ -57,3 +57,9 @@ regression tests. Browser checks should also cover actual GPU rendering and medi
 
 [BSD-3-Clause with Commons Clause 1.0](../../LICENSE), as described in the
 [collection README](../../README.md). Third-party licenses remain applicable.
+
+## Possible next study
+
+Ghost Tunnel: explore Contour Ghost with feedback scaling, rotation and color
+cycling, inspired by the user's Amiga-demo association. This is an idea only,
+not an implemented look or an attribution to a particular demo.
