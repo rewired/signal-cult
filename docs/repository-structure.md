@@ -45,3 +45,7 @@ and slider helper through `plugins/crt-sim/scripts/sync-master-ui.mjs`.
 Both editors use the same preset toolbar workflow and explicit Apply/Cancel model.
 Each plugin keeps its compatible preset format and independent native rendering.
 See [CRT architecture](../plugins/crt-sim/docs/ofx-architecture.md).
+
+GRID ROT (`plugins/grid-rot/`) owns its spatial grid model, current-frame renderer,
+media UI, presets and tests. It shares the existing control styling and slider
+helper. It has no delay buffers or native OFX target.
