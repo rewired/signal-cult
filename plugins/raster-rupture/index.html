@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RASTER RUPTURE — SIGNAL CULT</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section id="photosensitivity-warning" class="photosensitivity-warning" role="alertdialog" aria-modal="true" aria-labelledby="warning-title" aria-describedby="warning-description">
+ <div class="photosensitivity-card">
+  <p class="photosensitivity-kicker">Health &amp; safety</p><h1 id="warning-title">Photosensitivity / epilepsy warning</h1>
+  <p id="warning-description">RASTER RUPTURE can produce flashing lights, rapid contrast changes and moving patterns that may trigger seizures or discomfort in people with photosensitive epilepsy or other visual sensitivities.</p>
+  <p class="photosensitivity-advice">Stop using the application if you feel unwell.</p>
+  <form id="warning-form"><label class="photosensitivity-choice"><input id="dismiss-warning" type="checkbox">Do not show again on this device</label><button id="photosensitivity-continue" type="submit">I understand — continue</button></form>
+ </div>
+</section>
+<header class="topbar">
+ <div class="brand"><a href="../" aria-label="Back to SIGNAL CULT">SIGNAL CULT / 06</a><h1>RASTER RUPTURE</h1></div>
+ <div class="source-toolbar" aria-label="Source">
+  <label class="file-control toolbar-button">Load media<input id="media-file" type="file" accept="video/*,image/*"></label>
+  <button id="play" class="toolbar-button" aria-label="Pause" aria-pressed="false">Pause</button>
+  <button id="demo" class="toolbar-button active">Test portrait</button>
+ </div>
+ <div class="preset-toolbar" aria-label="Presets">
+  <button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset">«</button>
+  <select id="preset-select" aria-label="Current preset"><option value="custom">Current / custom</option></select>
+  <button id="preset-next" class="icon-button preset-step" aria-label="Next preset">»</button>
+  <label class="file-control icon-button" aria-label="Load JSON" title="Load JSON">↑<input id="preset-file" type="file" accept="application/json,.json"></label>
+  <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
+  <span id="preset-status" class="preset-status" role="status">Applied: Paper Signal</span>
+ </div>
+ <div class="header-status"><span id="fps" class="perf">READY</span></div>
+</header>
+<main id="app">
+ <section class="preview-panel" aria-label="Preview">
+  <canvas id="preview" width="960" height="540" aria-label="RASTER RUPTURE output"></canvas>
+  <span class="preview-tag">RASTER DAMAGE / STUDY 04</span><span id="view-label" class="view-label">OUTPUT</span>
+  <div id="error" class="error-panel" role="alert" hidden></div>
+ </section>
+ <aside class="controls">
+  <section><h2>Rupture character</h2><p id="preset-description" class="description"></p>
+   <label>Style<select id="style"><option value="transmission">Transmission</option><option value="xerox">Xerox ghost</option><option value="dry-ink">Dry ink</option><option value="thermal">Thermal decay</option><option value="motion">Motion rupture</option></select></label>
+   <div class="color-row"><label>Ink color<input id="ink-color" type="color" value="#e8e4d8"></label><label>Accent color<input id="accent-color" type="color" value="#ff2638"></label></div>
+   <div class="button-row"><button id="clear-memory">Clear feedback</button><button id="bypass" aria-pressed="false">View input</button></div>
+  </section>
+  <section id="parameters"><h2>Raster, surface &amp; memory</h2></section>
+  <section><h2>Mask source A</h2>
+   <div class="button-row mask-actions"><label class="file-control">Load mask<input id="mask-file" type="file" accept="image/png,image/tiff,image/x-exr,video/mp4,.exr,.tif,.tiff,.mp4"></label><button id="source-mask" aria-pressed="false">Source → mask</button><button id="no-mask">No mask</button><button id="default-mask">Default mask</button></div>
+   <p id="mask-name" class="source-name">PROCEDURAL PORTRAIT MATTE</p>
+   <label>Channel<select id="mask-channel"><option value="luma">Luminance</option><option value="r">Red</option><option value="g">Green</option><option value="b">Blue</option><option value="a">Alpha</option></select></label>
+   <label class="route-toggle"><input id="mask-invert" type="checkbox">Invert mask A</label>
+   <p class="interaction-note">PNG and MP4 masks are normalized into the float pipeline. MP4 follows the source transport. The EXR boundary is reserved for a 32-bit OpenEXR decoder and the later OFX float clip.</p>
+  </section>
+  <section><div class="section-heading"><h2>Mask influence</h2><button id="clear-routes" class="compact-button">Center all</button></div>
+   <p class="section-note">X: −1 inverted ↔ +1 normal · Y: −90° ↔ +90° offset</p>
+   <div id="mask-destinations" class="mask-destinations" aria-label="Mask destination"></div>
+   <div id="mask-xy-pad" class="mask-xy-pad" tabindex="0" role="application" aria-label="Mask influence and direction pad">
+    <i class="pad-axis horizontal"></i><i class="pad-axis vertical"></i><span id="mask-pad-handle" class="mask-pad-handle"></span>
+    <span class="pad-label top">+90°</span><span class="pad-label bottom">−90°</span><span class="pad-label left">−1</span><span class="pad-label right">+1</span>
+   </div>
+   <div class="mask-pad-values"><label>Influence X<input id="mask-pad-x" type="number" min="-1" max="1" step="0.01"></label><label>Angle Y<input id="mask-pad-y" type="number" min="-90" max="90" step="1"></label></div>
+   <p id="mask-pad-note" class="section-note"></p>
+  </section>
+  <section><h2>Source</h2><p id="filename" class="source-name">PROCEDURAL PORTRAIT</p><p id="dimensions" class="section-note">960 × 540</p>
+   <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>
+  </section>
+  <p class="scope-note">Browser preview · WebGL 2 · Float mask graph · OFX/CUDA boundary reserved</p>
+ </aside>
+</main>
+<script type="module" src="js/app.js"></script>
+</body></html>

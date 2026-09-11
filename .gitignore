@@ -1,4 +1,5 @@
 /dist/
+**/dist/
 /.vs/
 **/node_modules/
 *.log

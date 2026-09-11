@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><title>Raster Rupture WebGL runtime test</title>
+<canvas id="preview" width="64" height="64"></canvas><pre id="result">PENDING</pre>
+<script type="module">
+import {RuptureRenderer} from '../js/renderer.js';
+import {defaults,defaultColors,defaultRoutes} from '../js/params.js';
+const result=document.querySelector('#result');
+try{
+ const source=document.createElement('canvas');source.width=source.height=64;
+ const context=source.getContext('2d');context.fillStyle='#111';context.fillRect(0,0,64,64);context.fillStyle='#eee';context.fillRect(18,8,28,48);
+ const renderer=new RuptureRenderer(document.querySelector('#preview'));renderer.resize(64,64);renderer.setNoMask();
+ renderer.update(source,defaults,{ink:[.9,.88,.82],accent:[1,.1,.2]},'transmission',defaultRoutes(),'max',0);renderer.present(1);
+ const error=renderer.gl.getError();result.textContent=error===renderer.gl.NO_ERROR?'PASS':'GL ERROR '+error;renderer.destroy();
+}catch(error){result.textContent='FAIL '+error.message;}
+</script>
