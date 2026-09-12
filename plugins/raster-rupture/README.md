@@ -58,7 +58,7 @@ The following contracts should remain stable when an OFX/CUDA renderer is added:
 - deterministic seed and time inputs;
 - a replaceable motion-field input.
 
-The current OFX samples the previous source frame for deterministic motion and memory. Dense optical flow can replace that provisional field without changing preset and routing semantics.
+The current OFX uses the previous source frame for motion and an instance-local previous rendered frame for the WebGL-equivalent feedback, Xerox and memory stages. Sequential frames retain memory; seeks and host cache purges reset it. Dense optical flow can replace the provisional frame-difference field without changing preset and routing semantics.
 
 ## Test
 

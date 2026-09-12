@@ -2,8 +2,16 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-int main(){constexpr int w=64,h=40;std::vector<float>src(w*h*4),dst(w*h*4),mask(w*h);for(int y=0;y<h;y++)for(int x=0;x<w;x++){auto i=(y*w+x)*4;src[i]=float(x)/w;src[i+1]=float(y)/h;src[i+2]=.3f;src[i+3]=1;mask[y*w+x]=x<w/2?0:1;}raster_rupture::RenderRequest r;r.source={src.data(),w,h,4,w*16};r.output={dst.data(),w,h,w*16};r.mask={mask.data(),w,h,1,w*4};r.look=raster_rupture::defaultLook();r.time_seconds=1.25;auto status=raster_rupture::renderCpu(r);if(status!=raster_rupture::RenderStatus::Ok)return 1;double sum=0;for(float v:dst){if(!std::isfinite(v))return 2;sum+=v;}if(sum<=0)return 3;
+using namespace raster_rupture;
+int main(){
+ constexpr int width=96,height=54;std::vector<float>source(width*height*4),previous(width*height*4),mask(width*height),cpu(width*height*4),gpu(width*height*4),feedbackInput(width*height*4,.9f),withFeedback(width*height*4),withoutFeedback(width*height*4);
+ for(int y=0;y<height;++y)for(int x=0;x<width;++x){size_t i=(size_t(y)*width+x)*4;source[i]=float(x)/width;source[i+1]=float(y)/height;source[i+2]=.2f+.3f*float((x/7+y/5)&1);source[i+3]=1;int px=x>2?x-3:0;previous[i]=float(px)/width;previous[i+1]=source[i+1];previous[i+2]=source[i+2];previous[i+3]=1;mask[size_t(y)*width+x]=x<width/2?0:1;}
+ RenderRequest request;request.source={source.data(),width,height,4,width*16};request.previous={previous.data(),width,height,4,width*16};request.mask={mask.data(),width,height,1,width*4};request.output={cpu.data(),width,height,width*16};request.look=defaultLook();request.time_seconds=1.25;
+ if(renderCpu(request)!=RenderStatus::Ok)return 1;for(float value:cpu)if(!std::isfinite(value))return 2;
 #ifdef RASTER_RUPTURE_WITH_CUDA
- if(raster_rupture::cudaAvailable()&&raster_rupture::renderCuda(r)!=raster_rupture::RenderStatus::Ok)return 5;
+ if(cudaAvailable()){request.output={gpu.data(),width,height,width*16};if(renderCuda(request)!=RenderStatus::Ok)return 3;double error=0;for(size_t i=0;i<gpu.size();++i){if(!std::isfinite(gpu[i]))return 4;error+=std::abs(gpu[i]-cpu[i]);}if(error/gpu.size()>.02)return 5;}
 #endif
- auto a=r.look.parameters;a[static_cast<size_t>(raster_rupture::ParameterId::Amount)]=0;r.look.parameters=a;raster_rupture::renderCpu(r);for(size_t i=0;i<src.size();i++)if(std::abs(src[i]-dst[i])>1e-6)return 4;std::cout<<"Raster Rupture native smoke OK\n";}
+ for(size_t i=3;i<feedbackInput.size();i+=4)feedbackInput[i]=1;request.mask={};for(auto&route:request.look.routes)route={1,0};request.previous_feedback={feedbackInput.data(),width,height,4,width*16};request.output={withFeedback.data(),width,height,width*16};request.time_seconds+=1.0/24.0;if(renderCpu(request)!=RenderStatus::Ok)return 6;request.previous_feedback={};request.output={withoutFeedback.data(),width,height,width*16};if(renderCpu(request)!=RenderStatus::Ok)return 7;double feedbackDifference=0;for(size_t i=0;i<withFeedback.size();++i)feedbackDifference+=std::abs(withFeedback[i]-withoutFeedback[i]);if(feedbackDifference/withFeedback.size()<1e-4)return 8;
+ request.look.parameters[size_t(ParameterId::Amount)]=0;request.output={cpu.data(),width,height,width*16};if(renderCpu(request)!=RenderStatus::Ok)return 9;for(size_t i=0;i<source.size();++i)if(std::abs(source[i]-cpu[i])>1e-6)return 10;
+ std::cout<<"Raster Rupture two-pass CPU/CUDA/feedback smoke OK\n";
+}
