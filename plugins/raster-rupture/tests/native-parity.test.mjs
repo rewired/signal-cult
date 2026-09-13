@@ -33,3 +33,9 @@ test('native factory contract carries style, combine, colors and nine XY routes'
  assert.match(generated,/std::array<std::array<float,2>,9>/);
  assert.equal((generated.match(/\{"/g)||[]).length>=36,true);
 });
+
+test('OFX page layout contains leaf controls instead of group parameters',()=>{
+ assert.doesNotMatch(host,/kOfxParamPropPageChild,n,pageIndex/);
+ assert.match(host,/for\(const char\*id:\{"preset","style","combine","ink","accent","sourceAsMask","maskChannel","invertMask","useCuda"\}\)addToPage\(id\)/);
+ assert.match(host,/for\(const auto&d:kParameterDescriptors\)addToPage\(d\.id\)/);
+});
