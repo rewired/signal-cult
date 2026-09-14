@@ -471,6 +471,34 @@ export class BrokenFmRenderer {
     this.resetPersistence();
   }
 
+  capturePngBlob() {
+    const gl = this.gl;
+    if (!gl || this.canvas.width < 1 || this.canvas.height < 1) {
+      return Promise.reject(new Error('No rendered frame is available.'));
+    }
+    const { width, height } = this.canvas;
+    const source = new Uint8ClampedArray(width * height * 4);
+    const flipped = new Uint8ClampedArray(source.length);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    const stride = width * 4;
+    for (let y = 0; y < height; y += 1) {
+      flipped.set(source.subarray(y * stride, (y + 1) * stride), (height - 1 - y) * stride);
+    }
+    const output = document.createElement('canvas');
+    output.width = width;
+    output.height = height;
+    const context = output.getContext('2d');
+    if (!context) return Promise.reject(new Error('Canvas 2D is unavailable.'));
+    context.putImageData(new ImageData(flipped, width, height), 0, 0);
+    return new Promise((resolve, reject) => {
+      output.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('PNG encoding returned no data.'));
+      }, 'image/png');
+    });
+  }
+
   useTestPattern() {
     this.useVideo = false;
     this.resetFeedback();

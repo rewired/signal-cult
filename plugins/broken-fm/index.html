@@ -14,6 +14,7 @@
     <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
     <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
     <symbol id="icon-pattern" viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h8v8h-8v-8zm2 2v4h4v-4h-4z"/></symbol>
+    <symbol id="icon-camera" viewBox="0 0 24 24"><path d="M9 3 7.17 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9zm3 14a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.2a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6z"/></symbol>
     <symbol id="icon-visibility" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
     <symbol id="icon-tune" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zM15 9h2V7h4V5h-4V3h-2v6z"/></symbol>
     <symbol id="icon-equalizer" viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zm12 0h4V8h-4v12z"/></symbol>
@@ -45,8 +46,8 @@
     <div class="source-toolbar" aria-label="Source" data-i18n-aria-label="section.source">
       <label class="toolbar-button file-control">
         <svg class="material-icon"><use href="#icon-upload"/></svg>
-        <span data-i18n="source.loadVideo">Load video</span>
-        <input id="video-file" type="file" accept="video/mp4,video/webm,video/ogg,video/*">
+        <span data-i18n="source.loadMedia">Load media</span>
+        <input id="video-file" type="file" accept="video/mp4,video/webm,video/ogg,video/*,image/png,image/jpeg,image/webp,image/gif,image/*">
       </label>
       <button id="play-pause" class="icon-button" type="button" disabled data-i18n-aria-label="source.play" aria-label="Play">
         <svg class="material-icon"><use href="#icon-play"/></svg>
@@ -54,6 +55,13 @@
       <button id="use-test" class="toolbar-button active" type="button" aria-pressed="true">
         <svg class="material-icon"><use href="#icon-pattern"/></svg>
         <span data-i18n="source.testPattern">Test pattern</span>
+      </button>
+      <button id="use-camera" class="toolbar-button" type="button" aria-pressed="false">
+        <svg class="material-icon"><use href="#icon-camera"/></svg>
+        <span data-i18n="source.camera">Camera</span>
+      </button>
+      <button id="save-frame" class="icon-button" type="button" data-i18n-aria-label="source.saveFrame" aria-label="Save frame as PNG">
+        <svg class="material-icon"><use href="#icon-download"/></svg>
       </button>
       <span id="status" class="source-status" data-i18n="status.testPattern">TEST PATTERN · 1920 × 1080</span>
       <video id="source-video" muted loop playsinline hidden></video>

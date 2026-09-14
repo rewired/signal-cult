@@ -49,12 +49,17 @@ const status = document.querySelector('#status');
 const playPause = document.querySelector('#play-pause');
 const playPauseIcon = playPause.querySelector('use');
 const sourceToggle = document.querySelector('#use-test');
+const cameraToggle = document.querySelector('#use-camera');
+const saveFrame = document.querySelector('#save-frame');
 const carrierAudio = document.querySelector('#carrier-audio');
 const monitorAudio = document.querySelector('#monitor-audio');
 const monitorLevel = document.querySelector('#monitor-level');
 let objectUrl = null;
 let audioObjectUrl = null;
 let loadedVideoStatus = '';
+let cameraStream = null;
+let activeSourceKind = 'test';
+let sourceClockOrigin = performance.now();
 
 function showError(error) {
   console.error(error);
@@ -84,8 +89,41 @@ function setTestPatternActive(active) {
   sourceToggle.setAttribute('aria-pressed', String(active));
 }
 
+function setCameraActive(active) {
+  cameraToggle.classList.toggle('active', active);
+  cameraToggle.setAttribute('aria-pressed', String(active));
+}
+
+function setActiveSource(kind) {
+  activeSourceKind = kind;
+  sourceClockOrigin = performance.now();
+  setTestPatternActive(kind === 'test');
+  setCameraActive(kind === 'camera');
+}
+
+function stopCamera() {
+  if (!cameraStream) return;
+  for (const track of cameraStream.getTracks()) track.stop();
+  cameraStream = null;
+  if (video.srcObject) video.srcObject = null;
+}
+
+function releaseFileSource() {
+  if (!objectUrl) return;
+  URL.revokeObjectURL(objectUrl);
+  objectUrl = null;
+}
+
 function visualTimeSeconds() {
-  return renderer.useVideo ? video.currentTime : performance.now() / 1000;
+  if (activeSourceKind === 'video') return video.currentTime;
+  if (activeSourceKind === 'resolve') return 0;
+  return (performance.now() - sourceClockOrigin) / 1000;
+}
+
+function currentFrameIndex(now = performance.now()) {
+  if (activeSourceKind === 'video') return Math.round(video.currentTime * 60);
+  if (activeSourceKind === 'resolve') return 0;
+  return Math.floor((now - sourceClockOrigin) * 0.06);
 }
 
 function retriggerLfos() {
@@ -631,22 +669,111 @@ document.querySelector('#wavetable-file').addEventListener('change', async (even
 document.querySelector('#video-file').addEventListener('change', async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  stopCamera();
+  releaseFileSource();
   objectUrl = URL.createObjectURL(file);
-  video.src = objectUrl;
-  video.load();
   try {
+    if (file.type.startsWith('image/')) {
+      video.pause();
+      video.srcObject = null;
+      video.removeAttribute('src');
+      video.load();
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = objectUrl;
+      await image.decode();
+      renderer.setImage(image);
+      setActiveSource('image');
+      retriggerLfos();
+      playPause.disabled = true;
+      setPlaybackButton(false);
+      status.textContent = `${file.name.toUpperCase()} · ${image.naturalWidth} × ${image.naturalHeight}`;
+      return;
+    }
+    video.srcObject = null;
+    video.src = objectUrl;
+    video.loop = true;
+    video.load();
     await video.play();
     renderer.setVideo(video);
+    setActiveSource('video');
     retriggerLfos();
     playPause.disabled = false;
     setPlaybackButton(true);
     loadedVideoStatus = `${file.name.toUpperCase()} · ${video.videoWidth} × ${video.videoHeight}`;
     status.textContent = loadedVideoStatus;
-    setTestPatternActive(false);
     if (monitorAudio.checked) await startAudioMonitor(true);
   } catch (error) {
-    showError(new Error(t('error.videoStart', { message: error.message })));
+    const key = file.type.startsWith('image/') ? 'error.imageLoad' : 'error.videoStart';
+    showError(new Error(t(key, { message: error.message })));
+  } finally {
+    event.target.value = '';
+  }
+});
+
+cameraToggle.addEventListener('click', async () => {
+  if (activeSourceKind === 'camera') {
+    stopCamera();
+    renderer.useTestPattern();
+    setActiveSource('test');
+    retriggerLfos();
+    setPlaybackButton(false);
+    status.textContent = t('status.testPattern');
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showError(new Error(t('error.cameraUnavailable')));
+    return;
+  }
+  let requestedStream = null;
+  try {
+    requestedStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false,
+    });
+    releaseFileSource();
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    cameraStream = requestedStream;
+    video.srcObject = cameraStream;
+    video.loop = false;
+    await video.play();
+    renderer.setVideo(video);
+    setActiveSource('camera');
+    retriggerLfos();
+    playPause.disabled = true;
+    setPlaybackButton(false);
+    status.textContent = t('status.camera', { width: video.videoWidth, height: video.videoHeight });
+  } catch (error) {
+    stopCamera();
+    if (requestedStream) {
+      renderer.useTestPattern();
+      setActiveSource('test');
+      playPause.disabled = true;
+      setPlaybackButton(false);
+      status.textContent = t('status.testPattern');
+    }
+    showError(new Error(t('error.cameraStart', { message: error.message })));
+  }
+});
+
+saveFrame.addEventListener('click', async () => {
+  try {
+    renderer.render(currentFrameIndex());
+    const blob = await renderer.capturePngBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.href = url;
+    link.download = `broken-fm-${stamp}.png`;
+    link.hidden = true;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    showError(new Error(t('error.frameExport', { message: error.message })));
   }
 });
 
@@ -654,9 +781,9 @@ playPause.addEventListener('click', async () => {
   if (video.paused) {
     await video.play();
     renderer.setVideo(video);
+    setActiveSource('video');
     retriggerLfos();
     status.textContent = loadedVideoStatus;
-    setTestPatternActive(false);
     setPlaybackButton(true);
     if (monitorAudio.checked) await startAudioMonitor(true);
   } else {
@@ -667,12 +794,14 @@ playPause.addEventListener('click', async () => {
 });
 
 sourceToggle.addEventListener('click', () => {
+  stopCamera();
+  if (activeSourceKind === 'image') releaseFileSource();
   if (!video.paused) video.pause();
   setPlaybackButton(false);
   renderer.useTestPattern();
+  setActiveSource('test');
   retriggerLfos();
   status.textContent = t('status.testPattern');
-  setTestPatternActive(true);
   if (monitorAudio.checked) startAudioMonitor(true);
 });
 
@@ -687,7 +816,8 @@ toggleDebug.addEventListener('click', () => {
 });
 
 window.addEventListener('beforeunload', () => {
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  stopCamera();
+  releaseFileSource();
   if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
 });
 
@@ -699,9 +829,7 @@ const fpsLabel = document.querySelector('#fps');
 const frameTimeLabel = document.querySelector('#frame-time');
 
 function frame(now) {
-  const frameIndex = renderer.useVideo
-    ? Math.round(video.currentTime * 60)
-    : Math.floor(now * 0.06);
+  const frameIndex = currentFrameIndex(now);
   const audioFrameIndex = monitorAudio.checked && carrierAudio.src
     ? Math.round(carrierAudio.currentTime * 60)
     : frameIndex;
@@ -749,10 +877,13 @@ async function startApplication() {
       return stringifyPreset(createPreset(document, currentPresetName));
     },
     applyPreview(image) {
+      stopCamera();
+      releaseFileSource();
+      video.pause();
       renderer.setImage(image);
+      setActiveSource('resolve');
       playPause.disabled = true;
       setPlaybackButton(false);
-      setTestPatternActive(false);
       status.textContent = `RESOLVE FRAME · ${image.naturalWidth} × ${image.naturalHeight}`;
     },
   }).catch(showError);

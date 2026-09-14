@@ -59,6 +59,20 @@ test('photosensitivity warning gates the first renderer frame', async () => {
   assert.match(app, /waitForPhotosensitivityAcknowledgement\(\)\.then\(startApplication\)/);
 });
 
+test('media R&D sources release devices and PNG capture reads the rendered framebuffer', async () => {
+  const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../js/app.js', import.meta.url), 'utf8');
+
+  assert.match(index, /accept="[^"]*video\/\*[^"]*image\/\*/);
+  assert.match(index, /id="use-camera"/);
+  assert.match(index, /id="save-frame"/);
+  assert.match(app, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(app, /for \(const track of cameraStream\.getTracks\(\)\) track\.stop\(\)/);
+  assert.match(app, /renderer\.render\(currentFrameIndex\(\)\);\s*const blob = await renderer\.capturePngBlob\(\)/);
+  assert.match(rendererSource, /gl\.readPixels\(0, 0, width, height/);
+  assert.match(rendererSource, /\(height - 1 - y\) \* stride/);
+});
+
 test('README and OFX architecture describe the current renderer and install path', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
   const architecture = await readFile(new URL('../docs/ofx-architecture.md', import.meta.url), 'utf8');

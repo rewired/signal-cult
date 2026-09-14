@@ -125,7 +125,8 @@ Consequently, the phase difference between adjacent scan-space pixels reflects t
 
 ## Controls
 
-- Video file, Play/Pause, or built-in test pattern
+- Video or still-image file, live camera, Play/Pause for video, or built-in test pattern
+- Lossless PNG capture of the current processed frame at native source dimensions
 - Modulation source: Luma, Inverted Luma, Edges, Local Contrast, Luma + Edges
 - Luma Gain/Bias, Edge Gain, Local Contrast Gain, hard/soft Threshold, and overall Modulation Gain
 - OSC modal: Sine, Triangle, Saw, Square, Noise, Wavetable, and Audio carriers
@@ -145,7 +146,7 @@ Consequently, the phase difference between adjacent scan-space pixels reflects t
 - Color Mode and RGB Phase Offset
 - Black Level, Signal Gamma, Brightness, and Contrast
 
-Source loading, the combined Play/Pause action, test-pattern selection, preset selection/import/export, OSC, Setup, and the Debug View visibility toggle live in the header. Test Pattern is highlighted while active and pauses any loaded video. Play resumes the loaded video and makes it the active source; Pause freezes its current frame. The play control remains disabled until a video is loaded. Their icons use locally embedded Google Material Icons SVG paths, so the interface has no icon-font or CDN dependency. Debug View is initially off and opens as a translucent blur overlay in the lower-right corner of the video preview. Signal-route topology, deterministic Seed, audio loading, and wavetable import live in Setup. The Canvas2D oscillator scope is UI visualization only; all video processing remains in WebGL.
+Source loading accepts video and still images. The header also provides a live-camera source, lossless PNG capture of the current processed frame, the combined Play/Pause action, test-pattern selection, preset selection/import/export, OSC, Setup, and the Debug View visibility toggle. Test Pattern is highlighted while active and pauses any loaded video; selecting it from a camera source releases the camera immediately. Play resumes the loaded video and makes it the active source; it is disabled for still images and live camera. Camera access depends on browser or Companion permission. Their icons use locally embedded Google Material Icons SVG paths, so the interface has no icon-font or CDN dependency. Debug View is initially off and opens as a translucent blur overlay in the lower-right corner of the video preview. Signal-route topology, deterministic Seed, audio loading, and wavetable import live in Setup. The Canvas2D oscillator scope is UI visualization only; all video processing remains in WebGL.
 
 Audio files are decoded to mono. The same buffer can act as a spatial carrier, supplies deterministic Level/Low/Mid/High/Transient analysis at the explicit preview frame, and can be heard through the opt-in Monitor Audio control in Setup. Its level is independent of the effect. Monitoring, carrier sampling, analysis, and the oscillator scope share one playhead; video Play/Pause controls it, while Test Pattern lets it run independently. The internal demo signal is audible too, so audio presets remain self-contained. The modulation slots accept either LFO or audio-analysis sources and can drive carrier, feedback, failure, drift, jitter, noise, or persistence parameters. Imported wavetables are normalized, resampled to 2048 samples, and replace the custom table for the current session.
 
@@ -279,7 +280,7 @@ The native render path covers PM, scan-atlas prefix FM, source conditioning and 
 ## Known limitations
 
 - Edge extraction is intentionally minimal and operates at preview resolution.
-- A loaded video keeps its native input dimensions throughout the render graph: video-size-in equals video-size-out, with no processing rescale or crop. The built-in test signal is 1920 × 1080.
+- Loaded video, still images, and live camera frames keep their native input dimensions throughout the render graph, with no processing rescale or crop. The built-in test signal is 1920 × 1080.
 - The controls and preview layout are designed for a 1920 × 1080 editing-software workspace. CSS may scale the canvas presentation to fit the available panel, without changing the underlying render dimensions.
 - UI copy is resolved through stable translation keys in `js/i18n.js`. English is currently the only locale.
 - LINE width is an antialiased screen-space approximation; extreme phase folds can still create dense, unresolved regions.

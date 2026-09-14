@@ -32,7 +32,7 @@ BROKEN FM can generate flashing, flickering, and high-contrast moving patterns. 
 
 1. **Start from a preset.** Choose a factory preset in the header and step through the library with the previous/next buttons. Presets are complete effect states and are the fastest way to learn the available range.
 
-2. **Choose the source.** After the safety warning is acknowledged, Test pattern is active and highlighted by default. Loading a video enables Play. Selecting Test pattern pauses the loaded video; pressing Play resumes the video and makes it the source.
+2. **Choose the source.** After the safety warning is acknowledged, Test pattern is active and highlighted by default. Load a video or still image, or select Camera for a live source. Loading a video enables Play; still images and camera feeds run from the application clock. Selecting Test pattern pauses a loaded video or releases the camera.
 
 3. **Shape the modulation.** Choose Mod Source, then balance its gain/bias and optional threshold. Set Modulation Gain to 0 whenever you want to inspect the dry carrier.
 
@@ -44,9 +44,11 @@ BROKEN FM can generate flashing, flickering, and high-contrast moving patterns. 
 
 ## Header and session controls
 
-- **Load video** opens a local video. BROKEN FM preserves its render dimensions; the UI does not crop or scale the source.
+- **Load media** opens a local video or still image. BROKEN FM preserves its render dimensions; the UI does not crop or scale the source.
 - **Play/Pause** controls a loaded video and shared audio playhead. It is disabled until video is loaded.
 - **Test pattern** selects the built-in 1920 x 1080 pattern and pauses loaded video. The highlighted button always identifies the active source.
+- **Camera** requests a live video source from the browser or Companion. Switching to Test pattern releases the device. Camera permission is controlled by the runtime and operating system.
+- **Save frame** writes the currently processed output as a lossless PNG at the active source dimensions.
 - **Preset previous/current/next** steps through 56 factory presets. **Load JSON** and **Save JSON** exchange schema-16 preset files.
 - **OSC** opens carrier, LFO, audio-analysis, and four-slot modulation controls.
 - **Setup** opens audio/wavetable session assets, monitor controls, deterministic Seed, and the signal-routing diagram.
