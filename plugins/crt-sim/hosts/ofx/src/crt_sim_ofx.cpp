@@ -50,7 +50,7 @@ static OfxStatus context(OfxImageEffectHandle effect){
  OfxPropertySetHandle clip;for(const char* name:{"Source","Output"}){check(effects->clipDefine(effect,name,&clip));text(clip,kOfxImageEffectPropSupportedComponents,kOfxImageComponentRGBA);integer(clip,kOfxImageEffectPropSupportsTiles,0);}
  OfxParamSetHandle set;check(effects->getParamSet(effect,&set));
  auto page=define(set,kOfxParamTypePage,"controlsPage","Controls");int pageIndex=0;
- for(const char* child:{"crtSimEdit","crtSimStatus","preset","bypass","colorManagement","pixel","tube","signal","chroma","glow","monochrome","motion","grain","light","optics"})text(page,kOfxParamPropPageChild,child,pageIndex++);
+ for(const char* child:{"crtSimEdit","crtSimStatus","preset","bypass","colorManagement","pixel","tube","signal","chroma","glow","monochromeGroup","motion","grain","light","optics"})text(page,kOfxParamPropPageChild,child,pageIndex++);
 
  auto edit=define(set,kOfxParamTypePushButton,"crtSimEdit","Open CRT SIM Editor");text(edit,kOfxParamPropHint,"Edit a working copy in the CRT SIM Companion. Apply commits the look; Cancel leaves this instance unchanged.");
  auto status=define(set,kOfxParamTypeString,"crtSimStatus","Editor Status");text(status,kOfxParamPropDefault,"Ready");integer(status,kOfxParamPropEnabled,0);integer(status,kOfxParamPropAnimates,0);integer(status,kOfxParamPropPersistant,0);
@@ -65,7 +65,7 @@ static OfxStatus context(OfxImageEffectHandle effect){
  for(const auto& entry:{std::pair<const char*,const char*>{"referenceWhite","HDR Reference White (nits)"},{"hlgPeak","HLG Peak Luminance (nits)"}}){p=define(set,kOfxParamTypeDouble,entry.first,entry.second);text(p,kOfxParamPropParent,"colorManagement");bool peak=!std::strcmp(entry.first,"hlgPeak");real(p,kOfxParamPropDefault,peak?1000:100);real(p,kOfxParamPropMin,peak?400:1);real(p,kOfxParamPropMax,10000);real(p,kOfxParamPropDisplayMin,peak?400:80);real(p,kOfxParamPropDisplayMax,peak?4000:1000);integer(p,kOfxParamPropAnimates,0);}
  p=define(set,kOfxParamTypeString,"colorInfo","Host Color Space");text(p,kOfxParamPropParent,"colorManagement");text(p,kOfxParamPropStringMode,kOfxParamStringIsSingleLine);text(p,kOfxParamPropDefault,"Not reported; set Input Color Space and Input Gamma manually.");integer(p,kOfxParamPropEnabled,0);integer(p,kOfxParamPropAnimates,0);integer(p,kOfxParamPropPersistant,0);
 
- const char* groups[]={"Pixel / Sci-Fi","CRT","Signal","Chroma & Signal","Glow","Monochrome","Motion","Film Grain","Light & Color","Optics"};const char* ids[]={"pixel","tube","signal","chroma","glow","monochrome","motion","grain","light","optics"};
+ const char* groups[]={"Pixel / Sci-Fi","CRT","Signal","Chroma & Signal","Glow","Monochrome","Motion","Film Grain","Light & Color","Optics"};const char* ids[]={"pixel","tube","signal","chroma","glow","monochromeGroup","motion","grain","light","optics"};
  for(int i=0;i<10;i++){p=define(set,kOfxParamTypeGroup,ids[i],groups[i]);integer(p,kOfxParamPropGroupOpen,1);}
  p=define(set,kOfxParamTypeChoice,"maskType","Mask Type");text(p,kOfxParamPropParent,"tube");idx=0;for(const char* name:maskNames)text(p,kOfxParamPropChoiceOption,name,idx++);integer(p,kOfxParamPropDefault,0);
  for(const auto& def:parameterDefs){

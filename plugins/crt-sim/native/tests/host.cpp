@@ -31,7 +31,7 @@ static OfxStatus clipGet(OfxImageEffectHandle,const char*n,OfxImageClipHandle*ou
 static OfxStatus clipProps(OfxImageClipHandle h,OfxPropertySetHandle*out){*out=reinterpret_cast<OfxPropertySetHandle>(h);return kOfxStatOK;}
 static OfxStatus clipImage(OfxImageClipHandle h,OfxTime,const OfxRectD*,OfxPropertySetHandle*out){*out=ph(reinterpret_cast<Store*>(h)==&source?inputImage:outputImage);return kOfxStatOK;}
 static OfxStatus releaseImage(OfxPropertySetHandle){return kOfxStatOK;}static int abortRender(OfxImageEffectHandle){return 0;}
-static OfxStatus paramDefine(OfxParamSetHandle,const char*t,const char*n,OfxPropertySetHandle*out){param[n]=std::make_unique<Store>();param[n]->type=t;*out=ph(*param[n]);return kOfxStatOK;}
+static OfxStatus paramDefine(OfxParamSetHandle,const char*t,const char*n,OfxPropertySetHandle*out){if(param.count(n))return kOfxStatErrExists;param[n]=std::make_unique<Store>();param[n]->type=t;*out=ph(*param[n]);return kOfxStatOK;}
 static OfxStatus paramGet(OfxParamSetHandle,const char*n,OfxParamHandle*out,OfxPropertySetHandle*props){if(!param.count(n))return kOfxStatErrUnknown;*out=reinterpret_cast<OfxParamHandle>(param[n].get());if(props)*props=ph(*param[n]);return kOfxStatOK;}
 static void value(Store& s,va_list args){if(s.type==kOfxParamTypeDouble)*va_arg(args,double*)=s.dv;else if(s.type==kOfxParamTypeString)*va_arg(args,char**)=s.sv.data();else *va_arg(args,int*)=s.iv;}
 static OfxStatus getValue(OfxParamHandle h,...){va_list args;va_start(args,h);value(st(h),args);va_end(args);return kOfxStatOK;}
@@ -46,7 +46,7 @@ int main(int argc,char**argv){if(argc!=2)return 1;auto dll=LoadLibraryA(argv[1])
  parameters.paramDefine=paramDefine;parameters.paramGetHandle=paramGet;parameters.paramGetValue=getValue;parameters.paramGetValueAtTime=getTimed;parameters.paramSetValue=setValue;parameters.paramEditBegin=beginEdit;parameters.paramEditEnd=endEdit;
  OfxHost host{ph(effect),fetch};plugin->setHost(&host);
  for(auto a:{kOfxActionLoad,kOfxActionDescribe,kOfxImageEffectActionDescribeInContext,kOfxActionCreateInstance})if(plugin->mainEntry(a,&effect,nullptr,nullptr)!=kOfxStatOK)return 3;
- if(param["encoding"]->iv!=3||param["noiseSeed"]->type!=kOfxParamTypeInteger||param["noiseSeed"]->iv!=0)return 4;
+ if(param["encoding"]->iv!=3||param["noiseSeed"]->type!=kOfxParamTypeInteger||param["noiseSeed"]->iv!=0||param["monochrome"]->type!=kOfxParamTypeDouble||param["monochromeGroup"]->type!=kOfxParamTypeGroup)return 4;
  const int w=16,h=12;std::vector<float> src(w*h*4),dst(src.size());for(size_t i=0;i<src.size();i+=4){src[i]=.2f;src[i+1]=.4f;src[i+2]=.6f;src[i+3]=.7f;}
  for(auto item:{std::pair<Store*,float*>{&inputImage,src.data()},{&outputImage,dst.data()}}){auto p=ph(*item.first);sp(p,kOfxImagePropData,0,item.second);si(p,kOfxImagePropRowBytes,0,w*16);for(int i=0;i<4;i++)si(p,kOfxImagePropBounds,i,i<2?0:i==2?w:h);ss(p,kOfxImageEffectPropPixelDepth,0,kOfxBitDepthFloat);ss(p,kOfxImageEffectPropComponents,0,kOfxImageComponentRGBA);ss(p,kOfxImageEffectPropPreMultiplication,0,kOfxImageUnPreMultiplied);}
  Store in;sd(ph(in),kOfxPropTime,0,0);for(int i=0;i<4;i++)si(ph(in),kOfxImageEffectPropRenderWindow,i,i<2?0:i==2?w:h);
