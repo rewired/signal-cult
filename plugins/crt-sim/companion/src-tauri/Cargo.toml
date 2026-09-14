@@ -1,7 +1,7 @@
 [package]
 license-file = "../../../../LICENSE"
 name = "crt-sim-companion"
-version = "0.7.0"
+version = "0.8.0"
 description = "CRT SIM OFX companion editor"
 authors = ["rewired-vfx"]
 edition = "2021"

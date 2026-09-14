@@ -10,7 +10,7 @@ namespace crt {
 using uint=uint32_t;
 HD inline float floor(float x){return floorf(x);} HD inline float abs(float x){return fabsf(x);}
 HD inline float pow(float x,float y){return powf(x,y);} HD inline float sqrt(float x){return sqrtf(x);}
-HD inline float sin(float x){return sinf(x);} HD inline float exp(float x){return expf(x);} HD inline float exp2(float x){return exp2f(x);}
+HD inline float sin(float x){return sinf(x);} HD inline float cos(float x){return cosf(x);} HD inline float exp(float x){return expf(x);} HD inline float exp2(float x){return exp2f(x);}
 struct vec2 {float x,y; HD vec2(float a=0):x(a),y(a){} HD vec2(float a,float b):x(a),y(b){} };
 struct ivec2 {int x,y; HD ivec2(int a,int b):x(a),y(b){} HD explicit ivec2(vec2 a):x(int(a.x)),y(int(a.y)){} };
 struct vec3 {union {struct{float x,y,z;};struct{float r,g,b;};}; HD vec3(float a=0):x(a),y(a),z(a){} HD vec3(float a,float b,float c):x(a),y(b),z(c){} };
@@ -19,7 +19,7 @@ struct vec4 {float r,g,b,a; HD vec4(float x,float y,float z,float w):r(x),g(y),b
 #define OP3(op) HD inline vec3 operator op(vec3 a,vec3 b){return vec3(a.x op b.x,a.y op b.y,a.z op b.z);} HD inline vec3 operator op(vec3 a,float b){return a op vec3(b);} HD inline vec3 operator op(float a,vec3 b){return vec3(a) op b;}
 OP2(+) OP2(-) OP2(*) OP2(/) OP3(+) OP3(-) OP3(*) OP3(/)
 HD inline ivec2 operator+(ivec2 a,ivec2 b){return ivec2(a.x+b.x,a.y+b.y);}
-HD inline vec2& operator*=(vec2&a,float b){a=a*b;return a;}
+HD inline vec2& operator*=(vec2&a,float b){a=a*b;return a;} HD inline vec2& operator+=(vec2&a,vec2 b){a=a+b;return a;}
 HD inline vec3& operator*=(vec3&a,vec3 b){a=a*b;return a;}
 HD inline vec3& operator+=(vec3&a,vec3 b){a=a+b;return a;}
 HD inline float min(float a,float b){return fminf(a,b);} HD inline float max(float a,float b){return fmaxf(a,b);}

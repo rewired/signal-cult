@@ -2,7 +2,7 @@
 
 A tweakable CRT and pixel-monitor effect for images and video, with a local web playground and a Windows OFX plugin for DaVinci Resolve.
 
-BROKEN FM is the UI and architecture master. CRT SIM uses its dark/mint layout, toolbar, right-hand controls, Ctrl-drag snapping and explicit Apply/Cancel session. The web app uses **Vanilla JavaScript, CSS and WebGL 2**. The **OFX plugin is version 0.7.0**, with NVIDIA CUDA acceleration and a CPU fallback. The optional Tauri Companion follows the BROKEN FM editor workflow; native rendering remains independent of it. Both interfaces use English labels.
+BROKEN FM is the UI and architecture master. CRT SIM uses its dark/mint layout, toolbar, right-hand controls, Ctrl-drag snapping and explicit Apply/Cancel session. The web app uses **Vanilla JavaScript, CSS and WebGL 2**. The **OFX plugin is version 0.8.0**, with NVIDIA CUDA acceleration and a CPU fallback. The optional Tauri Companion follows the BROKEN FM editor workflow; native rendering remains independent of it. Both interfaces use English labels.
 
 ## Two independent stages
 
@@ -15,10 +15,15 @@ BROKEN FM is the UI and architecture master. CRT SIM uses its dark/mint layout, 
 
 Use **Enable Pixel / Sci-Fi** and **Enable CRT** in either interface. Switching a stage off preserves its settings. The tube switch controls the entire CRT stage, including signal noise, optics, bloom and color adjustments. Pixel strength must be above zero for its enabled stage to have an effect.
 
-- **CRT:** 12 phosphor masks, scanlines, beam width, bloom, exposure, gamma, saturation, curvature, vignette and RGB convergence.
+- **CRT:** 12 phosphor masks, scanlines, beam width, exposure, gamma, saturation, curvature, vignette and RGB convergence.
 - **Signal:** 10 noise types, adjustable grain structure, animated clustering with its own speed, interference bands, jitter, tracking and flicker.
+- **Chroma & Signal:** horizontal chroma delay and bleed, independent luma/chroma sharpness, static or animated hue drift.
+- **Glow 2.0:** threshold and soft knee, three spatial scales, adjustable radius/spread, highlight diffusion and ambient tube emission.
+- **Monochrome:** continuous source-to-tint mix with free hue, saturation, phosphor response and selectable luminance model.
+- **Motion:** vertical roll, traveling shutter scan, independent horizontal/vertical shake and horizontal sync drift.
+- **Film Grain:** a deterministic final-stage grain layer with size, softness, color and speed controls, separate from reception noise.
 - **Pixel / Sci-Fi:** 8 procedural raster forms and 6 palettes, with cell size, aspect, luminance response, fill, edge softness, tonal steps and background light.
-- **Presets:** 24 complete JSON snapshots: 12 CRT looks and 12 Sci-Fi looks. Presets appear only in the dropdown.
+- **Presets:** 24 complete JSON snapshots: 12 CRT looks and 12 Sci-Fi looks, with a current-frame thumbnail browser.
 
 ## Start
 
@@ -42,9 +47,9 @@ See [the native README](native/README.md) for build commands, the local update s
 
 ## Render order
 
-Pixel / Sci-Fi is sampled into the CRT signal, followed by RGB convergence, signal noise, scanlines/beam and the phosphor mask. Source-derived bloom is added before saturation, exposure and black level. Vignette and flicker precede output gamma. Bloom currently samples the pixel-processed source; it does not make mask or noise details glow independently.
+Pixel / Sci-Fi is sampled into the CRT signal. Screen motion moves the signal inside the fixed tube surface, then luma/chroma reconstruction, RGB convergence, reception noise, shutter scan, scanlines/beam and the phosphor mask are applied. Glow 2.0 collects thresholded source highlights at three spatial scales; highlight diffusion and ambient tube emission are added before monochrome tinting, saturation, exposure and black level. Vignette and flicker precede the separate final-stage film grain and output gamma.
 
-Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Signal jitter shifts the signal within that surface; it does not move the physical phosphor mask. Turning CRT off also disables curvature.
+Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Signal jitter, shake, roll and sync drift move the signal within that surface; they do not move the physical phosphor mask. Turning CRT off also disables curvature and all CRT-owned signal, glow, motion, monochrome and grain processing.
 
 ## Deterministic seed
 
@@ -62,6 +67,9 @@ Automatic mode requires a recognized explicit host tag and never guesses from mi
 
 The preset toolbar follows BROKEN FM: previous/next buttons wrap through factory looks,
 with previous selecting the last and next the first look from **Current / custom**.
+**Browse looks** opens a gallery that renders every factory preset from the current
+image, video frame or Resolve source snapshot. Selecting a tile applies that look.
+The gallery is regenerated when opened, so its images always reflect the current source.
 Parameter edits mark the look as custom. The status shows applied, loaded and saved
 names; imported names are retained on export until a parameter is edited. JSON imports
 are limited to 64 KB and validated before any settings change. Downloads use the preset
@@ -86,13 +94,21 @@ The OFX plugin compiles these presets into the binary. Editing its packaged JSON
 | `css/master.css`, `js/master-controls.js` | Synced from BROKEN FM; edit the master, then sync |
 | `tests/`, `native/tests/` | Preset, rendering and OFX interface checks |
 
+## R&D performance matrix
+
+The standalone benchmark builds with the renderer and measures 1080p/4K at defaults
+and with all expensive modules active. Run `./scripts/benchmark.ps1 -Cuda -WriteReport`
+after a Release build. The checked-in [measured matrix](docs/performance-results.md)
+records CPU and CUDA results, hardware and methodology. These numbers are renderer
+measurements, not claims about Resolve playback.
+
 ## Validation and limitations
 
 ```sh
 node --test tests/*.test.mjs
 ```
 
-Native checks cover CPU/CUDA rendering, 120 mask/noise combinations, 48 pixel/palette combinations, all four stage-switch combinations, preset output, alpha/strides and OFX loading. See the native README for the test command. Automated checks do not establish full compatibility with every Resolve version. Optional WebMCP preset selection is implemented but has not been interaction-tested.
+Native checks cover CPU/CUDA rendering, all five R&D module families, 120 mask/noise combinations, 48 pixel/palette combinations, all four stage-switch combinations, preset output, alpha/strides and OFX loading. See the native README for the test command. Automated checks do not establish full compatibility with every Resolve version. Optional WebMCP preset selection is implemented but has not been interaction-tested.
 
 The CRT model is artistic; managed OFX processing supports signed, wide-gamut and HDR values. It does not implement a calibrated tube, temporal phosphor persistence, proper interlace or a PAL/NTSC composite decoder. Native mask-edge smoothing approximates browser derivatives, so exact browser/native pixel equality is not guaranteed. Fine masks can produce moire when the preview is scaled down.
 
@@ -115,7 +131,7 @@ above remain valid. Shared build/test/preview commands are in the
 
 Run `node scripts/sync-master-ui.mjs` after changing BROKEN FM styles or slider helpers.
 Companion staging synchronizes them automatically; the checked-in files work directly in the browser.
-The former CRT stylesheet has been replaced. The effect shader remains unchanged; the 24 factory presets now have individually tuned noise profiles.
+The former CRT stylesheet has been replaced. The shared shader now contains the expanded R&D imaging pipeline; all 24 factory presets include and selectively exercise its controls.
 
 Build the complete CRT package with `./scripts/build-windows.ps1` (Rust/Tauri build tools
 required). This produces `dist/windows-x64/RewiredCRT.ofx.bundle`

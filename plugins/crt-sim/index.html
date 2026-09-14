@@ -46,12 +46,17 @@
 <button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset"><svg class="material-icon"><use href="#icon-double-left"/></svg></button>
 <select id="preset-select" aria-label="Current preset"></select>
 <button id="preset-next" class="icon-button preset-step" aria-label="Next preset"><svg class="material-icon"><use href="#icon-double-right"/></svg></button>
+<button id="open-preset-browser" class="toolbar-button">Browse looks</button>
 <label class="icon-button file-control" aria-label="Load JSON"><svg class="material-icon"><use href="#icon-upload"/></svg><input id="preset-file" type="file" accept="application/json,.json"></label>
 <button id="save-preset" class="icon-button" aria-label="Save JSON"><svg class="material-icon"><use href="#icon-download"/></svg></button>
 <span id="preset-status" class="preset-status" role="status"></span>
 </div>
 <div class="header-status"><button id="reset" class="toolbar-button">Reset</button><button id="maximize" class="toolbar-button" aria-pressed="false">Maximize</button><div class="perf"><span id="fps">-- FPS</span></div></div>
 </header>
+<dialog id="preset-browser-dialog" class="preset-browser-dialog" aria-labelledby="preset-browser-title">
+<div class="preset-browser-header"><span><h2 id="preset-browser-title">Preset browser</h2><small id="preset-browser-status" role="status">Rendering current frame...</small></span><button id="close-preset-browser" class="toolbar-button">Close</button></div>
+<div id="preset-grid" class="preset-grid"></div>
+</dialog>
 <div id="host-session" class="host-session" hidden><span><strong>Editing Resolve OFX instance</strong><small id="host-preview-status">SDR look preview · color management remains in Resolve</small></span><button id="host-apply">Apply to Resolve</button><button id="host-cancel">Cancel</button></div>
 <main id="app">
 <section class="preview-panel" aria-label="Preview"><div id="monitor"><canvas id="preview" width="1280" height="960" aria-label="CRT Preview"></canvas></div>

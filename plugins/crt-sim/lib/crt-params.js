@@ -61,7 +61,13 @@ export const controls = [
     ["CRT","mask","Phosphor Mask",0,1,0.01,0.65],
     ["CRT","pitch","Mask Pitch (px)",2,12,0.1,3],
     ["CRT","beam","Beam Width",0.2,1,0.01,0.65],
-    ["Light & Color","bloom","Bloom",0,1.5,0.01,0.3],
+    ["Glow","bloom","Bloom Strength",0,1.5,0.01,0.3],
+    ["Glow","bloomThreshold","Highlight Threshold",0,4,0.01,0.45],
+    ["Glow","bloomKnee","Threshold Knee",0.001,1,0.001,0.2],
+    ["Glow","bloomRadius","Bloom Radius (px)",0.5,32,0.1,4],
+    ["Glow","bloomSpread","Multi-scale Spread",0,1,0.01,0.55],
+    ["Glow","highlightDiffusion","Highlight Diffusion",0,1,0.01,0.25],
+    ["Glow","tubeGlow","Ambient Tube Glow",0,1,0.01,0],
     ["Light & Color","exposure","Exposure (EV)",-2,2,0.01,0.2],
     ["Light & Color","saturation","Saturation",0,2,0.01,1.1],
     ["Light & Color","black","Black Level",0,0.15,0.001,0.005],
@@ -69,6 +75,26 @@ export const controls = [
     ["Optics","curve","Curvature",0,0.3,0.001,0.06],
     ["Optics","vignette","Vignette",0,1,0.01,0.25],
     ["Optics","convergence","RGB Convergence (px)",0,8,0.1,0.6],
+    ["Chroma & Signal","chromaBleed","Chroma Bleed",0,1,0.01,0],
+    ["Chroma & Signal","chromaDelay","Horizontal Chroma Delay (px)",-24,24,0.1,0],
+    ["Chroma & Signal","lumaSharpness","Luma Sharpness",-1,2,0.01,0],
+    ["Chroma & Signal","chromaSharpness","Chroma Sharpness",-1,2,0.01,0],
+    ["Chroma & Signal","hueDrift","Hue Drift (degrees)",-180,180,0.1,0],
+    ["Chroma & Signal","hueDriftSpeed","Hue Drift Speed",0,3,0.01,0],
+    ["Monochrome","monochrome","Monochrome Mix",0,1,0.01,0],
+    ["Monochrome","tintHue","Tint Hue (degrees)",0,360,0.1,120],
+    ["Monochrome","tintSaturation","Tint Saturation",0,1,0.01,0.8],
+    ["Monochrome","phosphorResponse","Phosphor Response",0.3,3,0.01,1],
+    ["Monochrome","lumaMix","Luma Model Mix",0,1,0.01,0],
+    ["Motion","verticalRoll","Vertical Roll",0,1,0.01,0],
+    ["Motion","rollSpeed","Roll Speed",-3,3,0.01,0.2],
+    ["Motion","shutterScan","Shutter Scan",0,1,0.01,0],
+    ["Motion","shutterWidth","Shutter Width",0.005,0.5,0.005,0.08],
+    ["Motion","shutterSpeed","Shutter Speed",-3,3,0.01,0.35],
+    ["Motion","shakeX","Horizontal Shake (px)",0,32,0.1,0],
+    ["Motion","shakeY","Vertical Shake (px)",0,32,0.1,0],
+    ["Motion","shakeSpeed","Shake Speed",0,12,0.01,4],
+    ["Motion","syncDrift","Horizontal Sync Drift (px)",0,48,0.1,0],
     ["Signal","noiseType","Noise Type",0,9,1,0],
     ["Signal","noise","Noise Amount",0,1,0.001,0.015],
     ["Signal","noiseSize","Noise Thread Length",0.25,4,0.05,1.2],
@@ -80,9 +106,15 @@ export const controls = [
     ["Signal","jitter","Line Jitter (px)",0,12,0.1,0.15],
     ["Signal","tracking","Tracking",0,1,0.01,0],
     ["Signal","flicker","Flicker",0,0.2,0.001,0.008],
+    ["Film Grain","grainAmount","Grain Amount",0,0.5,0.001,0],
+    ["Film Grain","grainSize","Grain Size",0.5,6,0.05,1],
+    ["Film Grain","grainSoftness","Grain Softness",0,1,0.01,0.2],
+    ["Film Grain","grainColor","Grain Color",0,1,0.01,0.15],
+    ["Film Grain","grainSpeed","Grain Speed",0,12,0.01,6],
 ];
 export const defaults = Object.fromEntries(controls.map(c => [c[1], c[6]]));
-export const presets=Object.fromEntries(presetData.map(p=>[p.name,p.params]));
+const compatibilityDefaults=new Set(['bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift','grainAmount','grainSize','grainSoftness','grainColor','grainSpeed']);
+export const presets=Object.fromEntries(presetData.map(p=>[p.name,{...defaults,...p.params}]));
 export const presetStyles=Object.fromEntries(presetData.map(p=>[p.name,{maskType:p.maskType,description:p.description}]));
 export function getBuiltInPreset(name) {
     if (!Object.hasOwn(presets, name) || !Object.hasOwn(presetStyles, name))
@@ -94,7 +126,7 @@ export function validatePreset(input) {
     if (value?.version !== 1 || !value.params)
         throw new Error('Unsupported CRT preset (expected version 1).');
     return Object.fromEntries(controls.map(c => {
-        const n = value.params[c[1]] === undefined && ((c[1].startsWith('noise') && c[1] !== 'noise') || c[1].startsWith('pixel') || c[1]==='tubeEnabled') ? c[6] : value.params[c[1]];
+        const n = value.params[c[1]] === undefined && ((c[1].startsWith('noise') && c[1] !== 'noise') || c[1].startsWith('pixel') || c[1]==='tubeEnabled' || compatibilityDefaults.has(c[1])) ? c[6] : value.params[c[1]];
         if (typeof n !== 'number' || !Number.isFinite(n) || n < c[3] || n > c[4] || ((Object.hasOwn(choiceTypes,c[1]) || toggleIds.includes(c[1]) || integerIds.includes(c[1])) && !Number.isInteger(n)))
             throw new Error('Invalid parameter: ' + c[2]);
         return [c[1], n];

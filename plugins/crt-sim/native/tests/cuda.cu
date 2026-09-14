@@ -40,18 +40,24 @@ int main(){
   device.params.time=4.1f;if(renderCUDA(device,stream,true))return 17;device.params.time=.73f;if(renderCUDA(device,stream,true))return 18;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));if(gpu!=reference)return 19;
  }
  job.params.noiseSeed=0;
+ // Exercise all new R&D modules together on CPU and CUDA.
+ job.params.chromaBleed=.8f;job.params.chromaDelay=8;job.params.lumaSharpness=1;job.params.chromaSharpness=.7f;job.params.hueDrift=25;job.params.hueDriftSpeed=.8f;
+ job.params.bloom=1.2f;job.params.bloomThreshold=.15f;job.params.bloomSpread=1;job.params.highlightDiffusion=.7f;job.params.tubeGlow=.5f;
+ job.params.monochrome=.6f;job.params.tintHue=42;job.params.phosphorResponse=1.5f;job.params.verticalRoll=.1f;job.params.shutterScan=.4f;job.params.shakeX=8;job.params.shakeY=5;job.params.syncDrift=18;
+ job.params.grainAmount=.18f;job.params.grainColor=1;renderCPU(job);{RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;if(renderCUDA(device,stream,true))return 20;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 21;worst=std::fmax(worst,std::fabs(gpu[i]-cpu[i]));}}
+ job.params=Parameters{};job.params.time=.73f;job.params.noise=.4f;
  // Full managed rendering on CUDA, including signed/HDR inputs and every transfer.
- job.managed=true;job.params.tubeEnabled=1;job.params.pixelEnabled=1;job.params.pixelMix=.4f;
- float colorWorst=0;
+ job.managed=true;job.params.tubeEnabled=1;job.params.pixelEnabled=1;job.params.pixelMix=.4f;job.params.noise=0;job.params.jitter=0;job.params.flicker=0;
+ float colorWorst=0,colorWorstCpu=0,colorWorstGpu=0;int colorWorstGamut=-1,colorWorstTransfer=-1;size_t colorWorstIndex=0;
  for(int gamut=0;gamut<6;gamut++)for(int transfer=0;transfer<9;transfer++){
   if(transfer==6&&gamut!=3)continue;job.color={gamut,transfer,100,1000};
   for(size_t i=0;i<src.size();i+=4){float level=float(i%107)/21.f-.01f;vec3 c=encodeColor(vec3(level,level*.75f,level*.5f),job.color);src[i]=c.r;src[i+1]=c.g;src[i+2]=c.b;src[i+3]=.7f;}
   ok(cudaMemcpy(deviceIn,src.data(),bytes,cudaMemcpyHostToDevice));renderCPU(job);
   RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;
   if(renderCUDA(device,stream,true))return 12;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));
-  for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 13;colorWorst=std::fmax(colorWorst,std::fabs(gpu[i]-cpu[i])/(1+std::fabs(cpu[i])));}
+  for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 13;float error=std::fabs(gpu[i]-cpu[i])/(1+std::fabs(cpu[i]));if(error>colorWorst){colorWorst=error;colorWorstCpu=cpu[i];colorWorstGpu=gpu[i];colorWorstGamut=gamut;colorWorstTransfer=transfer;colorWorstIndex=i;}}
  }
- if(colorWorst>.003f){std::cerr<<"Color CPU/CUDA relative error "<<colorWorst<<"\n";return 14;}
+ if(colorWorst>.003f){std::cerr<<"Color CPU/CUDA relative error "<<colorWorst<<" at gamut "<<colorWorstGamut<<", transfer "<<colorWorstTransfer<<", component "<<colorWorstIndex%4<<" (CPU "<<colorWorstCpu<<", CUDA "<<colorWorstGpu<<")\n";return 14;}
  std::cout<<"Managed color CPU/CUDA relative error: "<<colorWorst<<"\n";
  job.params.bypass=1;RenderJob bypass=job;bypass.input.data=deviceIn;bypass.output.data=deviceOut;if(renderCUDA(bypass,nullptr,false))return 4;ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));if(gpu!=src)return 5;
  ok(cudaFree(deviceIn));ok(cudaFree(deviceOut));ok(cudaStreamDestroy(stream));

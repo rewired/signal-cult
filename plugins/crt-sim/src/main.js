@@ -22,7 +22,7 @@ function typePicker(parent,label,types,get,set){const wrap=document.createElemen
 const select=$('preset-select');select.append(new Option('Current / custom','custom'));
 for(const name of Object.keys(presets))select.append(new Option(name,name));
 const syncTypes=[];
-for(const [index,group] of ['Pixel / Sci-Fi','CRT','Light & Color','Optics','Signal'].entries()){
+for(const [index,group] of ['Pixel / Sci-Fi','CRT','Signal','Chroma & Signal','Glow','Monochrome','Motion','Film Grain','Light & Color','Optics'].entries()){
  const details=document.createElement('section');
  const summary=document.createElement('h2');const label=document.createElement('span');const small=document.createElement('small');small.textContent=`0${index+1}`;label.append(group);summary.append(label);details.append(summary);
  for(const [,id,title] of controls.filter(c=>c[0]===group&&toggleIds.includes(c[1]))){
@@ -47,6 +47,28 @@ for(const [index,group] of ['Pixel / Sci-Fi','CRT','Light & Color','Optics','Sig
 }
 function syncControls(){for(const [id,{number,range}]of fields){number.value=state.params[id];range.value=state.params[id];}syncTypes.forEach(sync=>sync());select.value=state.preset;$('preset-description').textContent=presetStyles[state.preset]?.description||'Custom Settings';}
 function apply(name){const preset=getBuiltInPreset(name);state.params=preset.params;state.maskType=preset.maskType;state.preset=name;currentPresetName=name;syncControls();$('preset-status').textContent=`Applied: ${name}`;}
+async function renderPresetBrowser(){
+ const dialog=$('preset-browser-dialog'),grid=$('preset-grid'),openButton=$('open-preset-browser');
+ grid.replaceChildren();dialog.showModal();openButton.disabled=true;$('preset-browser-status').textContent='Rendering current frame...';
+ const thumb=document.createElement('canvas');const video=source instanceof HTMLVideoElement;
+ const sourceWidth=video?source.videoWidth:(source.naturalWidth||source.width),sourceHeight=video?source.videoHeight:(source.naturalHeight||source.height);
+ thumb.width=240;thumb.height=Math.max(90,Math.round(240*sourceHeight/sourceWidth));const thumbRenderer=new CRTRenderer(thumb);
+ try{
+  const previewTime=video?source.currentTime:clock;
+  for(const [index,name] of names.entries()){
+   const preset=getBuiltInPreset(name);thumbRenderer.render(source,preset.params,previewTime,false,0,preset.maskType);
+   const button=document.createElement('button');button.type='button';button.className='preset-card';button.dataset.preset=name;
+   const image=document.createElement('img');image.alt='';image.src=thumb.toDataURL('image/jpeg',.82);
+   const copy=document.createElement('span');const title=document.createElement('strong');title.textContent=name;const description=document.createElement('small');description.textContent=presetStyles[name].description;
+   copy.append(title,description);button.append(image,copy);on(button,'click',()=>{apply(name);dialog.close();});grid.append(button);
+   if(index%4===3)await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
+  $('preset-browser-status').textContent=`${names.length} looks rendered from the current frame`;
+ }catch(error){showError('Could not render preset previews: '+error.message);dialog.close();}
+ finally{thumbRenderer.destroy();openButton.disabled=false;}
+}
+on($('open-preset-browser'),'click',()=>{void renderPresetBrowser();});
+on($('close-preset-browser'),'click',()=>$('preset-browser-dialog').close());
 
 const names=Object.keys(presets);
 function stepPreset(delta){const name=stepPresetName(names,select.value,delta);if(name)apply(name);}

@@ -34,6 +34,15 @@ int main(){
   job.params.noiseSeed=1234567;renderCPU(job);if(dst!=reference)return 19;
  }
  job.params.noiseSeed=0;
+ // Every R&D module must produce finite, visible output when enabled.
+ job.params=Parameters{};job.params.noise=0;job.params.bloom=0;job.params.flicker=0;job.params.jitter=0;renderCPU(job);auto neutral=dst;
+ auto feature=[&](const Parameters& p,int code){job.params=p;renderCPU(job);for(float v:dst)if(!std::isfinite(v))return code;if(dst==neutral)return code+1;return 0;};
+ Parameters featureParams=job.params;featureParams.bloom=1.2f;featureParams.bloomThreshold=.1f;featureParams.bloomSpread=1;if(int code=feature(featureParams,20))return code;
+ featureParams=job.params;featureParams.chromaBleed=.8f;featureParams.chromaDelay=8;featureParams.lumaSharpness=1;if(int code=feature(featureParams,22))return code;
+ featureParams=job.params;featureParams.monochrome=1;featureParams.tintHue=35;featureParams.phosphorResponse=1.6f;if(int code=feature(featureParams,24))return code;
+ featureParams=job.params;featureParams.verticalRoll=.2f;featureParams.shakeX=6;featureParams.syncDrift=12;if(int code=feature(featureParams,26))return code;
+ featureParams=job.params;featureParams.grainAmount=.2f;featureParams.grainColor=1;if(int code=feature(featureParams,28))return code;
+ job.params=Parameters{};
  // Disabled new stage must ignore its other controls exactly.
  job.params.pixelMix=0;renderCPU(job);auto legacy=dst;
  job.params.pixelPattern=7;job.params.pixelPalette=4;job.params.pixelSize=27;renderCPU(job);if(legacy!=dst)return 8;
@@ -61,7 +70,7 @@ int main(){
  job.output={out.data()+(h-1)*stride,11,17,11+w,17+h,-stride*4,false};job.x1=11;job.y1=17;job.x2=11+w;job.y2=17+h;job.params.bypass=1;renderCPU(job);
  for(int y=0;y<h;y++){for(int x=0;x<w*4;x++)if(out[y*stride+x]!=padded[y*stride+x])return 5;for(int x=w*4;x<stride;x++)if(out[y*stride+x]!=-77)return 6;}
  // Transparent premultiplied input must not generate opaque noise.
- std::fill(src.begin(),src.end(),0);job.input={src.data(),0,0,w,h,w*16,true};job.output={dst.data(),0,0,w,h,w*16,true};job.x1=job.y1=0;job.x2=w;job.y2=h;job.params.bypass=0;renderCPU(job);for(float v:dst)if(v!=0)return 7;
+ std::fill(src.begin(),src.end(),0.f);job.input={src.data(),0,0,w,h,w*16,true};job.output={dst.data(),0,0,w,h,w*16,true};job.x1=job.y1=0;job.x2=w;job.y2=h;job.params.bypass=0;renderCPU(job);for(float v:dst)if(v!=0)return 7;
  std::cout<<"CPU: bypass, 120 mask/noise combinations, determinism and animation passed\n";
  return 0;
 }

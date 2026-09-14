@@ -37,5 +37,5 @@ Copy-Item -LiteralPath (Join-Path $projectRoot "native/README.md") -Destination 
 $files = Get-ChildItem -LiteralPath $distRoot -File -Recurse | Where-Object Name -ne 'manifest.json' | ForEach-Object {
  [ordered]@{path=$_.FullName.Substring($distRoot.Length+1).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}
 }
-[ordered]@{product='CRT SIM';version='0.7.0';files=@($files)} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $distRoot 'manifest.json') -Encoding utf8
+[ordered]@{product='CRT SIM';version='0.8.0';files=@($files)} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $distRoot 'manifest.json') -Encoding utf8
 Write-Host "Staged $distRoot"

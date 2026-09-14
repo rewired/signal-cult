@@ -81,6 +81,16 @@ test('stage switches round-trip and old files preserve their render',()=>{
  for(const key of ['pixelEnabled','tubeEnabled'])assert.throws(()=>validatePreset({version:1,params:{...defaults,[key]:.5}}));
 });
 
+test('R&D modules default compatibly and validate their full ranges',()=>{
+ const legacy={...defaults};
+ const added=['bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift','grainAmount','grainSize','grainSoftness','grainColor','grainSpeed'];
+ for(const id of added)delete legacy[id];
+ const restored=validatePreset({version:1,params:legacy});
+ for(const id of added)assert.equal(restored[id],defaults[id],id);
+ for(const [id,value] of [['bloomRadius',99],['chromaDelay',25],['monochrome',1.1],['shakeX',33],['grainAmount',.51]])
+  assert.throws(()=>validatePreset({version:1,params:{...defaults,[id]:value}}));
+});
+
 test('seed is an exact 24-bit integer and defaults to zero for old presets',()=>{
  const legacy={...defaults};delete legacy.noiseSeed;assert.equal(validatePreset({version:1,params:legacy}).noiseSeed,0);
  for(const noiseSeed of [0,1,1234567,16777215])assert.equal(validatePreset({version:1,params:{...defaults,noiseSeed}}).noiseSeed,noiseSeed);

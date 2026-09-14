@@ -1,4 +1,4 @@
-# CRT SIM — OFX 0.7.0 (Windows x64)
+# CRT SIM — OFX 0.8.0 (Windows x64)
 
 A DaVinci Resolve OFX effect with host-native controls, NVIDIA CUDA acceleration and CPU fallback. Rendering does not depend on the optional Tauri Companion. The **Open CRT SIM Editor** button uses it for the BROKEN FM-style editor.
 
@@ -27,10 +27,16 @@ preview has no comparison, PNG-export or timeline controls underneath.
 The 24 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. Preset names, order and version-1 exchange stay unchanged. Saved project settings and exported presets keep their stored values.
 
 - **Enable Pixel / Sci-Fi** independently enables the pixel stage: 8 raster forms, 6 palettes and 12 dedicated presets.
-- **Enable CRT** enables the complete CRT stage: phosphor mask, scanlines, signal noise, optics, bloom and color adjustments.
-- Both on combines the stages; both off passes the original input through unchanged. Switching off preserves all slider values. The global **Bypass** overrides both stages.
+- **Enable CRT** enables the complete CRT stage: phosphor masks, scanlines, signal noise, optics, color and the R&D modules below.
+- **Glow** provides threshold/knee control, three spatial scales, radius/spread, highlight diffusion and ambient tube glow.
+- **Chroma & Signal** separates luma/chroma sharpness, chroma bleed and delay, plus static or animated hue drift.
+- **Monochrome** provides arbitrary tint hue/saturation, luminance-model blending and phosphor response.
+- **Motion** provides vertical roll, shutter scan, independent X/Y shake and horizontal sync drift.
+- **Film Grain** is a deterministic final-stage layer independent of reception noise.
+- Both main stages on combines them; both off passes the original input through unchanged. Switching off preserves all slider values. The global **Bypass** overrides both stages.
 - Pixel strength must be above zero to see the pixel stage. Select a Sci-Fi preset to start with an active raster.
 - 24 presets total, 12 phosphor masks, 10 noise types and independently animated noise clustering.
+- **Browse looks** in the Companion renders all 24 preset thumbnails from the current Resolve source snapshot.
 - Effect controls support host keyframes. Animation follows host time and frame rate, including still-image sources.
 
 Resolve stores settings and keyframes in its project. The packaged `Contents/Resources/presets.json` records compiled preset values; changing that copy does not update the binary. Edit `presets/crt-presets.json` in the repository and rebuild. The original twelve preset indices remain unchanged.
@@ -57,9 +63,9 @@ cmake --build native/build-cpu --config Release --parallel 4
 ctest --test-dir native/build-cpu -C Release --output-on-failure
 ```
 
-The CPU, CUDA, color-conversion and OFX load/descriptor tests passed locally for 0.7.0. Coverage includes all four stage combinations, 120 mask/noise pairs, 48 pixel/palette pairs, distinct Sci-Fi preset output, deterministic animation, alpha handling and signed/padded row strides. CUDA was checked on an RTX 2070. These checks do not replace a full host/version compatibility test matrix.
+The CPU, CUDA, color-conversion and OFX load/descriptor tests passed locally for 0.8.0. Coverage includes all five R&D module families, all four stage combinations, 120 mask/noise pairs, 48 pixel/palette pairs, distinct preset output, deterministic animation, alpha handling and signed/padded row strides. CUDA was checked on an RTX 2070. These checks do not replace a full host/version compatibility test matrix.
 
-## Seed and deterministic rendering (0.7.0)
+## Seed and deterministic rendering (0.8.0)
 
 **Signal / Seed** is a non-animated integer parameter in the range 0–16,777,215. It is part of look presets and saved projects. Zero retains the previous pattern. Noise, clustering and random jitter detail are derived directly from the seed and host time; no random state is accumulated between frames. CPU and CUDA tests re-render seeded frames after out-of-order requests and compare exact results within each backend. Cross-backend equality is numerical, not bit-exact.
 
@@ -77,7 +83,7 @@ New instances default to **Color Managed**, with **Input Color Space: Rec.709** 
 
 See [COLOR_MANAGEMENT.md](COLOR_MANAGEMENT.md) for RCM/ACES settings, host Auto behavior, HDR reference levels, legacy compatibility and verification limits. Color settings remain independent of creative presets.
 
-Native mask-edge smoothing approximates WebGL derivatives, so browser/native output is not guaranteed to match pixel for pixel. Bloom is spatial. There is no temporal phosphor persistence, proper interlace reconstruction or full PAL/NTSC decoder.
+Native mask-edge smoothing approximates WebGL derivatives, so browser/native output is not guaranteed to match pixel for pixel. Glow is a three-scale spatial approximation rather than temporal phosphor persistence. There is no proper interlace reconstruction or full PAL/NTSC decoder. See ../docs/performance-results.md for reproducible standalone CPU/CUDA measurements.
 
 
 OpenFX SDK headers are vendored from the [Academy Software Foundation OpenFX project](https://github.com/AcademySoftwareFoundation/openfx) under BSD-3-Clause; see [the included license](third_party/openfx/LICENSE.md).

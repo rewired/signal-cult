@@ -202,6 +202,53 @@ HD vec3 sampleLinear(vec2 p){
  vec3 background=pixelTint(vec3(pixelBackground),pixelBackground);
  return mix(original,mix(background,lit,coverage),pixelMix);
 }
+HD vec3 rotateHue(vec3 c,float angle){
+ float co=cos(angle),si=sin(angle),k=.577350269;
+ vec3 crossTerm=vec3(k*(c.b-c.g),k*(c.r-c.b),k*(c.g-c.r));
+ return c*co+crossTerm*si+vec3(k*dot(vec3(k),c)*(1.-co));
+}
+HD vec3 processedSignal(vec2 p){
+ if(chromaBleed==0.&&chromaDelay==0.&&lumaSharpness==0.&&chromaSharpness==0.&&hueDrift==0.)return sampleLinear(p);
+ vec2 sharpStep=vec2((1.+chromaBleed*10.)/resolution.x,0.);
+ vec3 center=sampleLinear(p);
+ vec3 delayed=sampleLinear(p-vec2(chromaDelay/resolution.x,0.));
+ vec3 left=sampleLinear(p-sharpStep),right=sampleLinear(p+sharpStep);
+ float yc=dot(center,vec3(.2126,.7152,.0722));
+ float yd=dot(delayed,vec3(.2126,.7152,.0722));
+ float yl=dot(left,vec3(.2126,.7152,.0722)),yr=dot(right,vec3(.2126,.7152,.0722));
+ vec3 chroma=delayed-vec3(yd);
+ vec3 chromaBlur=((left-vec3(yl))+(right-vec3(yr)))*.5;
+ float luma=yc+(yc-(yl+yr)*.5)*lumaSharpness;
+ chroma=mix(chroma,chromaBlur,chromaBleed)+(chroma-chromaBlur)*chromaSharpness;
+ float angle=(hueDrift+sin(time*hueDriftSpeed*6.2831853)*abs(hueDrift))*.017453293;
+ return rotateHue(vec3(luma)+chroma,angle);
+}
+HD vec3 highlightOnly(vec3 c){
+ float l=max(dot(c,vec3(.2126,.7152,.0722)),0.);
+ float gate=smoothstep(bloomThreshold-bloomKnee,bloomThreshold+bloomKnee,l);
+ return c*gate*max(l-bloomThreshold+bloomKnee,0.)/max(l+bloomKnee,.0001);
+}
+HD vec3 glowScale(vec2 p,float radius){
+ vec2 x=vec2(radius/resolution.x,0.),y=vec2(0.,radius/resolution.y);
+ vec3 g=highlightOnly(sampleLinear(p))*4.;
+ g+=(highlightOnly(sampleLinear(p+x))+highlightOnly(sampleLinear(p-x))+highlightOnly(sampleLinear(p+y))+highlightOnly(sampleLinear(p-y)))*2.;
+ return g/12.;
+}
+HD vec3 tintColor(){
+ float a=tintHue*.017453293;
+ vec3 hue=vec3(.5+.5*cos(a),.5+.5*cos(a-2.0943951),.5+.5*cos(a+2.0943951));
+ float peak=max(hue.r,max(hue.g,hue.b));
+ return mix(vec3(1.),hue/max(peak,.0001),tintSaturation);
+}
+HD vec3 filmGrain(vec2 p){
+ float epoch=floor(time*grainSpeed*24.);
+ vec2 cell=p*resolution/max(grainSize,.5);
+ vec3 fine=vec3(signalRandom(ivec2(floor(cell)),int(epoch)+1103),signalRandom(ivec2(floor(cell)),int(epoch)+1217),signalRandom(ivec2(floor(cell)),int(epoch)+1301));
+ vec3 soft=vec3(signalField(cell*.45,int(epoch)+1409),signalField(cell*.45,int(epoch)+1511),signalField(cell*.45,int(epoch)+1601));
+ vec3 n=mix(fine,soft,grainSoftness)-vec3(.5);
+ float mono=dot(n,vec3(.2126,.7152,.0722));
+ return mix(vec3(mono),n,grainColor);
+}
 HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
  vec2 p=uv;
  if(bypass>.5||(tubeEnabled<.5&&(pixelEnabled<.5||pixelMix<=0.))||(split>0.&&uv.x<split)){return texture(source,p);}
@@ -212,11 +259,18 @@ HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
  // Keep the physical raster separate from horizontal signal displacement.
  vec2 surfaceUV=p;
  vec2 surfacePixel=curve==0.?gl_FragCoord:surfaceUV*resolution;
- float tick=floor(time*30.);float row=floor(surfaceUV.y*lines);
+ if(shakeX>0.||shakeY>0.){
+  float shakePhase=time*shakeSpeed;
+  vec2 shake=vec2(signalField(vec2(shakePhase*.73,17.),1709)-.5,signalField(vec2(shakePhase*.61,31.),1811)-.5)*2.;
+  p+=shake*vec2(shakeX/resolution.x,shakeY/resolution.y);
+ }
+ if(verticalRoll>0.)p.y=fract(p.y+time*rollSpeed*verticalRoll);
+ if(syncDrift>0.)p.x+=sin(p.y*18.849556+time*5.3)*syncDrift/resolution.x;
+ float tick=floor(time*30.);float row=floor(p.y*lines);
  float band=pow(max(0.,1.-abs(p.y-fract(time*.11))/.035),2.)*tracking;
  p.x+=((hash(vec2(row,tick))-.5)*jitter+band*sin(row*2.+time*20.)*35.)/resolution.x;
  vec2 offset=vec2(convergence/resolution.x,0);
- vec3 c=vec3(sampleLinear(p+offset).r,sampleLinear(p).g,sampleLinear(p-offset).b);
+ vec3 c=vec3(processedSignal(p+offset).r,processedSignal(p).g,processedSignal(p-offset).b);
  // Reception noise enters before beam, mask and glass, not as a final overlay.
  if(noise>0.){
   vec3 snow=receptionNoise(p,band);
@@ -225,19 +279,31 @@ HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
   else c=mix(c,pow(max(snow,vec3(0)),vec3(2.2)),noise);
  }
  c+=vec3(band*hash(vec2(row,tick))*.12);
+ float shutterPos=fract(time*shutterSpeed);
+ float shutterDistance=min(abs(p.y-shutterPos),1.-abs(p.y-shutterPos));
+ c*=1.-shutterScan*(1.-smoothstep(0.,shutterWidth,shutterDistance));
  float phase=fract(surfaceUV.y*lines)-.5;
  c*=mix(1.,exp(-phase*phase/(beam*beam*.18)),scan);
  c*=mix(vec3(1),phosphorMask(surfacePixel),mask);
- vec3 glow=vec3(0);
- for(int i=-2;i<=2;i++){for(int j=-2;j<=2;j++){
- vec2 d=vec2(float(i),float(j));float w=exp(-dot(d,d)*.5);
- glow+=sampleLinear(p+d*3./resolution)*w/6.1689;
- }}
- c+=glow*bloom*.45*(int(noiseType)==4?1.:1.-noise);
+ vec3 glowNear=glowScale(p,bloomRadius);
+ vec3 glowMid=glowScale(p,bloomRadius*2.75);
+ vec3 glowFar=glowScale(p,bloomRadius*7.);
+ vec3 glow=mix(glowNear,mix(glowMid,glowFar,.45),bloomSpread);
+ float glowLuma=dot(glow,vec3(.2126,.7152,.0722));
+ glow=mix(glow,vec3(glowLuma),highlightDiffusion);
+ c+=glow*bloom*.72*(int(noiseType)==4?1.:1.-noise);
+ c+=vec3(glowLuma*tubeGlow*(.18+.35*(1.-smoothstep(.05,1.25,dot(q,q)))));
+ if(monochrome>0.){
+  float weightedLuma=dot(c,vec3(.2126,.7152,.0722));
+  float averageLuma=(c.r+c.g+c.b)/3.;
+  float monoLuma=pow(max(mix(weightedLuma,averageLuma,lumaMix),0.),1./phosphorResponse);
+  c=mix(c,tintColor()*monoLuma,monochrome);
+ }
  c=mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,saturation);
  c=c*exp2(exposure)+black;
  c*=1.-vignette*smoothstep(.15,1.4,dot(q,q));
  c*=1.-flicker*(.5+.5*sin(time*113.));
+ if(grainAmount>0.)c+=filmGrain(surfaceUV)*grainAmount;
 
  return managed?vec4(signedPower(c,2.2f/gamma),1):vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);
 }
