@@ -1,7 +1,7 @@
 import {enableCtrlDragSnapping} from '../js/master-controls.js';
 import {parsePreset,stringifyPreset,stepPresetName} from '../js/presets.js';
 import {initializeCompanion} from '../js/companion-adapter.js';
-import {controls,presets,presetStyles,getBuiltInPreset,maskTypes,choiceTypes,toggleIds,integerIds} from '../lib/crt-params.js';
+import {controls,presets,presetStyles,getBuiltInPreset,maskTypes,choiceTypes,toggleIds,integerIds,colorIds} from '../lib/crt-params.js';
 import {CRTRenderer} from '../lib/crt-renderer.js';
 import {registerCRTTools} from '../lib/crt-webmcp.js';
 import {testPattern} from './test-pattern.js';
@@ -19,10 +19,23 @@ function download(blob,name){const url=URL.createObjectURL(blob);const a=documen
 function custom(){state.preset='custom';currentPresetName='Untitled';$('preset-select').value='custom';$('preset-description').textContent='Custom Settings';$('preset-status').textContent='Current settings';}
 function options(select,types){for(const type of types){const option=document.createElement('option');option.value=type.id;option.textContent=`${String(type.id+1).padStart(2,'0')} · ${type.name}`;select.append(option);}}
 function typePicker(parent,label,types,get,set){const wrap=document.createElement('div');wrap.className='noise-picker';const l=document.createElement('label');l.className='maskselect';l.append(label);const select=document.createElement('select');options(select,types);l.append(select);const description=document.createElement('p');wrap.append(l,description);parent.append(wrap);const sync=()=>{select.value=get();description.textContent=types.find(t=>t.id===get())?.description||'';};on(select,'change',()=>{set(+select.value);custom();sync();});sync();return sync;}
+const linearToSrgb=value=>value<=.0031308?value*12.92:1.055*Math.pow(value,1/2.4)-.055;
+const srgbToLinear=value=>value<=.04045?value/12.92:Math.pow((value+.055)/1.055,2.4);
+const byteHex=value=>Math.round(Math.max(0,Math.min(1,linearToSrgb(value)))*255).toString(16).padStart(2,'0');
+function sciFiColorPicker(parent){
+ const wrap=document.createElement('label');wrap.className='sci-fi-color';
+ const title=document.createElement('span');title.textContent='Sci-Fi Color';
+ const input=document.createElement('input');input.type='color';input.setAttribute('aria-label','Sci-Fi Color');
+ const value=document.createElement('code');
+ wrap.append(title,input,value);parent.append(wrap);
+ const sync=()=>{const hex='#'+colorIds.map(id=>byteHex(state.params[id])).join('');input.value=hex;value.textContent=hex.toUpperCase();};
+ on(input,'input',()=>{const bytes=input.value.match(/[0-9a-f]{2}/gi).map(component=>parseInt(component,16)/255);colorIds.forEach((id,index)=>{state.params[id]=srgbToLinear(bytes[index]);});state.params.pixelPalette=6;custom();syncTypes.forEach(update=>update());});
+ sync();return sync;
+}
 const select=$('preset-select');select.append(new Option('Current / custom','custom'));
 for(const name of Object.keys(presets))select.append(new Option(name,name));
 const syncTypes=[];
-for(const [index,group] of ['Pixel / Sci-Fi','CRT','Signal','Chroma & Signal','Glow','Monochrome','Motion','Film Grain','Light & Color','Optics'].entries()){
+for(const [index,group] of ['CRT','Signal','Chroma & Signal','Glow','Monochrome','Motion','Light & Color','Optics','Pixel / Sci-Fi'].entries()){
  const details=document.createElement('section');
  const summary=document.createElement('h2');const label=document.createElement('span');const small=document.createElement('small');small.textContent=`0${index+1}`;label.append(group);summary.append(label);details.append(summary);
  for(const [,id,title] of controls.filter(c=>c[0]===group&&toggleIds.includes(c[1]))){
@@ -33,7 +46,8 @@ for(const [index,group] of ['Pixel / Sci-Fi','CRT','Signal','Chroma & Signal','G
  }
  if(group==='CRT')syncTypes.push(typePicker(details,'Mask Type',maskTypes,()=>state.maskType,value=>{state.maskType=value;}));
  for(const [,id,title] of controls.filter(c=>c[0]===group&&choiceTypes[c[1]]))syncTypes.push(typePicker(details,title,choiceTypes[id],()=>state.params[id],value=>{state.params[id]=value;}));
- for(const [,id,title,min,max,step,initial] of controls.filter(c=>c[0]===group&&!choiceTypes[c[1]]&&!toggleIds.includes(c[1]))){
+ if(group==='Pixel / Sci-Fi')syncTypes.push(sciFiColorPicker(details));
+ for(const [,id,title,min,max,step,initial] of controls.filter(c=>c[0]===group&&!choiceTypes[c[1]]&&!toggleIds.includes(c[1])&&!colorIds.includes(c[1]))){
   const wrap=document.createElement('div');wrap.className='control';const heading=document.createElement('div');heading.className='control-heading';const text=document.createElement('label');text.htmlFor=`range-${id}`;text.textContent=title;
   const number=document.createElement('input');number.type='number';number.setAttribute('aria-label',`${title} Value`);
   const range=document.createElement('input');range.type='range';range.id=`range-${id}`;range.setAttribute('aria-label',title);

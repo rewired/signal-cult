@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,presets,getBuiltInPreset,noiseTypes,maskTypes,validateMaskType,validatePreset} from '../lib/crt-params.js';
+import {defaults,presets,getBuiltInPreset,noiseTypes,maskTypes,pixelPalettes,validateMaskType,validatePreset} from '../lib/crt-params.js';
 test('every built-in preset survives JSON exchange',()=>{
  for(const params of Object.values(presets))assert.deepEqual(validatePreset(JSON.parse(JSON.stringify({version:1,params}))),params);
 });
@@ -47,7 +47,7 @@ test('all twelve mask IDs round-trip while malformed values fail',()=>{
 });
 
 test('built-in snapshots retain their mask and do not mutate saved looks',()=>{
- assert.equal(Object.keys(presets).length,24);
+ assert.equal(Object.keys(presets).length,26);
  for(const name of Object.keys(presets)){
   const snapshot=getBuiltInPreset(name);
   const encoded=JSON.parse(JSON.stringify(snapshot));
@@ -67,10 +67,11 @@ test('Sci-Fi presets and legacy compatibility',()=>{
  const old={...defaults};for(const id of Object.keys(old))if(id.startsWith('pixel'))delete old[id];
  assert.equal(validatePreset({version:1,params:old}).pixelMix,0);
  const looks=Object.entries(presets).filter(([name])=>name.startsWith('Sci-Fi /'));
- assert.equal(looks.length,12);
- assert.equal(new Set(looks.map(([,p])=>JSON.stringify(p))).size,12);
+ assert.equal(looks.length,14);
+ assert.equal(new Set(looks.map(([,p])=>JSON.stringify(p))).size,14);
  for(const [name,p] of Object.entries(presets))assert.equal(p.pixelEnabled===1,name.startsWith('Sci-Fi /'));
- for(const [key,values] of Object.entries({pixelPattern:[-1,.5,8],pixelPalette:[-1,.5,6],pixelSize:[0,65],pixelMix:[-1,2]}))
+ assert.equal(pixelPalettes.at(-1).name,'Custom Color');
+ for(const [key,values] of Object.entries({pixelPattern:[-1,.5,8],pixelPalette:[-1,.5,7],pixelSize:[0,65],pixelMix:[-1,2],pixelColorR:[-1,1.1],pixelColorG:[-1,1.1],pixelColorB:[-1,1.1]}))
   for(const value of values)assert.throws(()=>validatePreset({version:1,params:{...defaults,[key]:value}}));
 });
 
@@ -83,11 +84,11 @@ test('stage switches round-trip and old files preserve their render',()=>{
 
 test('R&D modules default compatibly and validate their full ranges',()=>{
  const legacy={...defaults};
- const added=['bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift','grainAmount','grainSize','grainSoftness','grainColor','grainSpeed'];
+ const added=['bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift'];
  for(const id of added)delete legacy[id];
  const restored=validatePreset({version:1,params:legacy});
  for(const id of added)assert.equal(restored[id],defaults[id],id);
- for(const [id,value] of [['bloomRadius',99],['chromaDelay',25],['monochrome',1.1],['shakeX',33],['grainAmount',.51]])
+ for(const [id,value] of [['bloomRadius',99],['chromaDelay',25],['monochrome',1.1],['shakeX',33]])
   assert.throws(()=>validatePreset({version:1,params:{...defaults,[id]:value}}));
 });
 

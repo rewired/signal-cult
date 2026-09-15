@@ -23,20 +23,21 @@ The Companion uses the same preset toolbar workflow as BROKEN FM: factory naviga
 Current / custom state, named JSON import/export and status feedback. CRT version-1
 files remain compatible; technical color settings remain in Resolve. The Companion
 preview has no comparison, PNG-export or timeline controls underneath.
+Resolve lists the core CRT groups first on the **Controls** page and keeps the optional **Pixel / Sci-Fi** group last.
 
-The 24 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. Preset names, order and version-1 exchange stay unchanged. Saved project settings and exported presets keep their stored values.
+The 26 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. The original preset names and indices remain unchanged, with the two LED display looks appended. Saved project settings and exported presets keep their stored values.
 
-- **Enable Pixel / Sci-Fi** independently enables the pixel stage: 8 raster forms, 6 palettes and 12 dedicated presets.
+- **Enable Pixel / Sci-Fi** independently enables the pixel stage: 8 raster forms, 7 palettes and 14 dedicated presets. The Custom Color palette is driven by the shared Sci-Fi picker in the Companion.
 - **Enable CRT** enables the complete CRT stage: phosphor masks, scanlines, signal noise, optics, color and the R&D modules below.
 - **Glow** provides threshold/knee control, three spatial scales, radius/spread, highlight diffusion and ambient tube glow.
 - **Chroma & Signal** separates luma/chroma sharpness, chroma bleed and delay, plus static or animated hue drift.
 - **Monochrome** provides arbitrary tint hue/saturation, luminance-model blending and phosphor response.
 - **Motion** provides vertical roll, shutter scan, independent X/Y shake and horizontal sync drift.
-- **Film Grain** is a deterministic final-stage layer independent of reception noise.
+
 - Both main stages on combines them; both off passes the original input through unchanged. Switching off preserves all slider values. The global **Bypass** overrides both stages.
 - Pixel strength must be above zero to see the pixel stage. Select a Sci-Fi preset to start with an active raster.
-- 24 presets total, 12 phosphor masks, 10 noise types and independently animated noise clustering.
-- **Browse looks** in the Companion renders all 24 preset thumbnails from the current Resolve source snapshot.
+- 26 presets total, 12 phosphor masks, 10 noise types and independently animated noise clustering.
+- **Browse looks** in the Companion renders all 26 preset thumbnails from the current Resolve source snapshot.
 - Effect controls support host keyframes. Animation follows host time and frame rate, including still-image sources.
 
 Resolve stores settings and keyframes in its project. The packaged `Contents/Resources/presets.json` records compiled preset values; changing that copy does not update the binary. Edit `presets/crt-presets.json` in the repository and rebuild. The original twelve preset indices remain unchanged.

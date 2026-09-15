@@ -37,17 +37,21 @@ export const noiseTypes = [
     { id: 9, name: 'Clouded Reception', description: 'Slowly evolving noise islands.' },
 ];
 export const pixelPatterns = [{"id":0,"name":"Dots","description":"Luminance-responsive raster anchored to the image."},{"id":1,"name":"Square Cells","description":"Luminance-responsive raster anchored to the image."},{"id":2,"name":"Diamonds","description":"Luminance-responsive raster anchored to the image."},{"id":3,"name":"Vertical Bars","description":"Luminance-responsive raster anchored to the image."},{"id":4,"name":"Horizontal Bars","description":"Luminance-responsive raster anchored to the image."},{"id":5,"name":"Cross Matrix","description":"Luminance-responsive raster anchored to the image."},{"id":6,"name":"Rings","description":"Luminance-responsive raster anchored to the image."},{"id":7,"name":"Segment Display","description":"Luminance-responsive raster anchored to the image."}];
-export const pixelPalettes = [{"id":0,"name":"Source Color","description":"Preserve the source colors."},{"id":1,"name":"Phosphor Green","description":"Stylized monitor palette."},{"id":2,"name":"Amber","description":"Stylized monitor palette."},{"id":3,"name":"Ice Blue","description":"Stylized monitor palette."},{"id":4,"name":"Magenta / Cyan","description":"Stylized monitor palette."},{"id":5,"name":"Warm White","description":"Stylized monitor palette."}];
+export const pixelPalettes = [{"id":0,"name":"Source Color","description":"Preserve the source colors."},{"id":1,"name":"Phosphor Green","description":"Stylized monitor palette."},{"id":2,"name":"Amber","description":"Stylized monitor palette."},{"id":3,"name":"Ice Blue","description":"Stylized monitor palette."},{"id":4,"name":"Magenta / Cyan","description":"Stylized monitor palette."},{"id":5,"name":"Warm White","description":"Stylized monitor palette."},{"id":6,"name":"Custom Color","description":"Use the shared Sci-Fi color picker."}];
 export const choiceTypes = {noiseType:noiseTypes,pixelPattern:pixelPatterns,pixelPalette:pixelPalettes};
 export const toggleIds = ['pixelEnabled','tubeEnabled'];
 export const integerIds = ['noiseSeed'];
+export const colorIds = ['pixelColorR','pixelColorG','pixelColorB'];
 export const controls = [
     ["Signal","noiseSeed","Seed",0,16777215,1,0],
     ["Pixel / Sci-Fi","pixelEnabled","Enable Pixel / Sci-Fi",0,1,1,1],
     ["CRT","tubeEnabled","Enable CRT",0,1,1,1],
     ["Pixel / Sci-Fi","pixelMix","Pixel Mix",0,1,0.01,0],
     ["Pixel / Sci-Fi","pixelPattern","Raster Shape",0,7,1,0],
-    ["Pixel / Sci-Fi","pixelPalette","Palette",0,5,1,0],
+    ["Pixel / Sci-Fi","pixelPalette","Palette",0,6,1,0],
+    ["Pixel / Sci-Fi","pixelColorR","Sci-Fi Color Red",0,1,0.001,1],
+    ["Pixel / Sci-Fi","pixelColorG","Sci-Fi Color Green",0,1,0.001,0.158],
+    ["Pixel / Sci-Fi","pixelColorB","Sci-Fi Color Blue",0,1,0.001,0.006],
     ["Pixel / Sci-Fi","pixelSize","Cell Size (px)",3,64,0.5,10],
     ["Pixel / Sci-Fi","pixelAspect","Cell Aspect",0.5,2,0.01,1],
     ["Pixel / Sci-Fi","pixelFill","Cell Fill",0.2,1,0.01,0.85],
@@ -106,14 +110,10 @@ export const controls = [
     ["Signal","jitter","Line Jitter (px)",0,12,0.1,0.15],
     ["Signal","tracking","Tracking",0,1,0.01,0],
     ["Signal","flicker","Flicker",0,0.2,0.001,0.008],
-    ["Film Grain","grainAmount","Grain Amount",0,0.5,0.001,0],
-    ["Film Grain","grainSize","Grain Size",0.5,6,0.05,1],
-    ["Film Grain","grainSoftness","Grain Softness",0,1,0.01,0.2],
-    ["Film Grain","grainColor","Grain Color",0,1,0.01,0.15],
-    ["Film Grain","grainSpeed","Grain Speed",0,12,0.01,6],
+
 ];
 export const defaults = Object.fromEntries(controls.map(c => [c[1], c[6]]));
-const compatibilityDefaults=new Set(['bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift','grainAmount','grainSize','grainSoftness','grainColor','grainSpeed']);
+const compatibilityDefaults=new Set(['pixelColorR','pixelColorG','pixelColorB','bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift']);
 export const presets=Object.fromEntries(presetData.map(p=>[p.name,{...defaults,...p.params}]));
 export const presetStyles=Object.fromEntries(presetData.map(p=>[p.name,{maskType:p.maskType,description:p.description}]));
 export function getBuiltInPreset(name) {

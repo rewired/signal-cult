@@ -16,7 +16,7 @@ static void maximumProfile(Parameters& p){
  p.pixelEnabled=1;p.pixelMix=1;p.tubeEnabled=1;p.noise=.65f;p.noiseClump=1;p.noiseBands=1;p.noiseChroma=1;p.jitter=8;p.tracking=.7f;p.flicker=.12f;
  p.chromaBleed=.8f;p.chromaDelay=12;p.lumaSharpness=1.2f;p.chromaSharpness=1.1f;p.hueDrift=35;p.hueDriftSpeed=1;
  p.bloom=1.2f;p.bloomSpread=1;p.highlightDiffusion=.8f;p.tubeGlow=.65f;p.monochrome=.55f;
- p.verticalRoll=.15f;p.shutterScan=.5f;p.shakeX=12;p.shakeY=8;p.syncDrift=24;p.grainAmount=.18f;p.grainColor=1;
+ p.verticalRoll=.15f;p.shutterScan=.5f;p.shakeX=12;p.shakeY=8;p.syncDrift=24;
 }
 static void report(const char* backend,int w,int h,const std::string& profile,int frames,double seconds){
  double ms=seconds*1000.0/frames,fps=frames/seconds;

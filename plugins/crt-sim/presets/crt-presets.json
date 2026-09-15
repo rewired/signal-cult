@@ -2,7 +2,7 @@
   {
     "version": 1,
     "name": "Studio / PVM",
-    "description": "Balanced studio monitor with a fine RGB grille and subtle RF grain.",
+    "description": "Balanced studio monitor with a fine RGB grille and subtle RF noise.",
     "maskType": 0,
     "params": {
       "noiseSeed": 101,
@@ -68,12 +68,7 @@
       "noiseChroma": 0.03,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -145,12 +140,7 @@
       "noiseChroma": 0.12,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.018,
-      "grainSize": 1.4,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -222,12 +212,7 @@
       "noiseChroma": 0.25,
       "jitter": 1.8,
       "tracking": 0.45,
-      "flicker": 0.008,
-      "grainAmount": 0.065,
-      "grainSize": 1.8,
-      "grainSoftness": 0.5,
-      "grainColor": 0.35,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -299,12 +284,7 @@
       "noiseChroma": 0.08,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -376,12 +356,7 @@
       "noiseChroma": 0.02,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -453,12 +428,7 @@
       "noiseChroma": 0,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -530,12 +500,7 @@
       "noiseChroma": 0.12,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -607,12 +572,7 @@
       "noiseChroma": 0.08,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.025,
-      "grainSize": 1,
-      "grainSoftness": 0.45,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -684,12 +644,7 @@
       "noiseChroma": 0,
       "jitter": 1.2,
       "tracking": 0.28,
-      "flicker": 0.008,
-      "grainAmount": 0.08,
-      "grainSize": 2.1,
-      "grainSoftness": 0.6,
-      "grainColor": 0.42,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -761,12 +716,7 @@
       "noiseChroma": 0.2,
       "jitter": 1.6,
       "tracking": 0.3,
-      "flicker": 0.025,
-      "grainAmount": 0.055,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.55,
-      "grainSpeed": 6
+      "flicker": 0.025
     }
   },
   {
@@ -838,12 +788,7 @@
       "noiseChroma": 0,
       "jitter": 0.15,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.035,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -915,12 +860,7 @@
       "noiseChroma": 1,
       "jitter": 2.2,
       "tracking": 0.4,
-      "flicker": 0.008,
-      "grainAmount": 0.045,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.8,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -992,12 +932,7 @@
       "noiseChroma": 0,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.012,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1069,18 +1004,13 @@
       "noiseChroma": 0,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.016,
-      "grainSize": 1.25,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
     "version": 1,
     "name": "Sci-Fi / Arctic array",
-    "description": "Fine, crisp square cells in a cool palette with subtle RF grain.",
+    "description": "Fine, crisp square cells in a cool palette with subtle reception noise.",
     "maskType": 0,
     "params": {
       "noiseSeed": 1414,
@@ -1146,12 +1076,7 @@
       "noiseChroma": 0.02,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.02,
-      "grainSize": 1.5,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1223,18 +1148,13 @@
       "noiseChroma": 0.55,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.024,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
     "version": 1,
     "name": "Sci-Fi / Diamond archive",
-    "description": "Warm diamonds and stepped tonal shading with soft, coarse grain.",
+    "description": "Warm diamonds and stepped tonal shading with softly textured signal noise.",
     "maskType": 0,
     "params": {
       "noiseSeed": 1616,
@@ -1300,12 +1220,7 @@
       "noiseChroma": 0.05,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.012,
-      "grainSize": 1.25,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1377,12 +1292,7 @@
       "noiseChroma": 0.12,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.016,
-      "grainSize": 1.5,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1454,12 +1364,7 @@
       "noiseChroma": 0,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.02,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1531,12 +1436,7 @@
       "noiseChroma": 0.8,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.024,
-      "grainSize": 1.25,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1608,18 +1508,13 @@
       "noiseChroma": 0,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.012,
-      "grainSize": 1.5,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
     "version": 1,
     "name": "Sci-Fi / Ice microgrid",
-    "description": "Fine warm-white square cells with barely visible fine grain.",
+    "description": "Fine warm-white square cells with barely visible signal noise.",
     "maskType": 0,
     "params": {
       "noiseSeed": 2121,
@@ -1685,12 +1580,7 @@
       "noiseChroma": 0,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.016,
-      "grainSize": 1,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1762,12 +1652,7 @@
       "noiseChroma": 0.65,
       "jitter": 0,
       "tracking": 0.08,
-      "flicker": 0.008,
-      "grainAmount": 0.02,
-      "grainSize": 1.25,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
     }
   },
   {
@@ -1839,12 +1724,157 @@
       "noiseChroma": 0.35,
       "jitter": 0,
       "tracking": 0,
-      "flicker": 0.008,
-      "grainAmount": 0.024,
-      "grainSize": 1.5,
-      "grainSoftness": 0.2,
-      "grainColor": 0.15,
-      "grainSpeed": 6
+      "flicker": 0.008
+    }
+  },
+  {
+    "version": 1,
+    "name": "Sci-Fi / LED display clean",
+    "description": "Clean amber dot-matrix display with crisp cells and restrained optical glow.",
+    "maskType": 6,
+    "params": {
+      "noiseSeed": 2511,
+      "pixelEnabled": 1,
+      "tubeEnabled": 1,
+      "pixelMix": 1,
+      "pixelPattern": 0,
+      "pixelPalette": 6,
+      "pixelColorR": 1,
+      "pixelColorG": 0.215,
+      "pixelColorB": 0.004,
+      "pixelSize": 8,
+      "pixelAspect": 1,
+      "pixelFill": 0.72,
+      "pixelResponse": 0.85,
+      "pixelSoftness": 0.012,
+      "pixelLevels": 8,
+      "pixelQuantize": 0.35,
+      "pixelBackground": 0,
+      "lines": 720,
+      "scan": 0.08,
+      "mask": 0,
+      "pitch": 3,
+      "beam": 0.82,
+      "bloom": 0.65,
+      "bloomThreshold": 0.12,
+      "bloomKnee": 0.16,
+      "bloomRadius": 4.5,
+      "bloomSpread": 0.55,
+      "highlightDiffusion": 0.5,
+      "tubeGlow": 0.015,
+      "exposure": 0.35,
+      "saturation": 1,
+      "black": 0,
+      "gamma": 2.2,
+      "curve": 0.01,
+      "vignette": 0.08,
+      "convergence": 0,
+      "chromaBleed": 0,
+      "chromaDelay": 0,
+      "lumaSharpness": 0.25,
+      "chromaSharpness": 0,
+      "hueDrift": 0,
+      "hueDriftSpeed": 0,
+      "monochrome": 1,
+      "tintHue": 32,
+      "tintSaturation": 1,
+      "phosphorResponse": 1.1,
+      "lumaMix": 0,
+      "verticalRoll": 0,
+      "rollSpeed": 0.2,
+      "shutterScan": 0,
+      "shutterWidth": 0.08,
+      "shutterSpeed": 0.35,
+      "shakeX": 0,
+      "shakeY": 0,
+      "shakeSpeed": 4,
+      "syncDrift": 0,
+      "noiseType": 1,
+      "noise": 0.003,
+      "noiseSize": 0.5,
+      "noiseClump": 0.1,
+      "noiseClumpSpeed": 0.1,
+      "noiseBands": 0,
+      "noiseSpeed": 0.8,
+      "noiseChroma": 0,
+      "jitter": 0,
+      "tracking": 0,
+      "flicker": 0.003
+    }
+  },
+  {
+    "version": 1,
+    "name": "Sci-Fi / LED display glitch",
+    "description": "Damaged amber dot-matrix signal with horizontal streaks, dropouts and unstable sync.",
+    "maskType": 6,
+    "params": {
+      "noiseSeed": 2512,
+      "pixelEnabled": 1,
+      "tubeEnabled": 1,
+      "pixelMix": 1,
+      "pixelPattern": 0,
+      "pixelPalette": 6,
+      "pixelColorR": 1,
+      "pixelColorG": 0.215,
+      "pixelColorB": 0.004,
+      "pixelSize": 8,
+      "pixelAspect": 1,
+      "pixelFill": 0.68,
+      "pixelResponse": 0.9,
+      "pixelSoftness": 0.018,
+      "pixelLevels": 6,
+      "pixelQuantize": 0.65,
+      "pixelBackground": 0,
+      "lines": 432,
+      "scan": 0.12,
+      "mask": 0,
+      "pitch": 3,
+      "beam": 0.72,
+      "bloom": 1.05,
+      "bloomThreshold": 0.08,
+      "bloomKnee": 0.24,
+      "bloomRadius": 7.5,
+      "bloomSpread": 0.72,
+      "highlightDiffusion": 0.65,
+      "tubeGlow": 0.02,
+      "exposure": 0.28,
+      "saturation": 1,
+      "black": 0,
+      "gamma": 2.2,
+      "curve": 0.015,
+      "vignette": 0.14,
+      "convergence": 0,
+      "chromaBleed": 0,
+      "chromaDelay": 0,
+      "lumaSharpness": -0.18,
+      "chromaSharpness": 0,
+      "hueDrift": 0,
+      "hueDriftSpeed": 0,
+      "monochrome": 1,
+      "tintHue": 32,
+      "tintSaturation": 1,
+      "phosphorResponse": 1.18,
+      "lumaMix": 0,
+      "verticalRoll": 0.012,
+      "rollSpeed": 0.16,
+      "shutterScan": 0.12,
+      "shutterWidth": 0.025,
+      "shutterSpeed": 0.48,
+      "shakeX": 1.2,
+      "shakeY": 0.25,
+      "shakeSpeed": 5.2,
+      "syncDrift": 15,
+      "noiseType": 3,
+      "noise": 0.24,
+      "noiseSize": 2.8,
+      "noiseClump": 0.8,
+      "noiseClumpSpeed": 0.55,
+      "noiseBands": 0.78,
+      "noiseSpeed": 0.75,
+      "noiseChroma": 0,
+      "jitter": 3.5,
+      "tracking": 0.35,
+      "flicker": 0.045
     }
   }
 ]

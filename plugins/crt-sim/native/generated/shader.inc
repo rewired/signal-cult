@@ -181,6 +181,7 @@ HD vec3 pixelTint(vec3 original,float level){
  if(kind==3)return vec3(.16,.68,1.)*level;
  if(kind==4)return mix(vec3(.75,.035,.42),vec3(.12,.95,1.),smoothstep(.15,.85,level))*level;
  if(kind==5)return vec3(1.,.88,.69)*level;
+ if(kind==6)return vec3(pixelColorR,pixelColorG,pixelColorB)*level;
  return original;
 }
 HD vec3 sampleLinear(vec2 p){
@@ -235,20 +236,13 @@ HD vec3 glowScale(vec2 p,float radius){
  return g/12.;
 }
 HD vec3 tintColor(){
+ if(pixelEnabled>.5&&int(pixelPalette)==6)return vec3(pixelColorR,pixelColorG,pixelColorB);
  float a=tintHue*.017453293;
  vec3 hue=vec3(.5+.5*cos(a),.5+.5*cos(a-2.0943951),.5+.5*cos(a+2.0943951));
  float peak=max(hue.r,max(hue.g,hue.b));
  return mix(vec3(1.),hue/max(peak,.0001),tintSaturation);
 }
-HD vec3 filmGrain(vec2 p){
- float epoch=floor(time*grainSpeed*24.);
- vec2 cell=p*resolution/max(grainSize,.5);
- vec3 fine=vec3(signalRandom(ivec2(floor(cell)),int(epoch)+1103),signalRandom(ivec2(floor(cell)),int(epoch)+1217),signalRandom(ivec2(floor(cell)),int(epoch)+1301));
- vec3 soft=vec3(signalField(cell*.45,int(epoch)+1409),signalField(cell*.45,int(epoch)+1511),signalField(cell*.45,int(epoch)+1601));
- vec3 n=mix(fine,soft,grainSoftness)-vec3(.5);
- float mono=dot(n,vec3(.2126,.7152,.0722));
- return mix(vec3(mono),n,grainColor);
-}
+
 HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
  vec2 p=uv;
  if(bypass>.5||(tubeEnabled<.5&&(pixelEnabled<.5||pixelMix<=0.))||(split>0.&&uv.x<split)){return texture(source,p);}
@@ -303,7 +297,7 @@ HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
  c=c*exp2(exposure)+black;
  c*=1.-vignette*smoothstep(.15,1.4,dot(q,q));
  c*=1.-flicker*(.5+.5*sin(time*113.));
- if(grainAmount>0.)c+=filmGrain(surfaceUV)*grainAmount;
+
 
  return managed?vec4(signedPower(c,2.2f/gamma),1):vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);
 }

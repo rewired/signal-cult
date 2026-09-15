@@ -41,7 +41,7 @@ int main(){
  featureParams=job.params;featureParams.chromaBleed=.8f;featureParams.chromaDelay=8;featureParams.lumaSharpness=1;if(int code=feature(featureParams,22))return code;
  featureParams=job.params;featureParams.monochrome=1;featureParams.tintHue=35;featureParams.phosphorResponse=1.6f;if(int code=feature(featureParams,24))return code;
  featureParams=job.params;featureParams.verticalRoll=.2f;featureParams.shakeX=6;featureParams.syncDrift=12;if(int code=feature(featureParams,26))return code;
- featureParams=job.params;featureParams.grainAmount=.2f;featureParams.grainColor=1;if(int code=feature(featureParams,28))return code;
+
  job.params=Parameters{};
  // Disabled new stage must ignore its other controls exactly.
  job.params.pixelMix=0;renderCPU(job);auto legacy=dst;

@@ -71,7 +71,10 @@ fn validate_preset(text: &str) -> Result<Value, String> {
     let contract: Value = serde_json::from_str(include_str!("../../../contracts/parameters-v1.json")).map_err(|e|e.to_string())?;
     for def in contract["parameters"].as_array().ok_or("invalid contract")? {
         let id=def["id"].as_str().ok_or("invalid parameter ID")?;
-        let n=params.get(id).and_then(Value::as_f64).ok_or_else(||format!("missing parameter: {id}"))?;
+        let Some(n)=params.get(id).and_then(Value::as_f64) else {
+            if matches!(id, "pixelColorR" | "pixelColorG" | "pixelColorB") { continue; }
+            return Err(format!("missing parameter: {id}"));
+        };
         if !n.is_finite() || n < def["min"].as_f64().unwrap() || n > def["max"].as_f64().unwrap()
             || (def["type"] != "double" && n.fract() != 0.0) { return Err(format!("invalid parameter: {id}")); }
     }

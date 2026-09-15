@@ -29,9 +29,11 @@ int main(int argc,char** argv){if(argc!=2)return 1;HMODULE module=LoadLibraryA(a
  if(plugin->mainEntry(kOfxActionLoad,nullptr,nullptr,nullptr)!=kOfxStatOK)return 5;
  if(plugin->mainEntry(kOfxActionDescribe,&effectStore,nullptr,nullptr)!=kOfxStatOK)return 6;
  if(plugin->mainEntry(kOfxImageEffectActionDescribeInContext,&effectStore,nullptr,nullptr)!=kOfxStatOK)return 7;
- if(paramStores["preset"]->strings[kOfxParamPropChoiceOption].size()!=25||paramStores["maskType"]->strings[kOfxParamPropChoiceOption].size()!=12||paramStores["noiseType"]->strings[kOfxParamPropChoiceOption].size()!=10)return 8;
- if(paramStores["pixelPattern"]->strings[kOfxParamPropChoiceOption].size()!=8||paramStores["pixelPalette"]->strings[kOfxParamPropChoiceOption].size()!=6||!paramStores.count("noiseClumpSpeed"))return 9;
+ if(paramStores["preset"]->strings[kOfxParamPropChoiceOption].size()!=27||paramStores["maskType"]->strings[kOfxParamPropChoiceOption].size()!=12||paramStores["noiseType"]->strings[kOfxParamPropChoiceOption].size()!=10)return 8;
+ if(paramStores["pixelPattern"]->strings[kOfxParamPropChoiceOption].size()!=8||paramStores["pixelPalette"]->strings[kOfxParamPropChoiceOption].size()!=7||!paramStores.count("noiseClumpSpeed"))return 9;
  if(paramStores["encoding"]->strings[kOfxParamPropChoiceOption].size()!=4||paramStores["inputGamut"]->strings[kOfxParamPropChoiceOption].size()!=6||paramStores["inputGamma"]->strings[kOfxParamPropChoiceOption].size()!=9)return 10;
+ const std::vector<std::string> expectedPage={"crtSimEdit","crtSimStatus","preset","bypass","colorManagement","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"};
+ if(paramStores["controlsPage"]->strings[kOfxParamPropPageChild]!=expectedPage)return 12;
  Store output;if(plugin->mainEntry(kOfxImageEffectActionGetOutputColourspace,&effectStore,nullptr,handle(&output))!=kOfxStatOK||output.strings[kOfxImageClipPropColourspace][0]!="OfxColourspace_Source")return 11;
  plugin->mainEntry(kOfxActionUnload,nullptr,nullptr,nullptr);FreeLibrary(module);
  std::cout<<"OFX binary loads; exports, describe, host parameters and all choices passed\n";return 0;

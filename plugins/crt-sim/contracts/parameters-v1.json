@@ -59,10 +59,40 @@
       "label": "Palette",
       "group": "Pixel / Sci-Fi",
       "min": 0,
-      "max": 5,
+      "max": 6,
       "step": 1,
       "default": 0,
       "type": "choice"
+    },
+    {
+      "id": "pixelColorR",
+      "label": "Sci-Fi Color Red",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 0.001,
+      "default": 1,
+      "type": "double"
+    },
+    {
+      "id": "pixelColorG",
+      "label": "Sci-Fi Color Green",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 0.001,
+      "default": 0.158,
+      "type": "double"
+    },
+    {
+      "id": "pixelColorB",
+      "label": "Sci-Fi Color Blue",
+      "group": "Pixel / Sci-Fi",
+      "min": 0,
+      "max": 1,
+      "step": 0.001,
+      "default": 0.006,
+      "type": "double"
     },
     {
       "id": "pixelSize",
@@ -642,56 +672,6 @@
       "max": 0.2,
       "step": 0.001,
       "default": 0.008,
-      "type": "double"
-    },
-    {
-      "id": "grainAmount",
-      "label": "Grain Amount",
-      "group": "Film Grain",
-      "min": 0,
-      "max": 0.5,
-      "step": 0.001,
-      "default": 0,
-      "type": "double"
-    },
-    {
-      "id": "grainSize",
-      "label": "Grain Size",
-      "group": "Film Grain",
-      "min": 0.5,
-      "max": 6,
-      "step": 0.05,
-      "default": 1,
-      "type": "double"
-    },
-    {
-      "id": "grainSoftness",
-      "label": "Grain Softness",
-      "group": "Film Grain",
-      "min": 0,
-      "max": 1,
-      "step": 0.01,
-      "default": 0.2,
-      "type": "double"
-    },
-    {
-      "id": "grainColor",
-      "label": "Grain Color",
-      "group": "Film Grain",
-      "min": 0,
-      "max": 1,
-      "step": 0.01,
-      "default": 0.15,
-      "type": "double"
-    },
-    {
-      "id": "grainSpeed",
-      "label": "Grain Speed",
-      "group": "Film Grain",
-      "min": 0,
-      "max": 12,
-      "step": 0.01,
-      "default": 6,
       "type": "double"
     }
   ]

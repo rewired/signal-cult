@@ -20,7 +20,7 @@ Measured locally on 2026-09-14T16:23:52+02:00. These are standalone core-rendere
 | CUDA | 1920x1080 | max | 60 | 48.33 | 20.69 |
 | CUDA | 3840x2160 | max | 30 | 191.00 | 5.24 |
 
-The default profile uses the parameter defaults and a generated color-gradient source. The max profile enables the Pixel / Sci-Fi stage and simultaneously drives signal noise, chroma processing, multi-scale glow, monochrome, screen motion and film grain to deliberately heavy settings. Timings include rendering only; input allocation and CPU-to-GPU upload are outside the timed loop.
+The default profile uses the parameter defaults and a generated color-gradient source. The max profile enables the Pixel / Sci-Fi stage and simultaneously drives signal noise, chroma processing, multi-scale glow, monochrome, screen motion to deliberately heavy settings. Timings include rendering only; input allocation and CPU-to-GPU upload are outside the timed loop.
 
 Reproduce the matrix after a Release build:
 

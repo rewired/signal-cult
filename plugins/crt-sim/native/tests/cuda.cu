@@ -18,7 +18,7 @@ int main(){
   for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i]))return 3;worst=std::fmax(worst,std::fabs(gpu[i]-cpu[i]));}
  }
  // Exercise all new pattern/palette pairs, including their threshold edges.
- for(int pattern=0;pattern<8;pattern++)for(int palette=0;palette<6;palette++){
+ for(int pattern=0;pattern<8;pattern++)for(int palette=0;palette<7;palette++){
   job.params.pixelMix=1;job.params.pixelPattern=float(pattern);job.params.pixelPalette=float(palette);job.params.pixelSize=9;job.params.pixelResponse=1.4f;
   renderCPU(job);RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;
   if(renderCUDA(device,stream,true))return 7;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));
@@ -44,7 +44,7 @@ int main(){
  job.params.chromaBleed=.8f;job.params.chromaDelay=8;job.params.lumaSharpness=1;job.params.chromaSharpness=.7f;job.params.hueDrift=25;job.params.hueDriftSpeed=.8f;
  job.params.bloom=1.2f;job.params.bloomThreshold=.15f;job.params.bloomSpread=1;job.params.highlightDiffusion=.7f;job.params.tubeGlow=.5f;
  job.params.monochrome=.6f;job.params.tintHue=42;job.params.phosphorResponse=1.5f;job.params.verticalRoll=.1f;job.params.shutterScan=.4f;job.params.shakeX=8;job.params.shakeY=5;job.params.syncDrift=18;
- job.params.grainAmount=.18f;job.params.grainColor=1;renderCPU(job);{RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;if(renderCUDA(device,stream,true))return 20;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 21;worst=std::fmax(worst,std::fabs(gpu[i]-cpu[i]));}}
+ renderCPU(job);{RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;if(renderCUDA(device,stream,true))return 20;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 21;worst=std::fmax(worst,std::fabs(gpu[i]-cpu[i]));}}
  job.params=Parameters{};job.params.time=.73f;job.params.noise=.4f;
  // Full managed rendering on CUDA, including signed/HDR inputs and every transfer.
  job.managed=true;job.params.tubeEnabled=1;job.params.pixelEnabled=1;job.params.pixelMix=.4f;job.params.noise=0;job.params.jitter=0;job.params.flicker=0;

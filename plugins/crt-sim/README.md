@@ -21,9 +21,9 @@ Use **Enable Pixel / Sci-Fi** and **Enable CRT** in either interface. Switching 
 - **Glow 2.0:** threshold and soft knee, three spatial scales, adjustable radius/spread, highlight diffusion and ambient tube emission.
 - **Monochrome:** continuous source-to-tint mix with free hue, saturation, phosphor response and selectable luminance model.
 - **Motion:** vertical roll, traveling shutter scan, independent horizontal/vertical shake and horizontal sync drift.
-- **Film Grain:** a deterministic final-stage grain layer with size, softness, color and speed controls, separate from reception noise.
-- **Pixel / Sci-Fi:** 8 procedural raster forms and 6 palettes, with cell size, aspect, luminance response, fill, edge softness, tonal steps and background light.
-- **Presets:** 24 complete JSON snapshots: 12 CRT looks and 12 Sci-Fi looks, with a current-frame thumbnail browser.
+
+- **Pixel / Sci-Fi:** 8 procedural raster forms and 7 palettes, including a shared custom-color picker, with cell size, aspect, luminance response, fill, edge softness, tonal steps and background light.
+- **Presets:** 26 complete JSON snapshots: 12 CRT looks and 14 Sci-Fi looks, with a current-frame thumbnail browser.
 
 ## Start
 
@@ -43,13 +43,15 @@ JSON presets are imported and exported from the preset toolbar. Video export is 
 
 Build output: `native/build/RewiredCRT.ofx.bundle`. Close Resolve, install the entire bundle into `C:\Program Files\Common Files\OFX\Plugins\`, then restart Resolve. Find **CRT SIM** in the **rewired-vfx** OpenFX group.
 
+On Resolve's **Controls** page, the core CRT groups appear first; the optional **Pixel / Sci-Fi** group is placed last.
+
 See [the native README](native/README.md) for build commands, the local update script, CUDA requirements and color handling. Compiled bundles, local ZIP packages and installation backups are excluded from Git.
 
 ## Render order
 
-Pixel / Sci-Fi is sampled into the CRT signal. Screen motion moves the signal inside the fixed tube surface, then luma/chroma reconstruction, RGB convergence, reception noise, shutter scan, scanlines/beam and the phosphor mask are applied. Glow 2.0 collects thresholded source highlights at three spatial scales; highlight diffusion and ambient tube emission are added before monochrome tinting, saturation, exposure and black level. Vignette and flicker precede the separate final-stage film grain and output gamma.
+Pixel / Sci-Fi is sampled into the CRT signal. Screen motion moves the signal inside the fixed tube surface, then luma/chroma reconstruction, RGB convergence, reception noise, shutter scan, scanlines/beam and the phosphor mask are applied. Glow 2.0 collects thresholded source highlights at three spatial scales; highlight diffusion and ambient tube emission are added before monochrome tinting, saturation, exposure and black level. Vignette and flicker precede output gamma.
 
-Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Signal jitter, shake, roll and sync drift move the signal within that surface; they do not move the physical phosphor mask. Turning CRT off also disables curvature and all CRT-owned signal, glow, motion, monochrome and grain processing.
+Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Signal jitter, shake, roll and sync drift move the signal within that surface; they do not move the physical phosphor mask. Turning CRT off also disables curvature and all CRT-owned signal, glow, motion and monochrome processing.
 
 ## Deterministic seed
 
@@ -75,7 +77,7 @@ names; imported names are retained on export until a parameter is edited. JSON i
 are limited to 64 KB and validated before any settings change. Downloads use the preset
 name as the filename. Each effect retains its own compatible preset format.
 
-The 24 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. Preset names, order and version-1 exchange stay unchanged. Saved project settings and exported presets keep their stored values.
+The 26 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. The original preset names and indices remain unchanged, with the two LED display looks appended. Saved project settings and exported presets keep their stored values.
 
 [presets/crt-presets.json](presets/crt-presets.json) is the shared preset source. Version-1 JSON exchange saves parameters, mask ID and stage switches. The web importer supplies compatible defaults for older files: missing switches are enabled, while files without pixel settings receive zero pixel strength. Existing CRT looks therefore remain unaffected.
 
@@ -131,7 +133,7 @@ above remain valid. Shared build/test/preview commands are in the
 
 Run `node scripts/sync-master-ui.mjs` after changing BROKEN FM styles or slider helpers.
 Companion staging synchronizes them automatically; the checked-in files work directly in the browser.
-The former CRT stylesheet has been replaced. The shared shader now contains the expanded R&D imaging pipeline; all 24 factory presets include and selectively exercise its controls.
+The former CRT stylesheet has been replaced. The shared shader now contains the expanded R&D imaging pipeline; all 26 factory presets include and selectively exercise its controls.
 
 Build the complete CRT package with `./scripts/build-windows.ps1` (Rust/Tauri build tools
 required). This produces `dist/windows-x64/RewiredCRT.ofx.bundle`

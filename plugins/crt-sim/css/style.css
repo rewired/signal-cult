@@ -10,6 +10,9 @@
 .controls .stage-toggle {display:flex;align-items:center;gap:8px;}
 .controls .stage-toggle input {width:auto;margin:0;accent-color:var(--accent);}
 .controls .noise-picker p {color:var(--muted);font-size:.64rem;line-height:1.5;}
+.controls .sci-fi-color {display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin:0 0 14px;color:var(--text);}
+.controls .sci-fi-color input[type=color] {width:42px;height:28px;padding:2px;border:1px solid #35534d;background:#0b100f;cursor:pointer;}
+.controls .sci-fi-color code {min-width:56px;color:var(--accent);font-size:.68rem;}
 #app.preview-focus {grid-template-columns:1fr;}
 #app.preview-focus .controls {display:none;}
 body:has(#host-session:not([hidden])) .source-toolbar #load,body:has(#host-session:not([hidden])) #use-test {display:none;}
