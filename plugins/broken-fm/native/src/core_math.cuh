@@ -266,10 +266,17 @@ BFM_HD inline float shapeVisibleSignal(float value, const Values& p) {
   return clampf(value * parameter(p, ParameterId::Brightness), 0, 1);
 }
 
+struct DrySignal {
+  float cycles = 0;
+  float normal = 0;
+  float drift_frequency = 0;
+  bool dropped = false;
+};
+
 template <typename Values>
-BFM_HD inline void renderPixel(const float* image, int width, int height, int x, int y,
-                               const Values& p, float time, FmIntegralView fmIntegral,
-                               bool sourceFlipY, float* output) {
+BFM_HD inline DrySignal drySignalAt(const float* image, int width, int height, int x, int y,
+                                    const Values& p, float time, FmIntegralView fmIntegral,
+                                    bool sourceFlipY) {
   const float cx = x + .5f - width * .5f, cy = y + .5f - height * .5f;
   const float angle = parameter(p, ParameterId::ScanAngle) * kTau / 360;
   const float dx = cosf(angle), dy = sinf(angle), nx = -dy, ny = dx;
@@ -316,9 +323,40 @@ BFM_HD inline void renderPixel(const float* image, int width, int height, int x,
   const float phaseNoise = signedNoise(scan / 84 + time * 1.1f + seedX,
                                        normal / 36 - time * .65f + seedY);
   const float broadNoise = signedNoise(px / 3.5f + time * 17 + seedX * 31,
-                                       py / 3.5f - time * 11 + seedY * 31);
+                                      py / 3.5f - time * 11 + seedY * 31);
   cycles += (phaseNoise * parameter(p, ParameterId::PhaseJitter) + broadNoise * parameter(p, ParameterId::SignalNoise)) * amount;
-  const float value = visibleSignal(cycles, normal, driftFrequency, p, time);
+  return {cycles, normal, driftFrequency, dropped};
+}
+
+template <typename Values>
+BFM_HD inline void feedbackSourcePixel(const float* image, int width, int height, int x, int y,
+                                       const Values& p, float time, FmIntegralView fmIntegral,
+                                       bool sourceFlipY, float* output) {
+  const auto dry = drySignalAt(image, width, height, x, y, p, time, fmIntegral, sourceFlipY);
+  float direct = carrier(dry.cycles, dry.normal, p, time);
+  float quadrature = carrier(dry.cycles + .25f, dry.normal, p, time);
+  if (dry.dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) == 1) direct = quadrature = 0;
+  output[0] = direct; output[1] = quadrature; output[2] = 0; output[3] = 1;
+}
+
+template <typename Values>
+BFM_HD inline void renderPixel(const float* image, int width, int height, int x, int y,
+                               const Values& p, float time, FmIntegralView fmIntegral,
+                               bool sourceFlipY, float* output, const float* feedbackState = nullptr,
+                               std::ptrdiff_t feedbackRowBytes = 0) {
+  const auto dry = drySignalAt(image, width, height, x, y, p, time, fmIntegral, sourceFlipY);
+  float cycles = dry.cycles;
+  if (feedbackState) {
+    const auto* state = reinterpret_cast<const float*>(reinterpret_cast<const char*>(feedbackState)
+      + static_cast<std::ptrdiff_t>(y) * feedbackRowBytes) + x * 4;
+    const float angle = parameter(p, ParameterId::FeedbackPhase) * kTau;
+    const float previousSignal = state[0] * cosf(angle) + state[1] * sinf(angle);
+    const float feedback = previousSignal * parameter(p, ParameterId::FeedbackAmount);
+    if (static_cast<int>(parameter(p, ParameterId::FeedbackInjection)) == 1) {
+      cycles += parameter(p, ParameterId::PhaseDepth) * feedback * parameter(p, ParameterId::ModulationGain);
+    } else cycles += feedback;
+  }
+  const float value = visibleSignal(cycles, dry.normal, dry.drift_frequency, p, time);
   const int color = static_cast<int>(parameter(p, ParameterId::ColorMode));
   const float inR = sourceChannel(image, width, height, x, y, 0, sourceFlipY);
   const float inG = sourceChannel(image, width, height, x, y, 1, sourceFlipY);
@@ -329,10 +367,10 @@ BFM_HD inline void renderPixel(const float* image, int width, int height, int x,
     if (peak > 1e-4f) { r *= inR / peak; g *= inG / peak; b *= inB / peak; }
   } else if (color == 2) {
     const float offset = parameter(p, ParameterId::RgbPhaseOffset);
-    r = visibleSignal(cycles + offset, normal, driftFrequency, p, time);
-    b = visibleSignal(cycles - offset, normal, driftFrequency, p, time);
+    r = visibleSignal(cycles + offset, dry.normal, dry.drift_frequency, p, time);
+    b = visibleSignal(cycles - offset, dry.normal, dry.drift_frequency, p, time);
   }
-  if (dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) != 0) r = g = b = 0;
+  if (dry.dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) != 0) r = g = b = 0;
   r = shapeVisibleSignal(r, p);
   g = shapeVisibleSignal(g, p);
   b = shapeVisibleSignal(b, p);

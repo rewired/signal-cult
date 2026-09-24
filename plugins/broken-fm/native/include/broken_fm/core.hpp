@@ -32,6 +32,7 @@ struct RenderRequest {
   double time_seconds = 0.0;
   double frame_rate = 24.0;
   double transport_origin_seconds = 0.0;
+  ConstImageView feedback_state;
 };
 
 enum class RenderStatus { Ok, InvalidArgument, CudaUnavailable, CudaError };
@@ -60,6 +61,7 @@ class CudaRenderContext {
 
 ParameterValues defaultParameters();
 RenderStatus renderCpu(const RenderRequest& request);
+RenderStatus renderFeedbackSourceCpu(const RenderRequest& request);
 RenderStatus renderCuda(const RenderRequest& request);
 bool cudaAvailable();
 

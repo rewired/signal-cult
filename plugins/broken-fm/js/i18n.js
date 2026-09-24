@@ -257,7 +257,7 @@ const messages = {
     'routing.ofxTarget': 'OFX target',
     'routing.ofxNote': 'OFX maps the finite dry history to explicit frames t−1…t−N, making the result independent of host render order.',
     'host.editing': 'Editing Resolve OFX instance',
-    'host.capability': 'Native v0.1 · audio resources and temporal history pending',
+    'host.capability': 'Native v0.1 · finite feedback enabled; audio, sequential feedback, and phosphor history pending',
     'host.apply': 'Apply to Resolve',
     'host.cancel': 'Cancel',
   },

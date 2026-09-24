@@ -23,11 +23,13 @@ int main() {
 
   set(values, ParameterId::FeedbackAmount, .1);
   if (broken_fm::ofx::nativeSupports(values)) return 3;
+  set(values, ParameterId::FeedbackModel, 1);
+  if (!broken_fm::ofx::nativeSupports(values)) return 7;
   set(values, ParameterId::FeedbackAmount, 0);
 
-  // A route that can turn feedback or persistence on must still be rejected.
+  // Finite feedback routes are supported; phosphor persistence remains gated.
   set(values, ParameterId::AudioDestination2, 5);
-  if (broken_fm::ofx::nativeSupports(values)) return 4;
+  if (!broken_fm::ofx::nativeSupports(values)) return 4;
   set(values, ParameterId::AudioDestination2, 16);
   if (broken_fm::ofx::nativeSupports(values)) return 5;
 
@@ -35,6 +37,15 @@ int main() {
   set(values, ParameterId::AudioDestination2, 1);
   set(values, ParameterId::AudioSource2, 1);
   if (broken_fm::ofx::nativeSupports(values)) return 6;
+
+  values = broken_fm::defaultParameters();
+  set(values, ParameterId::FeedbackModel, 1);
+  set(values, ParameterId::FeedbackAmount, .52);
+  set(values, ParameterId::FeedbackWindow, 8);
+  if (!broken_fm::ofx::nativeSupports(values)) return 8;
+  set(values, ParameterId::Mode, 1);
+  set(values, ParameterId::FeedbackInjection, 1);
+  if (broken_fm::ofx::nativeSupports(values)) return 9;
 
   return 0;
 }

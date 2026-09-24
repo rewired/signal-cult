@@ -28,7 +28,7 @@ The Tauri process never renders Resolve frames and the OFX render action never d
 
 ## Native capability gate
 
-The native v0.1 spine deliberately distinguishes implemented processing from preserved controls. PM/FM, threshold, procedural carriers, deterministic instability/failure, LFO modulation, color, and output response execute in CPU and CUDA. Audio analysis/imported sample data, custom wavetable bytes, finite feedback source history, and phosphor history require additional host/resource contracts. They remain valid preset fields and round-trip through Resolve/Companion, but cannot affect v0.1 native pixels yet.
+The native v0.1 spine deliberately distinguishes implemented processing from preserved controls. PM/FM, threshold, procedural carriers, deterministic instability/failure, LFO modulation, finite feedback source history, color, and output response execute natively. Resolve supplies the requested finite history window through `GetFramesNeeded`; the host adapter builds the same decayed, displaced dry-signal window used by the WebGL preview and then renders the final frame on CPU. Audio analysis/imported sample data, custom wavetable bytes, sequential feedback, and phosphor history still require additional host/resource contracts. They remain valid preset fields and round-trip through Resolve/Companion, but cannot affect v0.1 native pixels yet.
 
 The Companion host session disables unsupported carrier and modulation choices where possible. Resolve still presents the shared frozen parameter contract, so some enum or matrix combinations can remain selectable there. The renderer rejects those unsupported combinations instead of silently substituting another effect.
 

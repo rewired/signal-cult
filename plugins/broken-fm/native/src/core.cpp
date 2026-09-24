@@ -11,17 +11,16 @@
 
 namespace broken_fm {
 
-ParameterValues defaultParameters() {
-  ParameterValues values{};
-  for (std::size_t i = 0; i < values.size(); ++i) values[i] = kParameterDescriptors[i].default_value;
-  return values;
-}
+namespace {
 
-RenderStatus renderCpu(const RenderRequest& request) {
+RenderStatus renderCpuPass(const RenderRequest& request, bool feedbackSource) {
   if (!request.source.data || !request.output.data || request.source.width <= 0 || request.source.height <= 0
       || request.output.width != request.source.width || request.output.height != request.source.height
       || std::abs(request.source.row_bytes) < request.source.width * 4 * static_cast<std::ptrdiff_t>(sizeof(float))
-      || std::abs(request.output.row_bytes) < request.output.width * 4 * static_cast<std::ptrdiff_t>(sizeof(float))) {
+      || std::abs(request.output.row_bytes) < request.output.width * 4 * static_cast<std::ptrdiff_t>(sizeof(float))
+      || (request.feedback_state.data
+          && (request.feedback_state.width != request.source.width || request.feedback_state.height != request.source.height
+              || std::abs(request.feedback_state.row_bytes) < request.source.width * 4 * static_cast<std::ptrdiff_t>(sizeof(float))))) {
     return RenderStatus::InvalidArgument;
   }
   const int width = request.source.width, height = request.source.height;
@@ -69,10 +68,28 @@ RenderStatus renderCpu(const RenderRequest& request) {
   }
   std::for_each(std::execution::par_unseq, rows.begin(), rows.end(), [&](int y) {
     auto* row = reinterpret_cast<float*>(reinterpret_cast<std::byte*>(request.output.data) + y * request.output.row_bytes);
-    for (int x = 0; x < width; ++x) detail::renderPixel(
-      contiguous.data(), width, height, x, y, effective, signalTime, fm, false, row + x * 4);
+    for (int x = 0; x < width; ++x) {
+      if (feedbackSource) detail::feedbackSourcePixel(
+        contiguous.data(), width, height, x, y, effective, signalTime, fm, false, row + x * 4);
+      else detail::renderPixel(contiguous.data(), width, height, x, y, effective, signalTime, fm, false,
+        row + x * 4, request.feedback_state.data, request.feedback_state.row_bytes);
+    }
   });
   return RenderStatus::Ok;
 }
+
+}  // namespace
+
+ParameterValues defaultParameters() {
+  ParameterValues values{};
+  for (std::size_t i = 0; i < values.size(); ++i) values[i] = kParameterDescriptors[i].default_value;
+  return values;
+}
+
+RenderStatus renderCpu(const RenderRequest& request) {
+  return renderCpuPass(request, false);
+}
+
+RenderStatus renderFeedbackSourceCpu(const RenderRequest& request) { return renderCpuPass(request, true); }
 
 }  // namespace broken_fm

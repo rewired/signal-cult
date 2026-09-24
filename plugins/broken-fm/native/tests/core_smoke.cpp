@@ -103,6 +103,35 @@ bool rgbPhaseLineParityPass() {
   return true;
 }
 
+bool finiteFeedbackPass() {
+  auto source = makeImage(48, 24, 8), state = makeImage(48, 24, 4);
+  auto dry = makeImage(48, 24, 12), wet = makeImage(48, 24, 16);
+  fillSource(source);
+  auto parameters = broken_fm::defaultParameters();
+  parameters[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackModel)] = 1;
+  parameters[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackAmount)] = .52;
+  parameters[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackWindow)] = 8;
+  auto stateRequest = requestFor(source, state, parameters, 1.0);
+  if (broken_fm::renderFeedbackSourceCpu(stateRequest) != broken_fm::RenderStatus::Ok) return false;
+  bool hasSignal = false;
+  for (int y = 0; y < state.height; ++y) for (int x = 0; x < state.width; ++x) {
+    const float* pixel = state.row(y) + x * 4;
+    if (!std::isfinite(pixel[0]) || !std::isfinite(pixel[1]) || pixel[0] < -1.001f || pixel[0] > 1.001f
+        || pixel[1] < -1.001f || pixel[1] > 1.001f || std::abs(pixel[3] - 1) > 1e-6f) return false;
+    hasSignal = hasSignal || std::abs(pixel[0]) > .01f || std::abs(pixel[1]) > .01f;
+  }
+  if (!hasSignal) return false;
+  if (broken_fm::renderCpu(requestFor(source, dry, parameters, 1.25)) != broken_fm::RenderStatus::Ok) return false;
+  auto wetRequest = requestFor(source, wet, parameters, 1.25);
+  wetRequest.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+  if (broken_fm::renderCpu(wetRequest) != broken_fm::RenderStatus::Ok) return false;
+  for (int y = 0; y < wet.height; ++y) for (int x = 0; x < wet.width * 4; ++x) {
+    if (!std::isfinite(wet.row(y)[x])) return false;
+    if (std::abs(wet.row(y)[x] - dry.row(y)[x]) > 1e-4f) return true;
+  }
+  return false;
+}
+
 double percentile(std::vector<double> values, double fraction) {
   std::sort(values.begin(), values.end());
   return values[std::min(values.size() - 1,
@@ -137,6 +166,7 @@ bool benchmark(broken_fm::CudaRenderContext& context, int mode, const char* labe
 int main() {
   if (!hashGoldenVectorsPass()) return 1;
   if (!rgbPhaseLineParityPass()) return 10;
+  if (!finiteFeedbackPass()) return 11;
 
   constexpr int width = 96, height = 54;
   struct Scenario { int mode; float angle; int carrier; float seed; bool negative; };

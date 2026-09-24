@@ -70,8 +70,8 @@ std::string groupParameterId(std::string_view group) {
 }
 
 bool nativeParameterEnabled(const broken_fm::ParameterDescriptor& descriptor) {
-  const std::string_view id(descriptor.id), group(descriptor.group);
-  return group != "feedback" && id != "phosphorPersistence" && id != "audioAttack" && id != "audioRelease";
+  const std::string_view id(descriptor.id);
+  return id != "phosphorPersistence" && id != "audioAttack" && id != "audioRelease";
 }
 
 OfxStatus fetchSuites() {
@@ -94,7 +94,7 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   properties->propSetInt(props, kOfxImageEffectPropSupportsMultiResolution, 0, 1);
   properties->propSetInt(props, kOfxImageEffectPluginPropSingleInstance, 0, 0);
   properties->propSetString(props, kOfxImageEffectPluginRenderThreadSafety, 0, kOfxImageEffectRenderFullySafe);
-  properties->propSetInt(props, kOfxImageEffectPropTemporalClipAccess, 0, 0);
+  properties->propSetInt(props, kOfxImageEffectPropTemporalClipAccess, 0, 1);
   properties->propSetInt(props, kOfxImageEffectPropCPURenderSupported, 0, 1);
   return kOfxStatOK;
 }
@@ -261,6 +261,90 @@ broken_fm::ParameterValues readValues(const Instance& instance, OfxTime time) {
   return values;
 }
 
+double parameterValue(const broken_fm::ParameterValues& values, broken_fm::ParameterId id) {
+  return values[static_cast<std::size_t>(id)];
+}
+
+bool finiteFeedbackEnabled(const broken_fm::ParameterValues& values) {
+  if (static_cast<int>(parameterValue(values, broken_fm::ParameterId::FeedbackModel)) != 1) return false;
+  if (parameterValue(values, broken_fm::ParameterId::FeedbackAmount) > 0.000001) return true;
+  for (int slot = 0; slot < 4; ++slot) {
+    const auto destination = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioDestination1) + slot * 3);
+    const auto amount = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioAmount1) + slot * 3);
+    if (static_cast<int>(parameterValue(values, destination)) == 5
+        && std::abs(parameterValue(values, amount)) > 0.000001) return true;
+  }
+  return false;
+}
+
+float sampleChannel(const std::vector<float>& image, int width, int height, float x, float y, int channel) {
+  if (x < 0 || y < 0 || x > width - 1 || y > height - 1) return 0;
+  const int x0 = static_cast<int>(std::floor(x)), y0 = static_cast<int>(std::floor(y));
+  const int x1 = std::min(x0 + 1, width - 1), y1 = std::min(y0 + 1, height - 1);
+  const float tx = x - x0, ty = y - y0;
+  const auto at = [&](int sx, int sy) { return image[(static_cast<std::size_t>(sy) * width + sx) * 4 + channel]; };
+  return (at(x0, y0) * (1 - tx) + at(x1, y0) * tx) * (1 - ty)
+    + (at(x0, y1) * (1 - tx) + at(x1, y1) * tx) * ty;
+}
+
+bool buildFiniteFeedback(Instance& instance, OfxTime time, double frameRate, int width, int height,
+                         const broken_fm::ParameterValues& values, std::vector<float>& state) {
+  if (!finiteFeedbackEnabled(values)) return false;
+  const int window = std::clamp(static_cast<int>(std::round(parameterValue(
+    values, broken_fm::ParameterId::FeedbackWindow))), 1, 8);
+  const float decay = std::clamp(static_cast<float>(parameterValue(
+    values, broken_fm::ParameterId::FeedbackDecay)), 0.0f, .999f);
+  const float displacement = static_cast<float>(parameterValue(
+    values, broken_fm::ParameterId::FeedbackDisplacement));
+  const float angle = static_cast<float>(parameterValue(
+    values, broken_fm::ParameterId::FeedbackDisplacementAngle) * 3.14159265358979323846 / 180.0);
+  const float dx = std::cos(angle) * displacement, dy = std::sin(angle) * displacement;
+  state.assign(static_cast<std::size_t>(width) * height * 4, 0);
+  std::vector<float> historySignal(static_cast<std::size_t>(width) * height * 4);
+  float weightSum = 0;
+  for (int tap = 0; tap < window; ++tap) {
+    Image history;
+    if (!getImage(instance.source, time - tap - 1, history)) continue;
+    if (history.bounds.x2 - history.bounds.x1 != width || history.bounds.y2 - history.bounds.y1 != height) continue;
+    const auto historyValues = readValues(instance, time - tap - 1);
+    broken_fm::RenderRequest historyRequest{
+      {static_cast<const float*>(history.data), width, height, history.row_bytes},
+      {historySignal.data(), width, height, static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))},
+      historyValues, (time - tap - 1) / std::max(frameRate, 1.0), frameRate};
+    parameters->paramGetValue(instance.transport_origin, &historyRequest.transport_origin_seconds);
+    if (broken_fm::renderFeedbackSourceCpu(historyRequest) != broken_fm::RenderStatus::Ok) continue;
+    const float weight = std::pow(decay, static_cast<float>(tap));
+    for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+      const std::size_t offset = (static_cast<std::size_t>(y) * width + x) * 4;
+      state[offset] += sampleChannel(historySignal, width, height, x - dx * (tap + 1), y - dy * (tap + 1), 0) * weight;
+      state[offset + 1] += sampleChannel(historySignal, width, height, x - dx * (tap + 1), y - dy * (tap + 1), 1) * weight;
+      state[offset + 3] = 1;
+    }
+    weightSum += weight;
+  }
+  if (weightSum <= 0) return false;
+  for (std::size_t i = 0; i < state.size(); i += 4) {
+    state[i] /= weightSum;
+    state[i + 1] /= weightSum;
+  }
+  return true;
+}
+
+OfxStatus getFramesNeeded(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs) {
+  Instance* instance = nullptr;
+  if (instanceFromEffect(effect, instance) != kOfxStatOK) return kOfxStatErrBadHandle;
+  OfxTime time = 0;
+  if (properties->propGetDouble(inArgs, kOfxPropTime, 0, &time) != kOfxStatOK) return kOfxStatErrValue;
+  const auto values = readValues(*instance, time);
+  if (!finiteFeedbackEnabled(values)) return kOfxStatReplyDefault;
+  const int window = std::clamp(static_cast<int>(std::round(parameterValue(
+    values, broken_fm::ParameterId::FeedbackWindow))), 1, 8);
+  const double frames[]{time - window, time};
+  return properties->propSetDoubleN(outArgs, "OfxImageClipPropFrameRange_Source", 2, frames);
+}
+
 OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   Instance* instance = nullptr; if (instanceFromEffect(effect, instance) != kOfxStatOK) return kOfxStatErrBadHandle;
   OfxTime time = 0; if (properties->propGetDouble(inArgs, kOfxPropTime, 0, &time) != kOfxStatOK) return kOfxStatErrValue;
@@ -279,9 +363,14 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   if (effects->getPropertySet(effect, &effectProps) == kOfxStatOK) properties->propGetDouble(effectProps, kOfxImageEffectPropFrameRate, 0, &frameRate);
   const auto values = readValues(*instance, time);
   if (!broken_fm::ofx::nativeSupports(values)) return kOfxStatErrUnsupported;
+  std::vector<float> feedbackState;
   broken_fm::RenderRequest request{{static_cast<const float*>(source.data), width, height, source.row_bytes},
     {static_cast<float*>(output.data), width, height, output.row_bytes}, values, time / std::max(frameRate, 1.0), frameRate};
   parameters->paramGetValue(instance->transport_origin, &request.transport_origin_seconds);
+  if (buildFiniteFeedback(*instance, time, frameRate, width, height, values, feedbackState)) {
+    request.feedback_state = {feedbackState.data(), width, height,
+      static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))};
+  }
   auto status = instance->cuda.render(request);
   if (status == broken_fm::RenderStatus::CudaUnavailable || status == broken_fm::RenderStatus::CudaError) status = broken_fm::renderCpu(request);
   return status == broken_fm::RenderStatus::Ok ? kOfxStatOK : kOfxStatErrValue;
@@ -376,7 +465,7 @@ OfxStatus instanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle inAr
   return kOfxStatOK;
 }
 
-OfxStatus mainEntry(const char* action, const void* handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle) {
+OfxStatus mainEntry(const char* action, const void* handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs) {
   auto effect = reinterpret_cast<OfxImageEffectHandle>(const_cast<void*>(handle));
   try {
     if (std::strcmp(action, kOfxActionLoad) == 0) return fetchSuites();
@@ -386,6 +475,7 @@ OfxStatus mainEntry(const char* action, const void* handle, OfxPropertySetHandle
     if (std::strcmp(action, kOfxActionCreateInstance) == 0) return createInstance(effect);
     if (std::strcmp(action, kOfxActionDestroyInstance) == 0) return destroyInstance(effect);
     if (std::strcmp(action, kOfxImageEffectActionRender) == 0) return render(effect, inArgs);
+    if (std::strcmp(action, kOfxImageEffectActionGetFramesNeeded) == 0) return getFramesNeeded(effect, inArgs, outArgs);
     if (std::strcmp(action, kOfxActionInstanceChanged) == 0) return instanceChanged(effect, inArgs);
     return kOfxStatReplyDefault;
   } catch (...) { return kOfxStatErrUnknown; }

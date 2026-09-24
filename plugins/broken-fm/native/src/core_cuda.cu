@@ -161,6 +161,7 @@ CudaRenderStats CudaRenderContext::stats() const {
 }
 
 RenderStatus CudaRenderContext::render(const RenderRequest& request) {
+  if (request.feedback_state.data) return RenderStatus::CudaUnavailable;
   if (!cudaAvailable()) return RenderStatus::CudaUnavailable;
   if (!validRequest(request)) return RenderStatus::InvalidArgument;
 
