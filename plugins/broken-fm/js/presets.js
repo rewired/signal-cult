@@ -189,6 +189,19 @@ export function applyPreset(root, preset) {
   }
 }
 
+export function rendererParametersForPreset(preset) {
+  const normalized = normalizeParameters(preset.parameters);
+  return Object.fromEntries(PRESET_FIELDS.map((field) => [
+    field.key,
+    field.type === 'enum' ? field.values.indexOf(normalized[field.key]) : normalized[field.key],
+  ]));
+}
+
+export function describePreset(preset) {
+  const normalized = normalizeParameters(preset.parameters);
+  return `${normalized.mode.toUpperCase()} · ${normalized.modSource.replaceAll('-', ' ')} · ${normalized.carrierShape}`;
+}
+
 export async function loadBuiltInPresets() {
   const manifestResponse = await fetch('presets/index.json', { cache: 'no-store' });
   if (!manifestResponse.ok) throw new Error(`HTTP ${manifestResponse.status} loading presets/index.json`);

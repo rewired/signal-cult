@@ -4,7 +4,8 @@ import { setLocale, t } from './i18n.js';
 import { enableCtrlDragSnapping } from './controls.js';
 import { initializeCompanion } from './companion-adapter.js';
 import {
-  PRESET_FIELDS, applyPreset, createPreset, loadBuiltInPresets, parsePreset, stringifyPreset,
+  PRESET_FIELDS, applyPreset, createPreset, describePreset, loadBuiltInPresets, parsePreset,
+  rendererParametersForPreset, stringifyPreset,
 } from './presets.js';
 
 setLocale('en');
@@ -75,9 +76,16 @@ const presetSelect = document.querySelector('#preset-select');
 const presetStatus = document.querySelector('#preset-status');
 const presetPrevious = document.querySelector('#preset-previous');
 const presetNext = document.querySelector('#preset-next');
+const openPresetBrowser = document.querySelector('#open-preset-browser');
 let currentPresetName = 'Untitled';
 let applyingPreset = false;
 const builtInPresets = new Map();
+let applicationReady = false;
+let presetPreviewRenderer = null;
+
+function updatePresetBrowserAvailability() {
+  openPresetBrowser.disabled = !applicationReady || builtInPresets.size === 0;
+}
 
 function setPlaybackButton(isPlaying) {
   playPauseIcon.setAttribute('href', isPlaying ? '#icon-pause' : '#icon-play');
@@ -579,6 +587,73 @@ function stepPreset(direction) {
 presetPrevious.addEventListener('click', () => stepPreset(-1));
 presetNext.addEventListener('click', () => stepPreset(1));
 
+function assignPresetToRenderer(target, preset) {
+  Object.assign(target.params, rendererParametersForPreset(preset));
+  target.params.audioAnalysis = [0, 0, 0, 0, 0];
+  target.params.audioFrameIndex = 0;
+  target.params.lfoTriggerTime = 0;
+  target.setInternalWavetable(preset.parameters.wavetable === 'custom' ? 'harmonic' : preset.parameters.wavetable);
+  target.resetFeedback();
+  target.resetPersistence();
+}
+
+async function renderPresetBrowser() {
+  const dialog = document.querySelector('#preset-browser-dialog');
+  const grid = document.querySelector('#preset-grid');
+  const browserStatus = document.querySelector('#preset-browser-status');
+  grid.replaceChildren();
+  dialog.showModal();
+  openPresetBrowser.disabled = true;
+  browserStatus.textContent = t('preset.rendering');
+  try {
+    if (!presetPreviewRenderer) {
+      const thumbnailCanvas = document.createElement('canvas');
+      presetPreviewRenderer = new BrokenFmRenderer(thumbnailCanvas, showError);
+      await presetPreviewRenderer.initialize();
+      presetPreviewRenderer.setRenderSize(320, 180);
+    }
+    if (activeSourceKind === 'test') presetPreviewRenderer.useTestPattern();
+    else if (activeSourceKind === 'image' || activeSourceKind === 'resolve') presetPreviewRenderer.setImage(renderer.video);
+    else presetPreviewRenderer.setVideo(renderer.video);
+    const frameIndex = currentFrameIndex();
+    const presets = [...builtInPresets.values()];
+    for (const [index, preset] of presets.entries()) {
+      assignPresetToRenderer(presetPreviewRenderer, preset);
+      presetPreviewRenderer.render(frameIndex);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'preset-card';
+      button.dataset.preset = preset.id;
+      const image = document.createElement('img');
+      image.alt = '';
+      image.src = presetPreviewRenderer.canvas.toDataURL('image/jpeg', .82);
+      const copy = document.createElement('span');
+      const title = document.createElement('strong');
+      title.textContent = preset.name;
+      const description = document.createElement('small');
+      description.textContent = describePreset(preset);
+      copy.append(title, description);
+      button.append(image, copy);
+      button.addEventListener('click', () => {
+        presetSelect.value = preset.id;
+        applyAndResetPreset(preset, 'preset.applied');
+        dialog.close();
+      });
+      grid.append(button);
+      if (index % 4 === 3) await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    browserStatus.textContent = t('preset.rendered', { count: presets.length });
+  } catch (error) {
+    showError(new Error(t('preset.previewError', { message: error.message })));
+    dialog.close();
+  } finally {
+    updatePresetBrowserAvailability();
+  }
+}
+
+openPresetBrowser.addEventListener('click', () => { void renderPresetBrowser(); });
+document.querySelector('#close-preset-browser').addEventListener('click', () => document.querySelector('#preset-browser-dialog').close());
+
 loadBuiltInPresets()
   .then((presets) => {
     for (const preset of presets) {
@@ -591,6 +666,7 @@ loadBuiltInPresets()
     presetSelect.disabled = false;
     presetPrevious.disabled = false;
     presetNext.disabled = false;
+    updatePresetBrowserAvailability();
   })
   .catch((error) => showError(new Error(t('preset.libraryError', { message: error.message }))));
 
@@ -859,6 +935,8 @@ function frame(now) {
 
 async function startApplication() {
   await renderer.initialize();
+  applicationReady = true;
+  updatePresetBrowserAvailability();
   renderer.setAudioData(audioSource.samples, audioSource.sampleRate);
   renderer.setInternalWavetable('harmonic');
   audioObjectUrl = URL.createObjectURL(encodeWave(audioSource.samples, audioSource.sampleRate));

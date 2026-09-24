@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
 const renderer=await readFile(new URL('../js/renderer.js',import.meta.url),'utf8');
+const app=await readFile(new URL('../js/app.js',import.meta.url),'utf8');
+const html=await readFile(new URL('../index.html',import.meta.url),'utf8');
 const fract=value=>value-Math.floor(value);
 const f=Math.fround;
 function shaderHash(x,y,seed){
@@ -36,4 +38,14 @@ test('rupture direction rotates every material family and exposes cross damage',
  assert.match(renderer,/primaryGeneration.*secondaryGeneration/);
  assert.match(renderer,/previousFeedback,uv-feedbackAlong\*feedbackDrift/);
  assert.match(renderer,/signalNoise=noise\(vec2\(accentSpace\.y/);
+});
+
+test('preset browser renders isolated live thumbnails and applies a selected look',()=>{
+ assert.match(html,/id="open-preset-browser"/);
+ assert.match(html,/id="preset-browser-dialog"/);
+ assert.match(html,/id="preset-grid"/);
+ assert.match(app,/new RuptureRenderer\(thumb\)/);
+ assert.match(app,/thumbRenderer\.resize\(320,180\)/);
+ assert.match(app,/apply\(preset,preset\.id\);dialog\.close\(\)/);
+ assert.match(app,/thumbRenderer\?\.destroy\(\)/);
 });

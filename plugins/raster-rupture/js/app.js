@@ -53,6 +53,28 @@ paintMaskInfluence();
 for(const preset of presets)$('preset-select').append(new Option(preset.name,preset.id));
 on($('preset-select'),'change',()=>{const preset=presets.find(item=>item.id===$('preset-select').value);if(preset)apply(preset,preset.id);});
 for(const [id,delta] of [['preset-previous',-1],['preset-next',1]])on($(id),'click',()=>{const id=nextPreset(presets.map(p=>p.id),$('preset-select').value,delta);apply(presets.find(p=>p.id===id),id);});
+async function renderPresetBrowser(){
+ const dialog=$('preset-browser-dialog'),grid=$('preset-grid'),openButton=$('open-preset-browser');
+ if(!renderer){showError('Acknowledge the photosensitivity warning before browsing looks.');return;}
+ grid.replaceChildren();dialog.showModal();openButton.disabled=true;$('preset-browser-status').textContent='Rendering current frame...';
+ const thumb=document.createElement('canvas');thumb.width=320;thumb.height=180;let thumbRenderer;
+ try{
+  thumbRenderer=new RuptureRenderer(thumb);thumbRenderer.resize(320,180);
+  if(maskFromSource)thumbRenderer.setMask(source);else thumbRenderer.setMask(demoMask);
+  for(const [index,preset] of presets.entries()){
+   thumbRenderer.reset();thumbRenderer.update(source,preset.params,{ink:colorToFloat(preset.colors.ink),accent:colorToFloat(preset.colors.accent)},preset.style,preset.routes,preset.combine,sourceTime*preset.params.evolution);thumbRenderer.present(preset.params.amount);
+   const button=document.createElement('button');button.type='button';button.className='preset-card';button.dataset.preset=preset.id;
+   const image=document.createElement('img');image.alt='';image.src=thumb.toDataURL('image/jpeg',.82);
+   const copy=document.createElement('span'),title=document.createElement('strong'),description=document.createElement('small');title.textContent=preset.name;description.textContent=preset.description;
+   copy.append(title,description);button.append(image,copy);on(button,'click',()=>{apply(preset,preset.id);dialog.close();});grid.append(button);
+   if(index%4===3)await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
+  $('preset-browser-status').textContent=presets.length+' looks rendered from the current frame';
+ }catch(error){showError('Could not render preset previews: '+error.message);dialog.close();}
+ finally{thumbRenderer?.destroy();openButton.disabled=false;}
+}
+on($('open-preset-browser'),'click',()=>{void renderPresetBrowser();});
+on($('close-preset-browser'),'click',()=>$('preset-browser-dialog').close());
 on($('style'),'change',()=>{style=$('style').value;custom();clearMemory();});
 const colorToFloat=value=>[parseInt(value.slice(1,3),16)/255,parseInt(value.slice(3,5),16)/255,parseInt(value.slice(5,7),16)/255];
 for(const [id,key] of [['ink-color','ink'],['accent-color','accent']])on($(id),'input',()=>{colors[key]=$(id).value.toLowerCase();custom();needsFrame=true;});

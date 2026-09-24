@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 
 #include "broken_fm/core.hpp"
+#include "native_support.hpp"
 #include "ofxCore.h"
 #include "ofxGPURender.h"
 #include "ofxImageEffect.h"
@@ -260,25 +261,6 @@ broken_fm::ParameterValues readValues(const Instance& instance, OfxTime time) {
   return values;
 }
 
-bool nativeSupports(const broken_fm::ParameterValues& values) {
-  const auto get = [&](broken_fm::ParameterId id) { return values[static_cast<std::size_t>(id)]; };
-  if (static_cast<int>(get(broken_fm::ParameterId::CarrierShape)) == 6) return false;
-  if (static_cast<int>(get(broken_fm::ParameterId::CarrierShape)) == 5
-      && static_cast<int>(get(broken_fm::ParameterId::Wavetable)) == 3) return false;
-  if (get(broken_fm::ParameterId::FeedbackAmount) > 0.000001
-      || get(broken_fm::ParameterId::PhosphorPersistence) > 0.000001) return false;
-  for (int slot = 0; slot < 4; ++slot) {
-    const auto source = static_cast<broken_fm::ParameterId>(static_cast<std::size_t>(broken_fm::ParameterId::AudioSource1) + slot * 3);
-    const auto destination = static_cast<broken_fm::ParameterId>(static_cast<std::size_t>(broken_fm::ParameterId::AudioDestination1) + slot * 3);
-    const auto amount = static_cast<broken_fm::ParameterId>(static_cast<std::size_t>(broken_fm::ParameterId::AudioAmount1) + slot * 3);
-    const int sourceValue = static_cast<int>(get(source)), destinationValue = static_cast<int>(get(destination));
-    if (std::abs(get(amount)) <= 0.000001 || destinationValue == 0) continue;
-    if (sourceValue >= 1 && sourceValue <= 5) return false;
-    if (destinationValue == 5 || destinationValue == 11 || destinationValue == 12 || destinationValue == 16 || destinationValue == 20) return false;
-  }
-  return true;
-}
-
 OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   Instance* instance = nullptr; if (instanceFromEffect(effect, instance) != kOfxStatOK) return kOfxStatErrBadHandle;
   OfxTime time = 0; if (properties->propGetDouble(inArgs, kOfxPropTime, 0, &time) != kOfxStatOK) return kOfxStatErrValue;
@@ -296,7 +278,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   OfxPropertySetHandle effectProps = nullptr; double frameRate = 24;
   if (effects->getPropertySet(effect, &effectProps) == kOfxStatOK) properties->propGetDouble(effectProps, kOfxImageEffectPropFrameRate, 0, &frameRate);
   const auto values = readValues(*instance, time);
-  if (!nativeSupports(values)) return kOfxStatErrUnsupported;
+  if (!broken_fm::ofx::nativeSupports(values)) return kOfxStatErrUnsupported;
   broken_fm::RenderRequest request{{static_cast<const float*>(source.data), width, height, source.row_bytes},
     {static_cast<float*>(output.data), width, height, output.row_bytes}, values, time / std::max(frameRate, 1.0), frameRate};
   parameters->paramGetValue(instance->transport_origin, &request.transport_origin_seconds);

@@ -187,6 +187,7 @@ export class BrokenFmRenderer {
     };
     this.lastEffective = null;
     this.lastModulation = null;
+    this.renderSize = null;
   }
 
   async initialize() {
@@ -422,8 +423,8 @@ export class BrokenFmRenderer {
 
   resize() {
     const gl = this.gl;
-    const width = this.useVideo ? this.videoWidth : TEST_PATTERN_WIDTH;
-    const height = this.useVideo ? this.videoHeight : TEST_PATTERN_HEIGHT;
+    const width = this.renderSize?.[0] ?? (this.useVideo ? this.videoWidth : TEST_PATTERN_WIDTH);
+    const height = this.renderSize?.[1] ?? (this.useVideo ? this.videoHeight : TEST_PATTERN_HEIGHT);
     if (this.canvas.width === width && this.canvas.height === height) return;
     this.canvas.width = width;
     this.canvas.height = height;
@@ -438,6 +439,13 @@ export class BrokenFmRenderer {
     for (const target of this.persistenceTargets) this.allocateTarget(target, width, height);
     this.feedbackResetRequested = true;
     this.persistenceResetRequested = true;
+  }
+
+  setRenderSize(width, height) {
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
+      throw new Error('Render size must use positive integer dimensions.');
+    }
+    this.renderSize = [width, height];
   }
 
   prepareFmTargets(scanAngle = this.params.scanAngle, stableScanField = false) {

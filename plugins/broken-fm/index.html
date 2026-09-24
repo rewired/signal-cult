@@ -76,6 +76,7 @@
       <button id="preset-next" class="icon-button preset-step" type="button" disabled data-i18n-aria-label="preset.next" aria-label="Next preset">
         <svg class="material-icon"><use href="#icon-double-right"/></svg>
       </button>
+      <button id="open-preset-browser" class="toolbar-button" type="button" disabled data-i18n="preset.browse">Browse looks</button>
       <label class="icon-button file-control" aria-label="Load JSON" data-i18n-aria-label="preset.load">
         <svg class="material-icon"><use href="#icon-upload"/></svg>
         <input id="preset-file" type="file" accept="application/json,.json">
@@ -100,6 +101,10 @@
       <div class="perf" aria-live="polite"><span id="fps" data-i18n="perf.fpsPending">-- fps</span><span id="frame-time" data-i18n="perf.frameTimePending">-- ms</span></div>
     </div>
   </header>
+  <dialog id="preset-browser-dialog" class="preset-browser-dialog" aria-labelledby="preset-browser-title">
+    <div class="preset-browser-header"><span><h2 id="preset-browser-title" data-i18n="preset.browserTitle">Preset browser</h2><small id="preset-browser-status" role="status" data-i18n="preset.rendering">Rendering current frame...</small></span><button id="close-preset-browser" class="toolbar-button" type="button" data-i18n="preset.close">Close</button></div>
+    <div id="preset-grid" class="preset-grid"></div>
+  </dialog>
   <div id="host-session" class="host-session" hidden>
     <span><strong data-i18n="host.editing">Editing Resolve OFX instance</strong><small data-i18n="host.capability">Native v0.1 · audio resources and temporal history pending</small></span>
     <button id="host-apply" type="button" data-i18n="host.apply">Apply to Resolve</button>

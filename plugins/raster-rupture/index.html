@@ -26,12 +26,17 @@
   <button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset">«</button>
   <select id="preset-select" aria-label="Current preset"><option value="custom">Current / custom</option></select>
   <button id="preset-next" class="icon-button preset-step" aria-label="Next preset">»</button>
+  <button id="open-preset-browser" class="toolbar-button">Browse looks</button>
   <label class="file-control icon-button" aria-label="Load JSON" title="Load JSON">↑<input id="preset-file" type="file" accept="application/json,.json"></label>
   <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
   <span id="preset-status" class="preset-status" role="status">Applied: Paper Signal</span>
  </div>
  <div class="header-status"><span id="fps" class="perf">READY</span></div>
 </header>
+<dialog id="preset-browser-dialog" class="preset-browser-dialog" aria-labelledby="preset-browser-title">
+ <div class="preset-browser-header"><span><h2 id="preset-browser-title">Preset browser</h2><small id="preset-browser-status" role="status">Rendering current frame...</small></span><button id="close-preset-browser" class="toolbar-button">Close</button></div>
+ <div id="preset-grid" class="preset-grid"></div>
+</dialog>
 <main id="app">
  <section class="preview-panel" aria-label="Preview">
   <canvas id="preview" width="960" height="540" aria-label="RASTER RUPTURE output"></canvas>
