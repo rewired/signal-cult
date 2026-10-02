@@ -244,13 +244,13 @@ BFM_HD inline float carrier(float cycles, float normal, const Values& p, float t
 }
 
 template <typename Values>
-BFM_HD inline float visibleSignal(float cycles, float normal, float frequency,
+BFM_HD inline float visibleSignal(float cycles, float normal, float phasePerPixel,
                                   const Values& p, float time) {
   if (static_cast<int>(parameter(p, ParameterId::SignalRender)) != 0) {
     return carrier(cycles, normal, p, time) * .5f + .5f;
   }
   const float angular = fabsf(atan2f(sinf(cycles * kTau), cosf(cycles * kTau)));
-  const float phasePerPixel = fmaxf(kTau * fabsf(frequency) / 100, 1e-4f);
+  phasePerPixel = fmaxf(phasePerPixel, 1e-4f);
   const float distancePx = angular / phasePerPixel;
   return 1 - smooth(parameter(p, ParameterId::LineWidth) * .5f,
                     parameter(p, ParameterId::LineWidth) * .5f
@@ -270,6 +270,7 @@ struct DrySignal {
   float cycles = 0;
   float normal = 0;
   float drift_frequency = 0;
+  float phase_per_pixel = 0;
   bool dropped = false;
 };
 
@@ -286,7 +287,8 @@ BFM_HD inline DrySignal drySignalAt(const float* image, int width, int height, i
   const float driftX = signedNoise(clock + seed * .754877666f, 41.73f + seed * .569840296f) * parameter(p, ParameterId::HorizontalDrift) * amount;
   const float driftY = signedNoise(clock + seed * .754877666f, 83.19f + seed * .569840296f) * parameter(p, ParameterId::VerticalDrift) * amount;
   const float px = cx - driftX, py = cy - driftY;
-  float scan = px * dx + py * dy;
+  const float unjitteredScan = px * dx + py * dy;
+  float scan = unjitteredScan;
   const float normal = px * nx + py * ny;
   const float lineIndex = floorf(normal / fmaxf(parameter(p, ParameterId::LineJitterScale), 1));
   scan += signedNoise(lineIndex + seed * .754877666f, time * parameter(p, ParameterId::LineJitterSpeed) + seed * .569840296f)
@@ -307,25 +309,59 @@ BFM_HD inline DrySignal drySignalAt(const float* image, int width, int height, i
   const float dropNormal = px * -sinf(dropAngle) + py * cosf(dropAngle);
   const float dropRandom = hash21(floorf(dropNormal / 12) + seedX + 17, floorf(time * 5) + seedY + 53);
   const bool dropped = dropRandom >= 1 - parameter(p, ParameterId::Dropout) * .45f;
+  float phasePerPixel = 0.0f;
   if (static_cast<int>(parameter(p, ParameterId::Mode)) == 0) {
     float modulation = modulationAt(image, width, height, static_cast<float>(x), static_cast<float>(y), p, sourceFlipY) - .5f;
     if (dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) == 0) modulation = 0;
-    cycles += parameter(p, ParameterId::PhaseDepth) * modulation * parameter(p, ParameterId::ModulationGain);
+    const float pmGain = parameter(p, ParameterId::PhaseDepth) * parameter(p, ParameterId::ModulationGain);
+    cycles += pmGain * modulation;
+
+    if (fabsf(pmGain) > 1e-5f && !(dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) == 0)) {
+      const float modRight = modulationAt(image, width, height, static_cast<float>(x + 1), static_cast<float>(y), p, sourceFlipY);
+      const float modLeft  = modulationAt(image, width, height, static_cast<float>(x - 1), static_cast<float>(y), p, sourceFlipY);
+      const float modUp    = modulationAt(image, width, height, static_cast<float>(x), static_cast<float>(y + 1), p, sourceFlipY);
+      const float modDown  = modulationAt(image, width, height, static_cast<float>(x), static_cast<float>(y - 1), p, sourceFlipY);
+      const float dModDx = (modRight - modLeft) * 0.5f;
+      const float dModDy = (modUp - modDown) * 0.5f;
+      const float gradCyclesX = (driftFrequency / 100.0f) * dx + pmGain * dModDx;
+      const float gradCyclesY = (driftFrequency / 100.0f) * dy + pmGain * dModDy;
+      phasePerPixel = kTau * sqrtf(gradCyclesX * gradCyclesX + gradCyclesY * gradCyclesY);
+    } else {
+      phasePerPixel = kTau * fabsf(driftFrequency) / 100.0f;
+    }
   } else if (fmIntegral.data && fmIntegral.width > 0 && fmIntegral.height > 0) {
     const int fmX = static_cast<int>(floorf(scan + fmIntegral.width * .5f));
     const int fmY = static_cast<int>(floorf(normal + fmIntegral.height * .5f));
     const int clampedX = fmX < 0 ? 0 : fmX >= fmIntegral.width ? fmIntegral.width - 1 : fmX;
     const int clampedY = fmY < 0 ? 0 : fmY >= fmIntegral.height ? fmIntegral.height - 1 : fmY;
     const float integral = fmIntegral.data[static_cast<std::size_t>(clampedY) * fmIntegral.width + clampedX];
-    cycles += parameter(p, ParameterId::FrequencyDeviation) * parameter(p, ParameterId::ModulationGain)
-      * integral / 100;
+    const float fmGain = parameter(p, ParameterId::FrequencyDeviation) * parameter(p, ParameterId::ModulationGain);
+    cycles += fmGain * integral / 100;
+
+    const int nextX = clampedX < fmIntegral.width - 1 ? clampedX + 1 : clampedX;
+    const int prevX = clampedX > 0 ? clampedX - 1 : 0;
+    const float dIntegralDs = (nextX > prevX)
+      ? (fmIntegral.data[static_cast<std::size_t>(clampedY) * fmIntegral.width + nextX]
+         - fmIntegral.data[static_cast<std::size_t>(clampedY) * fmIntegral.width + prevX]) / static_cast<float>(nextX - prevX)
+      : 0.0f;
+    const int nextY = clampedY < fmIntegral.height - 1 ? clampedY + 1 : clampedY;
+    const int prevY = clampedY > 0 ? clampedY - 1 : 0;
+    const float dIntegralDn = (nextY > prevY)
+      ? (fmIntegral.data[static_cast<std::size_t>(nextY) * fmIntegral.width + clampedX]
+         - fmIntegral.data[static_cast<std::size_t>(prevY) * fmIntegral.width + clampedX]) / static_cast<float>(nextY - prevY)
+      : 0.0f;
+    const float gradCyclesScan = (driftFrequency + fmGain * dIntegralDs) / 100.0f;
+    const float gradCyclesNormal = (fmGain * dIntegralDn) / 100.0f;
+    phasePerPixel = kTau * sqrtf(gradCyclesScan * gradCyclesScan + gradCyclesNormal * gradCyclesNormal);
+  } else {
+    phasePerPixel = kTau * fabsf(driftFrequency) / 100.0f;
   }
-  const float phaseNoise = signedNoise(scan / 84 + time * 1.1f + seedX,
+  const float phaseNoise = signedNoise(unjitteredScan / 84 + time * 1.1f + seedX,
                                        normal / 36 - time * .65f + seedY);
   const float broadNoise = signedNoise(px / 3.5f + time * 17 + seedX * 31,
                                       py / 3.5f - time * 11 + seedY * 31);
   cycles += (phaseNoise * parameter(p, ParameterId::PhaseJitter) + broadNoise * parameter(p, ParameterId::SignalNoise)) * amount;
-  return {cycles, normal, driftFrequency, dropped};
+  return {cycles, normal, driftFrequency, phasePerPixel, dropped};
 }
 
 template <typename Values>
@@ -356,7 +392,7 @@ BFM_HD inline void renderPixel(const float* image, int width, int height, int x,
       cycles += parameter(p, ParameterId::PhaseDepth) * feedback * parameter(p, ParameterId::ModulationGain);
     } else cycles += feedback;
   }
-  const float value = visibleSignal(cycles, dry.normal, dry.drift_frequency, p, time);
+  const float value = visibleSignal(cycles, dry.normal, dry.phase_per_pixel, p, time);
   const int color = static_cast<int>(parameter(p, ParameterId::ColorMode));
   const float inR = sourceChannel(image, width, height, x, y, 0, sourceFlipY);
   const float inG = sourceChannel(image, width, height, x, y, 1, sourceFlipY);
@@ -367,8 +403,8 @@ BFM_HD inline void renderPixel(const float* image, int width, int height, int x,
     if (peak > 1e-4f) { r *= inR / peak; g *= inG / peak; b *= inB / peak; }
   } else if (color == 2) {
     const float offset = parameter(p, ParameterId::RgbPhaseOffset);
-    r = visibleSignal(cycles + offset, dry.normal, dry.drift_frequency, p, time);
-    b = visibleSignal(cycles - offset, dry.normal, dry.drift_frequency, p, time);
+    r = visibleSignal(cycles + offset, dry.normal, dry.phase_per_pixel, p, time);
+    b = visibleSignal(cycles - offset, dry.normal, dry.phase_per_pixel, p, time);
   }
   if (dry.dropped && static_cast<int>(parameter(p, ParameterId::DropoutStage)) != 0) r = g = b = 0;
   r = shapeVisibleSignal(r, p);

@@ -169,7 +169,7 @@ const viewModes = {
   'carrier-line': 5, 'carrier-raw': 6, phase: 7,
   feedback: 8, edges: 9, 'local-contrast': 10,
 };
-const modSources = { luma: 0, edges: 1, 'luma-edges': 2, 'inverted-luma': 3, 'local-contrast': 4 };
+const modSources = { luma: 0, 'inverted-luma': 1, edges: 2, 'local-contrast': 3, 'luma-edges': 4 };
 const signalModes = { pm: 0, fm: 1 };
 const colorModes = { mono: 0, 'input-color': 1, 'rgb-phase': 2 };
 const dropoutStages = { modulator: 0, 'signal-loop': 1, output: 2 };

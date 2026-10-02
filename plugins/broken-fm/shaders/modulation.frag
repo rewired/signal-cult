@@ -35,10 +35,10 @@ void main() {
     float shapedLuma = clamp(luma * uLumaGain + uLumaBias, 0.0, 1.0);
 
     float modulation = shapedLuma;
-    if (uModSource == 1) modulation = edge;
-    if (uModSource == 2) modulation = clamp(shapedLuma * 0.72 + edge * 0.65, 0.0, 1.0);
-    if (uModSource == 3) modulation = 1.0 - shapedLuma;
-    if (uModSource == 4) modulation = localContrast;
+    if (uModSource == 1) modulation = 1.0 - shapedLuma;
+    if (uModSource == 2) modulation = edge;
+    if (uModSource == 3) modulation = localContrast;
+    if (uModSource == 4) modulation = clamp(shapedLuma * 0.72 + edge * 0.65, 0.0, 1.0);
 
     // Threshold zero is an exact bypass, preserving the original modulation path.
     if (uThreshold > 0.0) {
