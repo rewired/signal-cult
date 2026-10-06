@@ -6,6 +6,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -38,6 +39,21 @@ const OfxPropertySuiteV1* properties = nullptr;
 const OfxImageEffectSuiteV1* effects = nullptr;
 const OfxParameterSuiteV1* parameters = nullptr;
 
+struct CachedFeedbackFrame {
+  std::vector<float> data;
+  int width = 0;
+  int height = 0;
+};
+
+struct TemporalState {
+  std::vector<float> sequential;
+  std::vector<float> persistence;
+  double frame = -1e30;
+  int width = 0;
+  int height = 0;
+  bool valid = false;
+};
+
 struct Instance {
   OfxImageEffectHandle effect = nullptr;
   OfxImageClipHandle source = nullptr;
@@ -48,6 +64,10 @@ struct Instance {
   std::vector<std::uint8_t> preview_bmp;
   double preview_frame = -1e30;
   broken_fm::CudaRenderContext cuda;
+  std::mutex feedback_mutex;
+  std::map<double, CachedFeedbackFrame> feedback_cache;
+  std::mutex temporal_mutex;
+  TemporalState temporal;
 };
 
 struct Image {
@@ -71,7 +91,7 @@ std::string groupParameterId(std::string_view group) {
 
 bool nativeParameterEnabled(const broken_fm::ParameterDescriptor& descriptor) {
   const std::string_view id(descriptor.id);
-  return id != "phosphorPersistence" && id != "audioAttack" && id != "audioRelease";
+  return id != "audioAttack" && id != "audioRelease";
 }
 
 OfxStatus fetchSuites() {
@@ -279,6 +299,33 @@ bool finiteFeedbackEnabled(const broken_fm::ParameterValues& values) {
   return false;
 }
 
+bool sequentialFeedbackEnabled(const broken_fm::ParameterValues& values) {
+  if (static_cast<int>(parameterValue(values, broken_fm::ParameterId::FeedbackModel)) != 0) return false;
+  if (parameterValue(values, broken_fm::ParameterId::FeedbackAmount) > 0.000001) return true;
+  for (int slot = 0; slot < 4; ++slot) {
+    const auto destination = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioDestination1) + slot * 3);
+    const auto amount = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioAmount1) + slot * 3);
+    if (static_cast<int>(parameterValue(values, destination)) == 5
+        && std::abs(parameterValue(values, amount)) > 0.000001) return true;
+  }
+  return false;
+}
+
+bool phosphorPersistenceEnabled(const broken_fm::ParameterValues& values) {
+  if (parameterValue(values, broken_fm::ParameterId::PhosphorPersistence) > 0.000001) return true;
+  for (int slot = 0; slot < 4; ++slot) {
+    const auto destination = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioDestination1) + slot * 3);
+    const auto amount = static_cast<broken_fm::ParameterId>(
+      static_cast<std::size_t>(broken_fm::ParameterId::AudioAmount1) + slot * 3);
+    if (static_cast<int>(parameterValue(values, destination)) == 16
+        && std::abs(parameterValue(values, amount)) > 0.000001) return true;
+  }
+  return false;
+}
+
 float sampleChannel(const std::vector<float>& image, int width, int height, float x, float y, int channel) {
   if (x < 0 || y < 0 || x > width - 1 || y > height - 1) return 0;
   const int x0 = static_cast<int>(std::floor(x)), y0 = static_cast<int>(std::floor(y));
@@ -287,6 +334,54 @@ float sampleChannel(const std::vector<float>& image, int width, int height, floa
   const auto at = [&](int sx, int sy) { return image[(static_cast<std::size_t>(sy) * width + sx) * 4 + channel]; };
   return (at(x0, y0) * (1 - tx) + at(x1, y0) * tx) * (1 - ty)
     + (at(x0, y1) * (1 - tx) + at(x1, y1) * tx) * ty;
+}
+
+void updateSequentialState(const std::vector<float>& current, const std::vector<float>& previous,
+                           int width, int height, const broken_fm::ParameterValues& effective,
+                           std::vector<float>& next) {
+  const float decay = std::clamp(static_cast<float>(parameterValue(
+    effective, broken_fm::ParameterId::FeedbackDecay)), 0.0f, .999f);
+  const float displacement = static_cast<float>(parameterValue(
+    effective, broken_fm::ParameterId::FeedbackDisplacement));
+  const float angle = static_cast<float>(parameterValue(
+    effective, broken_fm::ParameterId::FeedbackDisplacementAngle) * 3.14159265358979323846 / 180.0);
+  const float dx = std::cos(angle) * displacement, dy = std::sin(angle) * displacement;
+  next.assign(static_cast<std::size_t>(width) * height * 4, 0);
+  const bool hasPrevious = previous.size() == next.size();
+  for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+    const std::size_t offset = (static_cast<std::size_t>(y) * width + x) * 4;
+    for (int channel = 0; channel < 2; ++channel) {
+      const float oldValue = hasPrevious
+        ? sampleChannel(previous, width, height, x - dx, y - dy, channel) : 0.0f;
+      next[offset + channel] = current[offset + channel] * (1.0f - decay) + oldValue * decay;
+    }
+    next[offset + 3] = 1.0f;
+  }
+}
+
+void applyPersistence(Image& output, const std::vector<float>& previous, int width, int height,
+                      double frameRate, double halfLifeMs, std::vector<float>& next) {
+  const float decay = halfLifeMs <= 0.0 ? 0.0f : static_cast<float>(std::exp(
+    -0.6931471805599453 * 1000.0 / std::max(frameRate, 1.0) / halfLifeMs));
+  next.resize(static_cast<std::size_t>(width) * height * 4);
+  const bool hasPrevious = previous.size() == next.size();
+  for (int y = 0; y < height; ++y) {
+    auto* row = reinterpret_cast<float*>(reinterpret_cast<std::byte*>(output.data)
+      + static_cast<std::ptrdiff_t>(y) * output.row_bytes);
+    for (int x = 0; x < width; ++x) {
+      const std::size_t offset = (static_cast<std::size_t>(y) * width + x) * 4;
+      for (int channel = 0; channel < 3; ++channel) {
+        const float stored = hasPrevious ? previous[offset + channel] * decay : 0.0f;
+        row[x * 4 + channel] = std::max(row[x * 4 + channel], stored);
+        next[offset + channel] = row[x * 4 + channel];
+      }
+      next[offset + 3] = row[x * 4 + 3];
+    }
+  }
+}
+
+void resetTemporalState(Instance& instance) {
+  instance.temporal = {};
 }
 
 bool buildFiniteFeedback(Instance& instance, OfxTime time, double frameRate, int width, int height,
@@ -302,19 +397,34 @@ bool buildFiniteFeedback(Instance& instance, OfxTime time, double frameRate, int
     values, broken_fm::ParameterId::FeedbackDisplacementAngle) * 3.14159265358979323846 / 180.0);
   const float dx = std::cos(angle) * displacement, dy = std::sin(angle) * displacement;
   state.assign(static_cast<std::size_t>(width) * height * 4, 0);
-  std::vector<float> historySignal(static_cast<std::size_t>(width) * height * 4);
   float weightSum = 0;
+
+  std::lock_guard lock(instance.feedback_mutex);
   for (int tap = 0; tap < window; ++tap) {
-    Image history;
-    if (!getImage(instance.source, time - tap - 1, history)) continue;
-    if (history.bounds.x2 - history.bounds.x1 != width || history.bounds.y2 - history.bounds.y1 != height) continue;
-    const auto historyValues = readValues(instance, time - tap - 1);
-    broken_fm::RenderRequest historyRequest{
-      {static_cast<const float*>(history.data), width, height, history.row_bytes},
-      {historySignal.data(), width, height, static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))},
-      historyValues, (time - tap - 1) / std::max(frameRate, 1.0), frameRate};
-    parameters->paramGetValue(instance.transport_origin, &historyRequest.transport_origin_seconds);
-    if (broken_fm::renderFeedbackSourceCpu(historyRequest) != broken_fm::RenderStatus::Ok) continue;
+    const double historyTime = time - tap - 1;
+    auto it = instance.feedback_cache.find(historyTime);
+    if (it == instance.feedback_cache.end() || it->second.width != width || it->second.height != height) {
+      Image history;
+      if (!getImage(instance.source, historyTime, history)) continue;
+      if (history.bounds.x2 - history.bounds.x1 != width || history.bounds.y2 - history.bounds.y1 != height) continue;
+      const auto historyValues = readValues(instance, historyTime);
+      CachedFeedbackFrame cached;
+      cached.width = width;
+      cached.height = height;
+      cached.data.resize(static_cast<std::size_t>(width) * height * 4);
+      broken_fm::RenderRequest historyRequest{
+        {static_cast<const float*>(history.data), width, height, history.row_bytes},
+        {cached.data.data(), width, height, static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))},
+        historyValues, historyTime / std::max(frameRate, 1.0), frameRate};
+      parameters->paramGetValue(instance.transport_origin, &historyRequest.transport_origin_seconds);
+      auto status = instance.cuda.renderFeedbackSource(historyRequest);
+      if (status != broken_fm::RenderStatus::Ok) {
+        status = broken_fm::renderFeedbackSourceCpu(historyRequest);
+      }
+      if (status != broken_fm::RenderStatus::Ok) continue;
+      it = instance.feedback_cache.insert_or_assign(historyTime, std::move(cached)).first;
+    }
+    const auto& historySignal = it->second.data;
     const float weight = std::pow(decay, static_cast<float>(tap));
     for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
       const std::size_t offset = (static_cast<std::size_t>(y) * width + x) * 4;
@@ -324,6 +434,11 @@ bool buildFiniteFeedback(Instance& instance, OfxTime time, double frameRate, int
     }
     weightSum += weight;
   }
+  for (auto iter = instance.feedback_cache.begin(); iter != instance.feedback_cache.end();) {
+    if (iter->first < time - window || iter->first >= time) iter = instance.feedback_cache.erase(iter);
+    else ++iter;
+  }
+
   if (weightSum <= 0) return false;
   for (std::size_t i = 0; i < state.size(); i += 4) {
     state[i] /= weightSum;
@@ -339,6 +454,7 @@ OfxStatus getFramesNeeded(OfxImageEffectHandle effect, OfxPropertySetHandle inAr
   if (properties->propGetDouble(inArgs, kOfxPropTime, 0, &time) != kOfxStatOK) return kOfxStatErrValue;
   const auto values = readValues(*instance, time);
   if (!finiteFeedbackEnabled(values)) return kOfxStatReplyDefault;
+  if (!broken_fm::ofx::nativeSupports(values)) return kOfxStatReplyDefault;
   const int window = std::clamp(static_cast<int>(std::round(parameterValue(
     values, broken_fm::ParameterId::FeedbackWindow))), 1, 8);
   const double frames[]{time - window, time};
@@ -363,17 +479,60 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   if (effects->getPropertySet(effect, &effectProps) == kOfxStatOK) properties->propGetDouble(effectProps, kOfxImageEffectPropFrameRate, 0, &frameRate);
   const auto values = readValues(*instance, time);
   if (!broken_fm::ofx::nativeSupports(values)) return kOfxStatErrUnsupported;
+  const bool sequential = sequentialFeedbackEnabled(values);
+  const bool persistence = phosphorPersistenceEnabled(values);
+  std::lock_guard temporalLock(instance->temporal_mutex);
+  if (!instance->temporal.valid || instance->temporal.width != width || instance->temporal.height != height
+      || std::abs(time - instance->temporal.frame - 1.0) > 1e-6) {
+    resetTemporalState(*instance);
+  }
   std::vector<float> feedbackState;
   broken_fm::RenderRequest request{{static_cast<const float*>(source.data), width, height, source.row_bytes},
     {static_cast<float*>(output.data), width, height, output.row_bytes}, values, time / std::max(frameRate, 1.0), frameRate};
   parameters->paramGetValue(instance->transport_origin, &request.transport_origin_seconds);
-  if (buildFiniteFeedback(*instance, time, frameRate, width, height, values, feedbackState)) {
+  const auto effective = broken_fm::effectiveParameters(
+    values, request.time_seconds, request.transport_origin_seconds);
+  if (sequential && !instance->temporal.sequential.empty()) {
+    request.feedback_state = {instance->temporal.sequential.data(), width, height,
+      static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))};
+  } else if (buildFiniteFeedback(*instance, time, frameRate, width, height, values, feedbackState)) {
     request.feedback_state = {feedbackState.data(), width, height,
       static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))};
   }
   auto status = instance->cuda.render(request);
   if (status == broken_fm::RenderStatus::CudaUnavailable || status == broken_fm::RenderStatus::CudaError) status = broken_fm::renderCpu(request);
-  return status == broken_fm::RenderStatus::Ok ? kOfxStatOK : kOfxStatErrValue;
+  if (status != broken_fm::RenderStatus::Ok) return kOfxStatErrValue;
+
+  if (sequential) {
+    std::vector<float> currentSignal(static_cast<std::size_t>(width) * height * 4);
+    auto feedbackRequest = request;
+    feedbackRequest.output = {currentSignal.data(), width, height,
+      static_cast<std::ptrdiff_t>(width * 4 * sizeof(float))};
+    status = instance->cuda.renderFeedbackSource(feedbackRequest);
+    if (status == broken_fm::RenderStatus::CudaUnavailable || status == broken_fm::RenderStatus::CudaError) {
+      status = broken_fm::renderFeedbackSourceCpu(feedbackRequest);
+    }
+    if (status != broken_fm::RenderStatus::Ok) return kOfxStatErrValue;
+    std::vector<float> next;
+    updateSequentialState(currentSignal, instance->temporal.sequential, width, height, effective, next);
+    instance->temporal.sequential = std::move(next);
+  } else {
+    instance->temporal.sequential.clear();
+  }
+
+  if (persistence) {
+    std::vector<float> next;
+    applyPersistence(output, instance->temporal.persistence, width, height, frameRate,
+      parameterValue(effective, broken_fm::ParameterId::PhosphorPersistence), next);
+    instance->temporal.persistence = std::move(next);
+  } else {
+    instance->temporal.persistence.clear();
+  }
+  instance->temporal.frame = time;
+  instance->temporal.width = width;
+  instance->temporal.height = height;
+  instance->temporal.valid = true;
+  return kOfxStatOK;
 }
 
 std::filesystem::path exchangeDirectory() {
@@ -453,6 +612,12 @@ OfxStatus instanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle inAr
   char* name = nullptr; if (properties->propGetString(inArgs, kOfxPropName, 0, &name) != kOfxStatOK || !name) return kOfxStatReplyDefault;
   OfxTime time = 0; properties->propGetDouble(inArgs, kOfxPropTime, 0, &time); Instance* instance = nullptr;
   if (instanceFromEffect(effect, instance) != kOfxStatOK) return kOfxStatErrBadHandle;
+  {
+    std::lock_guard temporalLock(instance->temporal_mutex);
+    std::lock_guard feedbackLock(instance->feedback_mutex);
+    resetTemporalState(*instance);
+    instance->feedback_cache.clear();
+  }
   if (std::strcmp(name, kRetriggerParam) == 0) {
     OfxPropertySetHandle effectProps = nullptr; double frameRate = 24;
     if (effects->getPropertySet(effect, &effectProps) == kOfxStatOK) properties->propGetDouble(effectProps, kOfxImageEffectPropFrameRate, 0, &frameRate);

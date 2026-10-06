@@ -60,7 +60,8 @@ RenderStatus renderCpuPass(const RenderRequest& request, bool feedbackSource) {
       float sum = 0.0f;
       for (int x = 0; x < atlasWidth; ++x) {
         sum += detail::fmSeedAt(modulation.data(), width, height, x, y, atlasWidth, atlasHeight,
-                                effective, signalTime);
+                                effective, signalTime,
+                                request.feedback_state.data, request.feedback_state.row_bytes);
         integral[static_cast<std::size_t>(y) * atlasWidth + x] = sum;
       }
     });
@@ -84,6 +85,17 @@ ParameterValues defaultParameters() {
   ParameterValues values{};
   for (std::size_t i = 0; i < values.size(); ++i) values[i] = kParameterDescriptors[i].default_value;
   return values;
+}
+
+ParameterValues effectiveParameters(const ParameterValues& values, double time_seconds,
+                                    double transport_origin_seconds) {
+  const auto effective = detail::effectiveParameters(
+    values, static_cast<float>(time_seconds), static_cast<float>(transport_origin_seconds));
+  ParameterValues result{};
+  for (std::size_t i = 0; i < result.size(); ++i) {
+    result[i] = effective[i];
+  }
+  return result;
 }
 
 RenderStatus renderCpu(const RenderRequest& request) {

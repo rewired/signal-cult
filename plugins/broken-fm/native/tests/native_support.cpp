@@ -22,20 +22,25 @@ int main() {
   if (!broken_fm::ofx::nativeSupports(values)) return 2;
 
   set(values, ParameterId::FeedbackAmount, .1);
-  if (broken_fm::ofx::nativeSupports(values)) return 3;
+  if (!broken_fm::ofx::nativeSupports(values)) return 3;
   set(values, ParameterId::FeedbackModel, 1);
   if (!broken_fm::ofx::nativeSupports(values)) return 7;
   set(values, ParameterId::FeedbackAmount, 0);
 
-  // Finite feedback routes are supported; phosphor persistence remains gated.
+  // Sequential/finite feedback routes and phosphor persistence are native.
   set(values, ParameterId::AudioDestination2, 5);
   if (!broken_fm::ofx::nativeSupports(values)) return 4;
   set(values, ParameterId::AudioDestination2, 16);
-  if (broken_fm::ofx::nativeSupports(values)) return 5;
+  if (!broken_fm::ofx::nativeSupports(values)) return 5;
+  set(values, ParameterId::AudioAmount2, 0);
+  set(values, ParameterId::PhosphorPersistence, 820);
+  if (!broken_fm::ofx::nativeSupports(values)) return 10;
+  set(values, ParameterId::PhosphorPersistence, 0);
 
   // Audio analysis sources remain Companion-only.
   set(values, ParameterId::AudioDestination2, 1);
   set(values, ParameterId::AudioSource2, 1);
+  set(values, ParameterId::AudioAmount2, .32);
   if (broken_fm::ofx::nativeSupports(values)) return 6;
 
   values = broken_fm::defaultParameters();
@@ -45,7 +50,7 @@ int main() {
   if (!broken_fm::ofx::nativeSupports(values)) return 8;
   set(values, ParameterId::Mode, 1);
   set(values, ParameterId::FeedbackInjection, 1);
-  if (broken_fm::ofx::nativeSupports(values)) return 9;
+  if (!broken_fm::ofx::nativeSupports(values)) return 9;
 
   return 0;
 }

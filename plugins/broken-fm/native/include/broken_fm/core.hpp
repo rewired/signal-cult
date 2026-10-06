@@ -52,6 +52,7 @@ class CudaRenderContext {
   CudaRenderContext& operator=(const CudaRenderContext&) = delete;
 
   RenderStatus render(const RenderRequest& request);
+  RenderStatus renderFeedbackSource(const RenderRequest& request);
   CudaRenderStats stats() const;
 
  private:
@@ -60,9 +61,12 @@ class CudaRenderContext {
 };
 
 ParameterValues defaultParameters();
+ParameterValues effectiveParameters(const ParameterValues& values, double time_seconds,
+                                    double transport_origin_seconds = 0.0);
 RenderStatus renderCpu(const RenderRequest& request);
 RenderStatus renderFeedbackSourceCpu(const RenderRequest& request);
 RenderStatus renderCuda(const RenderRequest& request);
+RenderStatus renderFeedbackSourceCuda(const RenderRequest& request);
 bool cudaAvailable();
 
 }  // namespace broken_fm

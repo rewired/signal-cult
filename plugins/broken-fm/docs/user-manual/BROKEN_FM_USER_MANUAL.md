@@ -241,7 +241,7 @@ Preset JSON stores all 82 effect parameters. It does not store video/audio files
 
 ## Current native OFX limits
 
-BROKEN FM OFX 0.1.0 deliberately fails closed for features whose native behavior is not yet equivalent to the Companion preview: audio carrier/analysis, imported custom wavetable data, temporal feedback history, and phosphor persistence. Their settings remain valid preset data, but the OFX UI disables unsupported controls. Time Jitter changes internal signal time; it is not source-video time remapping.
+BROKEN FM OFX 0.1.0 supports sequential and finite feedback history plus phosphor persistence during consecutive Resolve frames. Timeline jumps, backwards movement, and parameter edits reset recursive state before it accumulates again. Audio carrier/analysis and imported custom wavetable data remain Companion-only because OpenFX provides no portable audio stream or preset sample payload. Time Jitter changes internal signal time; it is not source-video time remapping.
 
 ---
 

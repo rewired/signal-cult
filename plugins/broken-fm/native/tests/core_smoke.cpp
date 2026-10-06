@@ -106,6 +106,7 @@ bool rgbPhaseLineParityPass() {
 bool finiteFeedbackPass() {
   auto source = makeImage(48, 24, 8), state = makeImage(48, 24, 4);
   auto dry = makeImage(48, 24, 12), wet = makeImage(48, 24, 16);
+  auto gpuWet = makeImage(48, 24, 20);
   fillSource(source);
   auto parameters = broken_fm::defaultParameters();
   parameters[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackModel)] = 1;
@@ -125,11 +126,93 @@ bool finiteFeedbackPass() {
   auto wetRequest = requestFor(source, wet, parameters, 1.25);
   wetRequest.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
   if (broken_fm::renderCpu(wetRequest) != broken_fm::RenderStatus::Ok) return false;
+  bool wetDifference = false;
   for (int y = 0; y < wet.height; ++y) for (int x = 0; x < wet.width * 4; ++x) {
     if (!std::isfinite(wet.row(y)[x])) return false;
-    if (std::abs(wet.row(y)[x] - dry.row(y)[x]) > 1e-4f) return true;
+    if (std::abs(wet.row(y)[x] - dry.row(y)[x]) > 1e-4f) wetDifference = true;
   }
-  return false;
+  if (!wetDifference) return false;
+
+  if (broken_fm::cudaAvailable()) {
+    broken_fm::CudaRenderContext cuda;
+    auto gpuState = makeImage(48, 24, 24);
+    auto gpuStateRequest = requestFor(source, gpuState, parameters, 1.0);
+    if (cuda.renderFeedbackSource(gpuStateRequest) != broken_fm::RenderStatus::Ok) return false;
+    float maxDiff = 0.0f, meanDiff = 0.0f;
+    if (!compareImages(state, gpuState, maxDiff, meanDiff)) return false;
+
+    auto gpuWetRequest = requestFor(source, gpuWet, parameters, 1.25);
+    gpuWetRequest.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+    if (cuda.render(gpuWetRequest) != broken_fm::RenderStatus::Ok) return false;
+    if (!compareImages(wet, gpuWet, maxDiff, meanDiff)) return false;
+
+    // Test FM mode + Modulation Injection parity
+    parameters[static_cast<std::size_t>(broken_fm::ParameterId::Mode)] = 1;
+    parameters[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackInjection)] = 1;
+    auto fmCpu = makeImage(48, 24, 28), fmGpu = makeImage(48, 24, 32);
+    auto fmCpuRequest = requestFor(source, fmCpu, parameters, 1.25);
+    fmCpuRequest.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+    if (broken_fm::renderCpu(fmCpuRequest) != broken_fm::RenderStatus::Ok) return false;
+    auto fmGpuRequest = requestFor(source, fmGpu, parameters, 1.25);
+    fmGpuRequest.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+    if (cuda.render(fmGpuRequest) != broken_fm::RenderStatus::Ok) return false;
+    if (!compareImages(fmCpu, fmGpu, maxDiff, meanDiff)) return false;
+  }
+  return true;
+}
+
+bool preset06MeltingCarrierPass() {
+  auto source = makeImage(96, 54, 8), state = makeImage(96, 54, 4);
+  auto cpuOutput = makeImage(96, 54, 16), gpuOutput = makeImage(96, 54, 24);
+  fillSource(source);
+  auto p = broken_fm::defaultParameters();
+  p[static_cast<std::size_t>(broken_fm::ParameterId::Mode)] = 1;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::ModSource)] = 0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LumaGain)] = 1.35;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LumaBias)] = -0.12;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::EdgeGain)] = 2.5;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LocalContrastGain)] = 4.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::ModulationGain)] = 1.5;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::Frequency)] = 5.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FrequencyDeviation)] = 8.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::ScanAngle)] = 90.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LineWidth)] = 1.2;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LineSoftness)] = 0.75;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::Instability)] = 0.45;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::PhaseJitter)] = 0.35;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FrequencyDrift)] = 1.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::LineJitter)] = 12.0;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackAmount)] = 0.15;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackDecay)] = 0.92;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackInjection)] = 1;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackModel)] = 1;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::FeedbackWindow)] = 4;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::ColorMode)] = 2;
+  p[static_cast<std::size_t>(broken_fm::ParameterId::RgbPhaseOffset)] = 0.045;
+
+  auto stateReq = requestFor(source, state, p, 1.0);
+  if (broken_fm::renderFeedbackSourceCpu(stateReq) != broken_fm::RenderStatus::Ok) return false;
+
+  auto cpuReq = requestFor(source, cpuOutput, p, 1.25);
+  cpuReq.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+  if (broken_fm::renderCpu(cpuReq) != broken_fm::RenderStatus::Ok) return false;
+
+  if (broken_fm::cudaAvailable()) {
+    broken_fm::CudaRenderContext cuda;
+    auto gpuReq = requestFor(source, gpuOutput, p, 1.25);
+    gpuReq.feedback_state = {state.data(), state.width, state.height, state.rowBytes()};
+    if (cuda.render(gpuReq) != broken_fm::RenderStatus::Ok) {
+      std::cerr << "cuda.render failed!\n";
+      return false;
+    }
+    float maxDiff = 0.0f, meanDiff = 0.0f;
+    compareImages(cpuOutput, gpuOutput, maxDiff, meanDiff);
+    if (meanDiff > 0.02f) {
+      std::cerr << "Preset06 mismatch too large: mean=" << meanDiff << " max=" << maxDiff << '\n';
+      return false;
+    }
+  }
+  return true;
 }
 
 double percentile(std::vector<double> values, double fraction) {
@@ -167,6 +250,7 @@ int main() {
   if (!hashGoldenVectorsPass()) return 1;
   if (!rgbPhaseLineParityPass()) return 10;
   if (!finiteFeedbackPass()) return 11;
+  if (!preset06MeltingCarrierPass()) return 12;
 
   constexpr int width = 96, height = 54;
   struct Scenario { int mode; float angle; int carrier; float seed; bool negative; };

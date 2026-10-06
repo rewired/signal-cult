@@ -198,9 +198,27 @@ inline void fmAtlasDimensions(int width, int height, float scanAngleDegrees, int
   atlasHeight = static_cast<int>(ceilf(width * s + height * c)) + 2;
 }
 
+BFM_HD inline float sampleFeedbackChannel(const float* state, int width, int height,
+                                          float x, float y, int channel, std::ptrdiff_t rowBytes) {
+  x = clampf(x, 0.0f, static_cast<float>(width - 1));
+  y = clampf(y, 0.0f, static_cast<float>(height - 1));
+  const int x0 = static_cast<int>(floorf(x)), y0 = static_cast<int>(floorf(y));
+  const int x1 = x0 + 1 < width ? x0 + 1 : width - 1;
+  const int y1 = y0 + 1 < height ? y0 + 1 : height - 1;
+  const float tx = x - static_cast<float>(x0), ty = y - static_cast<float>(y0);
+  const auto at = [&](int sx, int sy) {
+    const auto* row = reinterpret_cast<const float*>(
+      reinterpret_cast<const char*>(state) + static_cast<std::ptrdiff_t>(sy) * rowBytes);
+    return row[sx * 4 + channel];
+  };
+  return (at(x0, y0) * (1.0f - tx) + at(x1, y0) * tx) * (1.0f - ty)
+       + (at(x0, y1) * (1.0f - tx) + at(x1, y1) * tx) * ty;
+}
+
 template <typename Values>
 BFM_HD inline float fmSeedAt(const float* modulation, int width, int height, int atlasX, int atlasY,
-                             int atlasWidth, int atlasHeight, const Values& p, float time) {
+                             int atlasWidth, int atlasHeight, const Values& p, float time,
+                             const float* feedbackState = nullptr, std::ptrdiff_t feedbackRowBytes = 0) {
   const float angle = parameter(p, ParameterId::ScanAngle) * kTau / 360.0f;
   const float dx = cosf(angle), dy = sinf(angle), nx = -dy, ny = dx;
   const float scanX = atlasX + .5f - atlasWidth * .5f;
@@ -209,8 +227,16 @@ BFM_HD inline float fmSeedAt(const float* modulation, int width, int height, int
   const float outputY = dy * scanX + ny * scanY;
   if (outputX < width * -.5f || outputX > width * .5f
       || outputY < height * -.5f || outputY > height * .5f) return 0.0f;
-  float value = scalarLinear(modulation, width, height,
-                             outputX + width * .5f - .5f, outputY + height * .5f - .5f) - .5f;
+  const float sampleX = outputX + width * .5f - .5f;
+  const float sampleY = outputY + height * .5f - .5f;
+  float value = scalarLinear(modulation, width, height, sampleX, sampleY) - .5f;
+  if (feedbackState && static_cast<int>(parameter(p, ParameterId::FeedbackInjection)) == 1) {
+    const float fbAngle = parameter(p, ParameterId::FeedbackPhase) * kTau;
+    const float fbDirect = sampleFeedbackChannel(feedbackState, width, height, sampleX, sampleY, 0, feedbackRowBytes);
+    const float fbQuad = sampleFeedbackChannel(feedbackState, width, height, sampleX, sampleY, 1, feedbackRowBytes);
+    const float rotatedFeedback = fbDirect * cosf(fbAngle) + fbQuad * sinf(fbAngle);
+    value += rotatedFeedback * parameter(p, ParameterId::FeedbackAmount);
+  }
   if (static_cast<int>(parameter(p, ParameterId::DropoutStage)) == 0) {
     const float seed = parameter(p, ParameterId::Seed);
     const float dropAngle = parameter(p, ParameterId::DropoutAngle) * kTau / 360.0f;
@@ -389,8 +415,12 @@ BFM_HD inline void renderPixel(const float* image, int width, int height, int x,
     const float previousSignal = state[0] * cosf(angle) + state[1] * sinf(angle);
     const float feedback = previousSignal * parameter(p, ParameterId::FeedbackAmount);
     if (static_cast<int>(parameter(p, ParameterId::FeedbackInjection)) == 1) {
-      cycles += parameter(p, ParameterId::PhaseDepth) * feedback * parameter(p, ParameterId::ModulationGain);
-    } else cycles += feedback;
+      if (static_cast<int>(parameter(p, ParameterId::Mode)) == 0) {
+        cycles += parameter(p, ParameterId::PhaseDepth) * feedback * parameter(p, ParameterId::ModulationGain);
+      }
+    } else {
+      cycles += feedback;
+    }
   }
   const float value = visibleSignal(cycles, dry.normal, dry.phase_per_pixel, p, time);
   const int color = static_cast<int>(parameter(p, ParameterId::ColorMode));

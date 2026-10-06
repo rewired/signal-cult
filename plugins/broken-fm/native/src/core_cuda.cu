@@ -32,35 +32,63 @@ __global__ void modulationKernel(const float* __restrict__ source, float* __rest
 __global__ void fmSeedKernel(const float* __restrict__ modulation, float* __restrict__ seed,
                              int* __restrict__ rowKeys,
                              int width, int height, int atlasWidth, int atlasHeight,
-                             const FloatParameterValues* __restrict__ parameters, float signalTime) {
+                             const FloatParameterValues* __restrict__ parameters, float signalTime,
+                             const float* __restrict__ feedbackState = nullptr,
+                             std::ptrdiff_t feedbackRowBytes = 0) {
   const int x = blockIdx.x * blockDim.x + threadIdx.x;
   const int y = blockIdx.y * blockDim.y + threadIdx.y;
   if (x >= atlasWidth || y >= atlasHeight) return;
   const auto index = static_cast<std::size_t>(y) * atlasWidth + x;
   seed[index] = detail::fmSeedAt(
-    modulation, width, height, x, y, atlasWidth, atlasHeight, *parameters, signalTime);
+    modulation, width, height, x, y, atlasWidth, atlasHeight, *parameters, signalTime,
+    feedbackState, feedbackRowBytes);
   rowKeys[index] = y;
 }
 
 __global__ void renderKernel(const float* __restrict__ source, float* __restrict__ output,
                              int width, int height, const FloatParameterValues* __restrict__ parameters,
                              float signalTime, const float* __restrict__ fmIntegral,
-                             int fmWidth, int fmHeight, bool sourceFlipY, bool outputFlipY) {
+                             int fmWidth, int fmHeight, bool sourceFlipY, bool outputFlipY,
+                             const float* __restrict__ feedbackState = nullptr,
+                             std::ptrdiff_t feedbackRowBytes = 0) {
   const int x = blockIdx.x * blockDim.x + threadIdx.x;
   const int y = blockIdx.y * blockDim.y + threadIdx.y;
   if (x >= width || y >= height) return;
   const int outputY = outputFlipY ? height - 1 - y : y;
   detail::renderPixel(source, width, height, x, y, *parameters, signalTime,
                       {fmIntegral, fmWidth, fmHeight}, sourceFlipY,
-                      output + (static_cast<std::size_t>(outputY) * width + x) * 4);
+                      output + (static_cast<std::size_t>(outputY) * width + x) * 4,
+                      feedbackState, feedbackRowBytes);
+}
+
+__global__ void feedbackSourceKernel(const float* __restrict__ source, float* __restrict__ output,
+                                     int width, int height, const FloatParameterValues* __restrict__ parameters,
+                                     float signalTime, const float* __restrict__ fmIntegral,
+                                     int fmWidth, int fmHeight, bool sourceFlipY, bool outputFlipY) {
+  const int x = blockIdx.x * blockDim.x + threadIdx.x;
+  const int y = blockIdx.y * blockDim.y + threadIdx.y;
+  if (x >= width || y >= height) return;
+  const int outputY = outputFlipY ? height - 1 - y : y;
+  detail::feedbackSourcePixel(source, width, height, x, y, *parameters, signalTime,
+                              {fmIntegral, fmWidth, fmHeight}, sourceFlipY,
+                              output + (static_cast<std::size_t>(outputY) * width + x) * 4);
 }
 
 bool validRequest(const RenderRequest& request) {
   constexpr auto pixelBytes = static_cast<std::ptrdiff_t>(4 * sizeof(float));
-  return request.source.data && request.output.data && request.source.width > 0 && request.source.height > 0
-    && request.output.width == request.source.width && request.output.height == request.source.height
-    && std::abs(request.source.row_bytes) >= request.source.width * pixelBytes
-    && std::abs(request.output.row_bytes) >= request.output.width * pixelBytes;
+  if (!request.source.data || !request.output.data || request.source.width <= 0 || request.source.height <= 0
+      || request.output.width != request.source.width || request.output.height != request.source.height
+      || std::abs(request.source.row_bytes) < request.source.width * pixelBytes
+      || std::abs(request.output.row_bytes) < request.output.width * pixelBytes) {
+    return false;
+  }
+  if (request.feedback_state.data) {
+    if (request.feedback_state.width != request.source.width || request.feedback_state.height != request.source.height
+        || std::abs(request.feedback_state.row_bytes) < request.source.width * pixelBytes) {
+      return false;
+    }
+  }
+  return true;
 }
 
 template <typename T>
@@ -83,6 +111,7 @@ struct Slot {
   float* modulation = nullptr;
   float* seed = nullptr;
   float* integral = nullptr;
+  float* feedbackState = nullptr;
   int* rowKeys = nullptr;
   FloatParameterValues* parameters = nullptr;
   void* scanWorkspace = nullptr;
@@ -91,6 +120,7 @@ struct Slot {
   std::size_t modulationCapacity = 0;
   std::size_t seedCapacity = 0;
   std::size_t integralCapacity = 0;
+  std::size_t feedbackStateCapacity = 0;
   std::size_t rowKeysCapacity = 0;
   std::size_t parameterCapacity = 0;
   std::size_t scanWorkspaceCapacity = 0;
@@ -105,6 +135,7 @@ struct Slot {
     cudaFree(modulation);
     cudaFree(seed);
     cudaFree(integral);
+    cudaFree(feedbackState);
     cudaFree(rowKeys);
     cudaFree(parameters);
     cudaFree(scanWorkspace);
@@ -138,6 +169,8 @@ struct CudaRenderContext::Impl {
     std::lock_guard lock(mutex);
     slot->inUse = false;
   }
+
+  RenderStatus render(const RenderRequest& request, bool feedbackSource);
 };
 
 bool cudaAvailable() {
@@ -160,18 +193,17 @@ CudaRenderStats CudaRenderContext::stats() const {
   return result;
 }
 
-RenderStatus CudaRenderContext::render(const RenderRequest& request) {
-  if (request.feedback_state.data) return RenderStatus::CudaUnavailable;
+RenderStatus CudaRenderContext::Impl::render(const RenderRequest& request, bool feedbackSource) {
   if (!cudaAvailable()) return RenderStatus::CudaUnavailable;
   if (!validRequest(request)) return RenderStatus::InvalidArgument;
 
-  Slot* acquiredSlot = impl_->acquire();
+  Slot* acquiredSlot = acquire();
   if (!acquiredSlot) return RenderStatus::CudaError;
   struct Lease {
     Impl* owner;
     Slot* value;
     ~Lease() { owner->release(value); }
-  } lease{impl_.get(), acquiredSlot};
+  } lease{this, acquiredSlot};
   Slot& slot = *lease.value;
   const int width = request.source.width, height = request.source.height;
   const std::size_t pixelCount = static_cast<std::size_t>(width) * height;
@@ -205,6 +237,19 @@ RenderStatus CudaRenderContext::render(const RenderRequest& request) {
     && cudaMemcpyAsync(slot.parameters, &effective, sizeof(effective), cudaMemcpyHostToDevice,
                        slot.stream) == cudaSuccess;
 
+  const bool hasFeedback = (request.feedback_state.data != nullptr) && !feedbackSource;
+  if (ok && hasFeedback) {
+    ok = reserveDevice(slot.feedbackState, slot.feedbackStateCapacity, pixelCount * 4, slot.allocationCount);
+    if (ok) {
+      const bool fbFlipY = request.feedback_state.row_bytes < 0;
+      const auto fbPitch = static_cast<std::size_t>(std::abs(request.feedback_state.row_bytes));
+      const auto* fbBase = reinterpret_cast<const std::byte*>(request.feedback_state.data);
+      if (fbFlipY) fbBase += static_cast<std::ptrdiff_t>(height - 1) * request.feedback_state.row_bytes;
+      ok = cudaMemcpy2DAsync(slot.feedbackState, rowBytes, fbBase, fbPitch, rowBytes, height,
+                             cudaMemcpyHostToDevice, slot.stream) == cudaSuccess;
+    }
+  }
+
   int atlasWidth = 0, atlasHeight = 0;
   const bool fmEnabled = static_cast<int>(detail::parameter(effective, ParameterId::Mode)) == 1;
   if (ok && fmEnabled) {
@@ -220,8 +265,10 @@ RenderStatus CudaRenderContext::render(const RenderRequest& request) {
       modulationKernel<<<imageGrid, block, 0, slot.stream>>>(
         slot.source, slot.modulation, width, height, sourceFlipY, slot.parameters);
       const dim3 atlasGrid((atlasWidth + 15) / 16, (atlasHeight + 15) / 16);
-      fmSeedKernel<<<atlasGrid, block, 0, slot.stream>>>(slot.modulation, slot.seed, slot.rowKeys, width, height,
-        atlasWidth, atlasHeight, slot.parameters, signalTime);
+      fmSeedKernel<<<atlasGrid, block, 0, slot.stream>>>(
+        slot.modulation, slot.seed, slot.rowKeys, width, height,
+        atlasWidth, atlasHeight, slot.parameters, signalTime,
+        hasFeedback ? slot.feedbackState : nullptr, static_cast<std::ptrdiff_t>(rowBytes));
       ok = cudaGetLastError() == cudaSuccess;
     }
     std::size_t workspaceBytes = 0;
@@ -247,9 +294,16 @@ RenderStatus CudaRenderContext::render(const RenderRequest& request) {
 
   if (ok) {
     const dim3 block(16, 16), grid((width + 15) / 16, (height + 15) / 16);
-    renderKernel<<<grid, block, 0, slot.stream>>>(slot.source, slot.output, width, height,
-      slot.parameters, signalTime, fmEnabled ? slot.integral : nullptr,
-      atlasWidth, atlasHeight, sourceFlipY, outputFlipY);
+    if (feedbackSource) {
+      feedbackSourceKernel<<<grid, block, 0, slot.stream>>>(
+        slot.source, slot.output, width, height, slot.parameters, signalTime,
+        fmEnabled ? slot.integral : nullptr, atlasWidth, atlasHeight, sourceFlipY, outputFlipY);
+    } else {
+      renderKernel<<<grid, block, 0, slot.stream>>>(
+        slot.source, slot.output, width, height, slot.parameters, signalTime,
+        fmEnabled ? slot.integral : nullptr, atlasWidth, atlasHeight, sourceFlipY, outputFlipY,
+        hasFeedback ? slot.feedbackState : nullptr, static_cast<std::ptrdiff_t>(rowBytes));
+    }
     ok = cudaGetLastError() == cudaSuccess
       && cudaMemcpy2DAsync(outputBase, outputPitch, slot.output, rowBytes, rowBytes, height,
                            cudaMemcpyDeviceToHost, slot.stream) == cudaSuccess;
@@ -258,9 +312,22 @@ RenderStatus CudaRenderContext::render(const RenderRequest& request) {
   return ok && synchronized == cudaSuccess ? RenderStatus::Ok : RenderStatus::CudaError;
 }
 
+RenderStatus CudaRenderContext::render(const RenderRequest& request) {
+  return impl_->render(request, false);
+}
+
+RenderStatus CudaRenderContext::renderFeedbackSource(const RenderRequest& request) {
+  return impl_->render(request, true);
+}
+
 RenderStatus renderCuda(const RenderRequest& request) {
   thread_local CudaRenderContext context;
   return context.render(request);
+}
+
+RenderStatus renderFeedbackSourceCuda(const RenderRequest& request) {
+  thread_local CudaRenderContext context;
+  return context.renderFeedbackSource(request);
 }
 
 }  // namespace broken_fm
