@@ -15,6 +15,8 @@ uniform float targetUniform,targetBright,targetDark,targetEdges,targetMotion,tar
 uniform float opWeights[13],opStrengths[13],opTotal;uniform vec2 opSettings[13];
 float noise(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float luma(vec3 value){return dot(value,vec3(.2126,.7152,.0722));}
+float edgeAt(vec2 p){vec2 d=vec2(1.5)/size;float x=luma(texture(image,p+vec2(d.x,0.)).rgb)-luma(texture(image,p-vec2(d.x,0.)).rgb),y=luma(texture(image,p+vec2(0.,d.y)).rgb)-luma(texture(image,p-vec2(0.,d.y)).rgb);return length(vec2(x,y));}
+float motionAt(vec2 p,float layer){return abs(luma(texture(image,p).rgb)-luma(texture(history,vec3(p,layer)).rgb));}
 vec2 topologyCell(vec2 p){vec2 base=floor(p);if(topologyType<1.5)return mod(base,grid);vec2 best=base;float bestDistance=1e9;for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 candidate=base+vec2(float(x),float(y));vec2 point=candidate+.5+(vec2(noise(candidate+13.),noise(candidate+71.))-.5)*topologyJitter;float distance=dot(p-point,p-point);if(distance<bestDistance){bestDistance=distance;best=candidate;}}return mod(best+grid,grid);}
 int chooseOperator(vec2 p,float tick){if(opTotal<=0.)return -1;float pick=noise(p+tick*.013)*opTotal,used=0.;for(int i=0;i<13;i++){used+=opWeights[i];if(pick<used)return i;}return 12;}
 void main(){
@@ -48,9 +50,9 @@ void main(){
  vec2 fineGrid=grid*scale;
  cell=floor(lattice*scale);
  strength=min(1.,strength*(1.+infectionMutation));
- vec2 analysisPx=1./size;float lum=luma(texture(image,uv).rgb);
- float edge=max(abs(luma(texture(image,uv+vec2(analysisPx.x,0)).rgb)-lum),abs(luma(texture(image,uv+vec2(0,analysisPx.y)).rgb)-lum));
- float previousLayer=mod(historyHead-1.+32.,32.);float motion=historyCount>1.?abs(lum-luma(texture(history,vec3(uv,previousLayer)).rgb)):0.;
+ float lum=luma(texture(image,uv).rgb),previousLayer=mod(historyHead-1.+32.,32.);vec2 featureRadius=.28/grid;
+ float edge=max(edgeAt(uv),max(max(edgeAt(uv+vec2(featureRadius.x,0.)),edgeAt(uv-vec2(featureRadius.x,0.))),max(edgeAt(uv+vec2(0.,featureRadius.y)),edgeAt(uv-vec2(0.,featureRadius.y)))));edge=smoothstep(.015,.24,edge);
+ float motion=0.;if(historyCount>1.){motion=max(motionAt(uv,previousLayer),max(max(motionAt(uv+vec2(featureRadius.x,0.),previousLayer),motionAt(uv-vec2(featureRadius.x,0.),previousLayer)),max(motionAt(uv+vec2(0.,featureRadius.y),previousLayer),motionAt(uv-vec2(0.,featureRadius.y),previousLayer))));motion=smoothstep(.008,.16,motion);}
  float targetTotal=targetUniform+targetBright+targetDark+targetEdges+targetMotion;float targetScore=targetTotal>0.?(targetUniform+targetBright*lum+targetDark*(1.-lum)+targetEdges*edge+targetMotion*motion)/targetTotal:1.;
  strength*=mix(1.,clamp(targetScore,0.,1.),targetBias);affected=strength>0.;
  color=fresh;
