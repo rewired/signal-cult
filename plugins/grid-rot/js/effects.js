@@ -15,3 +15,8 @@ export function infectionStrength(distance,time,tick,infection){
  if(distance>Math.min(infection.radius,phase))return 0;
  return infection.amount*Math.max(0,1-distance/infection.radius)*Math.max(0,1-Math.max(0,phase-infection.radius)/Math.max(.001,infection.speed*infection.decay));
 }
+export function topologyCoordinate(x,y,topology,time=0){
+ const warpedX=x+(y-.5)*(topology.skew||0)+Math.sin((y+time*(topology.warpSpeed||0))*Math.PI*2)*(topology.warpAmount||0);
+ const warpedY=y+Math.cos((x-time*(topology.warpSpeed||0))*Math.PI*2)*(topology.warpAmount||0);
+ return {x:warpedX,y:warpedY,type:topology.type};
+}
