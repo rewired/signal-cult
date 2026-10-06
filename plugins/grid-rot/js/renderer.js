@@ -9,6 +9,7 @@ uniform sampler2D image;uniform highp sampler2DArray history;uniform vec2 grid,s
 uniform float historyHead,historyCount,temporalRange,temporalAmount;
 uniform vec4 regions[16];uniform vec2 traits[16];uniform float regionCount;
 uniform float amount,shift,split,crush,overlay,fractureDepth,fractureAmount;
+uniform float timeline,infectionAmount,infectionRadius,infectionSpeed,infectionDecay,infectionMutation,infectionDirection;
 uniform float opWeights[13],opStrengths[13],opTotal;uniform vec2 opSettings[13];
 float noise(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 int chooseOperator(vec2 p,float tick){if(opTotal<=0.)return -1;float pick=noise(p+tick*.013)*opTotal,used=0.;for(int i=0;i<13;i++){used+=opWeights[i];if(pick<used)return i;}return 12;}
@@ -22,8 +23,14 @@ void main(){
  bool affected=false;float strength=0.;float tick=0.;
  for(int i=0;i<16;i++){
   if(float(i)>=regionCount)break;
-  vec2 local=mod(cell-regions[i].xy+grid,grid);
-  if(local.x<regions[i].z&&local.y<regions[i].w&&traits[i].x>strength){affected=true;strength=traits[i].x;tick=traits[i].y;}
+  vec2 local=mod(cell-regions[i].xy+grid,grid);bool inside=local.x<regions[i].z&&local.y<regions[i].w;
+  vec2 halfSize=regions[i].zw*.5,center=regions[i].xy+halfSize;
+  vec2 outside=max(abs(mod(cell-center+grid*.5,grid)-grid*.5)-halfSize,0.);
+  float distance=infectionDirection==1.?outside.x:infectionDirection==2.?outside.y:length(outside);
+  float cycle=infectionRadius+max(.001,infectionSpeed*infectionDecay);
+  float phase=mod(timeline*infectionSpeed+traits[i].y*.001,cycle);
+  float infected=infectionAmount*max(0.,1.-distance/max(.001,infectionRadius))*step(distance,min(infectionRadius,phase))*max(0.,1.-max(0.,phase-infectionRadius)/max(.001,infectionSpeed*infectionDecay));
+  float candidate=inside?traits[i].x:traits[i].x*infected;if(candidate>strength){affected=candidate>0.;strength=candidate;tick=traits[i].y;}
  }
  float scale=1.;
  if(affected){for(int level=1;level<=3;level++){
@@ -36,6 +43,7 @@ void main(){
  }}
  vec2 fineGrid=grid*scale;
  cell=floor(vec2(uv.x,1.-uv.y)*fineGrid);
+ strength=min(1.,strength*(1.+infectionMutation));
  color=fresh;
  if(affected&&amount>0.){
   float n=noise(cell+floor(tick)*.137);int op=chooseOperator(cell,tick);float os=op<0?0.:opStrengths[op];
@@ -83,6 +91,6 @@ export class GridRenderer {
  reset(){this.offset=-this.time*(this.mode==='drops'?8:(this.params?.rate||0));}
  update(source,params,mode,time){this.params=params;this.mode=mode;this.time=time;const gl=this.gl;this.historyContext.drawImage(source,0,0,this.width,this.height);gl.activeTexture(gl.TEXTURE0);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.bindTexture(gl.TEXTURE_2D,this.upload);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,this.historyCanvas);this.historyHead=(this.historyHead+1)%32;gl.bindTexture(gl.TEXTURE_2D_ARRAY,this.history.texture);gl.texSubImage3D(gl.TEXTURE_2D_ARRAY,0,0,0,this.historyHead,this.width,this.height,1,gl.RGBA,gl.UNSIGNED_BYTE,this.historyCanvas);this.historyCount=Math.min(32,this.historyCount+1);this.valid=true;}
  state(){const grid=gridFor(this.sourceWidth,this.sourceHeight,this.params.density);return {grid,areas:activeAreas(grid,this.params,this.mode,this.time,this.offset)};}
- present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state(),temporal=this.extensions?.temporal??{},ops=operatorData(this.extensions?.operators);const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload,history:this.history},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],historyHead:this.historyHead,historyCount:this.historyCount,temporalRange:temporal.range??1,temporalAmount:temporal.enabled?Math.max(temporal.hold??0,temporal.delay??0,temporal.stutter??0,temporal.reverse??0,temporal.smear??0):0,'opWeights[0]':ops.weights,'opStrengths[0]':ops.strengths,'opSettings[0]':ops.settings,opTotal:ops.total,amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,fractureDepth:this.params.fractureDepth??0,fractureAmount:this.params.fractureAmount??0.65,overlay:!bypass&&amount>0&&this.overlay?1:0});}
+ present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state(),temporal=this.extensions?.temporal??{},infection=this.extensions?.infection??{},ops=operatorData(this.extensions?.operators);const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload,history:this.history},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],timeline:this.time,infectionAmount:infection.amount??0,infectionRadius:infection.radius??0,infectionSpeed:infection.speed??0,infectionDecay:infection.decay??0,infectionMutation:infection.mutation??0,infectionDirection:['all','horizontal','vertical','route'].indexOf(infection.direction),historyHead:this.historyHead,historyCount:this.historyCount,temporalRange:temporal.range??1,temporalAmount:temporal.enabled?Math.max(temporal.hold??0,temporal.delay??0,temporal.stutter??0,temporal.reverse??0,temporal.smear??0):0,'opWeights[0]':ops.weights,'opStrengths[0]':ops.strengths,'opSettings[0]':ops.settings,opTotal:ops.total,amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,fractureDepth:this.params.fractureDepth??0,fractureAmount:this.params.fractureAmount??0.65,overlay:!bypass&&amount>0&&this.overlay?1:0});}
  destroy(){for(const t of this.textures)this.gl.deleteTexture(t);for(const p of this.programs)this.gl.deleteProgram(p.program);this.textures=[];this.programs=[];}
 }

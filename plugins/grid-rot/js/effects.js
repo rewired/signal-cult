@@ -9,3 +9,9 @@ export function selectOperator(x,y,tick,operators){
  const data=operatorData(operators);if(data.total<=0)return -1;let pick=random01((x*73856093)^(y*19349663)^(Math.floor(tick)*83492791))*data.total;
  for(let i=0;i<data.weights.length;i++){pick-=data.weights[i];if(pick<0)return i;}return data.weights.length-1;
 }
+export function infectionStrength(distance,time,tick,infection){
+ if(!infection||infection.amount<=0||infection.radius<=0||distance>infection.radius)return 0;
+ const cycle=infection.radius+Math.max(.001,infection.speed*infection.decay),phase=((time*infection.speed+tick*.001)%cycle+cycle)%cycle;
+ if(distance>Math.min(infection.radius,phase))return 0;
+ return infection.amount*Math.max(0,1-distance/infection.radius)*Math.max(0,1-Math.max(0,phase-infection.radius)/Math.max(.001,infection.speed*infection.decay));
+}
