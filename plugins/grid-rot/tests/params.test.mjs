@@ -54,3 +54,12 @@ test('version 2 presets round-trip and version 1 receives neutral extensions',()
  source.temporal={...source.temporal,enabled:true,range:24};source.operators.delay={...source.operators.delay,enabled:true,weight:50};
  const parsed=parsePreset(JSON.stringify(source));assert.equal(parsed.temporal.range,24);assert.equal(parsed.operators.delay.weight,50);assert.deepEqual(parsePreset(JSON.stringify(parsed)),parsed);
 });
+test('ZASH presets are vivid, unique and valid version 2 looks',()=>{
+ const zash=presets.filter(p=>p.id.startsWith('zash-'));
+ assert.deepEqual(zash.map(p=>p.name),['ZASH // IMPACT','ZASH // CHROMA KNIFE','ZASH // TIME SLAP','ZASH // VOID PUNCH','ZASH // CASCADE']);
+ for(const preset of zash){
+  const parsed=parsePreset(JSON.stringify({format:'grid-rot-preset',version:2,name:preset.name,mode:preset.mode,params:preset.params,temporal:preset.temporal,infection:preset.infection,topology:preset.topology,targeting:preset.targeting,operators:preset.operators}));
+  assert.equal(parsed.name,preset.name);assert.ok(Object.values(parsed.operators).filter(operator=>operator.enabled&&operator.weight>0).length>=3);
+  assert.ok(parsed.infection.amount>.7);assert.ok(parsed.params.amount===1&&parsed.params.fractureDepth>=2);
+ }
+});

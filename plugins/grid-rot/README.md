@@ -131,3 +131,8 @@ timeline frames from the host rather than preserving render-order state.
 | Voronoi Decay | Irregular delayed infection |
 | Edge Parasite | Damage biased toward contrast edges |
 | Motion Eater | Delay and blackout biased toward movement |
+| ZASH // IMPACT | Maximum short-form shard, infection and routing impact |
+| ZASH // CHROMA KNIFE | Edge-biased mirrored chromatic cuts |
+| ZASH // TIME SLAP | Aggressive stutter, reverse and delay hit |
+| ZASH // VOID PUNCH | Motion-sensitive Voronoi blackout bursts |
+| ZASH // CASCADE | Vertical warped temporal avalanche |
