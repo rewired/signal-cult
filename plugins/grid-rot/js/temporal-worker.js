@@ -15,7 +15,7 @@ async function decodeWindow(time,preroll,generation,request){
  const end=time*1e6,start=Math.max(0,(time-Math.min(3,preroll))*1e6);let first=chunks.findIndex(chunk=>chunk.timestamp>=start);if(first<0)first=chunks.length-1;while(first>0&&chunks[first].type!=='key')first--;
  const frames=[];const decoder=new VideoDecoder({output:frame=>{if(frame.timestamp>=start&&frame.timestamp<=end){frames.push(frame);if(frames.length>32)frames.shift().close();}else frame.close();},error:error=>respond('unsupported',{reason:error.message})});
  decoder.configure(decoderConfig);
- for(let i=first;i<chunks.length&&chunks[i].timestamp<=end;i++)decoder.decode(chunks[i]);
+ let stop=chunks.findIndex((chunk,index)=>index>first&&chunk.timestamp>end&&chunk.type==='key');if(stop<0)stop=chunks.length;for(let i=first;i<stop;i++)decoder.decode(chunks[i]);
  await decoder.flush();decoder.close();
  if(generation!==activeGeneration||request!==activeRequest){frames.forEach(frame=>frame.close());return;}
  respond('frames',{time,request,frames},frames);

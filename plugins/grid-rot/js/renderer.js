@@ -6,7 +6,7 @@ const fragment=`#version 300 es
 precision highp float;
 in vec2 uv;out vec4 color;
 uniform sampler2D image;uniform highp sampler2DArray history;uniform vec2 grid,size;
-uniform float historyHead,historyCount,temporalRange,temporalAmount;
+uniform float historyHead,historyCount,temporalRange,historyRate;uniform vec4 temporalModes;uniform float temporalSmear;
 uniform vec4 regions[16];uniform vec2 traits[16];uniform float regionCount;
 uniform float amount,shift,split,crush,overlay,fractureDepth,fractureAmount;
 uniform float timeline,infectionAmount,infectionRadius,infectionSpeed,infectionDecay,infectionMutation,infectionDirection;
@@ -22,11 +22,8 @@ void main(){
  mappedUv.x+=(mappedUv.y-.5)*topologySkew;mappedUv+=vec2(sin((mappedUv.y+timeline*topologyWarpSpeed)*6.283),cos((mappedUv.x-timeline*topologyWarpSpeed)*6.283))*topologyWarp/grid;
  vec2 lattice=vec2(mappedUv.x,1.-mappedUv.y)*grid;
  if(topologyType<.5)lattice+=vec2((noise(vec2(floor(lattice.y),17.))-.5)*topologyJitter,(noise(vec2(floor(lattice.x),31.))-.5)*topologyJitter);vec2 cell=topologyCell(lattice);
- if(temporalAmount>0.&&historyCount>1.){
-  float lag=1.+floor(noise(cell+17.3)*min(temporalRange,historyCount-1.));
-  float layer=mod(historyHead-lag+32.,32.);
-  fresh=mix(fresh,texture(history,vec3(uv,layer)),temporalAmount);
- }
+
+
  bool affected=false;float strength=0.;float tick=0.;
  for(int i=0;i<16;i++){
   if(float(i)>=regionCount)break;
@@ -68,7 +65,17 @@ void main(){
   else if(op==4){mapped+=vec2(floor(noise(cell+4.)*3.)-1.,floor(noise(cell+9.)*3.)-1.)*opSettings[4].x;}
   if(op>=0&&op<=4)p=origin+mapped/fineGrid+d;
   vec3 damaged=texture(image,p).rgb;
-  if(op>=8&&historyCount>1.){float frames=max(1.,opSettings[op].x);float lag=op==8?temporalRange:op==9?frames:op==10?floor(mod(tick,frames))+1.:op==11?mod(floor(tick),frames)+1.:1.+noise(cell)*frames;float layer=mod(historyHead-min(lag,historyCount-1.)+32.,32.);damaged=texture(history,vec3(p,layer)).rgb;}
+  if(op>=8&&historyCount>1.){
+   float frames=max(1.,opSettings[op].x),clock=floor(timeline*max(1.,historyRate)+.5),lag=1.,blend=0.;
+   if(op==8){lag=mod(clock,max(1.,temporalRange));blend=temporalModes.x;}
+   else if(op==9){lag=frames;blend=temporalModes.y;}
+   else if(op==10){lag=mod(clock,frames);blend=temporalModes.z;}
+   else if(op==11){lag=1.+2.*mod(clock,frames);blend=temporalModes.w;}
+   else {lag=1.+noise(cell)*frames;blend=temporalSmear;}
+   lag=min(lag,historyCount-1.);vec3 temporalSample=texture(history,vec3(p,mod(historyHead-lag+32.,32.))).rgb;
+   if(op==12){float middle=min(max(1.,floor(frames*.5)),historyCount-1.),tail=min(frames,historyCount-1.);temporalSample=(temporalSample+texture(history,vec3(p,mod(historyHead-middle+32.,32.))).rgb+texture(history,vec3(p,mod(historyHead-tail+32.,32.))).rgb)/3.;}
+   damaged=mix(damaged,temporalSample,clamp(blend*os,0.,1.));
+  }
   if(op==5)damaged=damaged.gbr;if(op==6)damaged=vec3(opSettings[6].x);if(op==7)damaged=mix(damaged,vec3(noise(cell+uv*opSettings[7].x)),os);
   vec2 rgb=vec2(split/fineGrid.x,0);if(split>0.&&op<0)damaged=vec3(texture(image,p+rgb).r,texture(image,p).g,texture(image,p-rgb).b);
   float levels=mix(256.,3.,crush);damaged=floor(damaged*(levels-1.)+.5)/(levels-1.);damaged*=1.-crush*n*.6;
@@ -77,7 +84,7 @@ void main(){
  if(overlay>.5){vec2 f=fract(lattice*scale);vec2 px=fineGrid/size;float line=1.-step(px.x,f.x)*step(px.y,f.y);if(topologyType>.5&&topologyType<1.5)line=max(line,1.-step(max(px.x,px.y),abs(f.x-f.y)));color.rgb=mix(color.rgb,affected?vec3(.9,.5,1.):vec3(.35,.65,.55),line*.65);}
 }`;
 export class GridRenderer {
- constructor(canvas){this.canvas=canvas;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw new Error('WebGL 2 is unavailable. Enable browser hardware acceleration.');this.programs=[];this.textures=[];this.time=0;this.offset=0;this.sourceWidth=960;this.sourceHeight=540;this.overlay=false;this.historyHead=-1;this.historyCount=0;this.historyCanvas=document.createElement('canvas');this.historyContext=this.historyCanvas.getContext('2d',{alpha:false});try{this.display=this.program(fragment);this.upload=this.texture();const texture=this.gl.createTexture();this.textures.push(texture);this.history={texture,target:this.gl.TEXTURE_2D_ARRAY};}catch(error){this.destroy();throw error;}}
+ constructor(canvas){this.canvas=canvas;this.historyRate=30;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw new Error('WebGL 2 is unavailable. Enable browser hardware acceleration.');this.programs=[];this.textures=[];this.time=0;this.offset=0;this.sourceWidth=960;this.sourceHeight=540;this.overlay=false;this.historyHead=-1;this.historyCount=0;this.historyCanvas=document.createElement('canvas');this.historyContext=this.historyCanvas.getContext('2d',{alpha:false});try{this.display=this.program(fragment);this.upload=this.texture();const texture=this.gl.createTexture();this.textures.push(texture);this.history={texture,target:this.gl.TEXTURE_2D_ARRAY};}catch(error){this.destroy();throw error;}}
  program(fragment){
   const gl=this.gl;const shaders=[];const program=gl.createProgram();
   try{
@@ -100,10 +107,11 @@ export class GridRenderer {
  }
 
  resize(width,height){this.width=this.canvas.width=width;this.height=this.canvas.height=height;this.historyCanvas.width=width;this.historyCanvas.height=height;const gl=this.gl;gl.bindTexture(gl.TEXTURE_2D_ARRAY,this.history.texture);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage3D(gl.TEXTURE_2D_ARRAY,0,gl.RGBA8,width,height,32,0,gl.RGBA,gl.UNSIGNED_BYTE,null);this.historyHead=-1;this.historyCount=0;}
+ resetHistory(){this.historyHead=-1;this.historyCount=0;}
  reset(){this.offset=-this.time*(this.mode==='drops'?8:(this.params?.rate||0));}
  update(source,params,mode,time){this.params=params;this.mode=mode;this.time=time;const gl=this.gl;this.historyContext.drawImage(source,0,0,this.width,this.height);gl.activeTexture(gl.TEXTURE0);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.bindTexture(gl.TEXTURE_2D,this.upload);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,this.historyCanvas);this.historyHead=(this.historyHead+1)%32;gl.bindTexture(gl.TEXTURE_2D_ARRAY,this.history.texture);gl.texSubImage3D(gl.TEXTURE_2D_ARRAY,0,0,0,this.historyHead,this.width,this.height,1,gl.RGBA,gl.UNSIGNED_BYTE,this.historyCanvas);this.historyCount=Math.min(32,this.historyCount+1);this.valid=true;}
  loadHistoryFrames(frames){const gl=this.gl;this.historyHead=-1;this.historyCount=0;gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);for(const frame of frames){this.historyContext.drawImage(frame,0,0,this.width,this.height);this.historyHead=(this.historyHead+1)%32;gl.bindTexture(gl.TEXTURE_2D_ARRAY,this.history.texture);gl.texSubImage3D(gl.TEXTURE_2D_ARRAY,0,0,0,this.historyHead,this.width,this.height,1,gl.RGBA,gl.UNSIGNED_BYTE,this.historyCanvas);this.historyCount++;frame.close();}}
  state(){const grid=gridFor(this.sourceWidth,this.sourceHeight,this.params.density);return {grid,areas:activeAreas(grid,this.params,this.mode,this.time,this.offset)};}
- present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state(),temporal=this.extensions?.temporal??{},infection=this.extensions?.infection??{},topology=this.extensions?.topology??{},targeting=this.extensions?.targeting??{},ops=operatorData(this.extensions?.operators);const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload,history:this.history},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],timeline:this.time,targetUniform:targeting.uniform??1,targetBright:targeting.bright??0,targetDark:targeting.dark??0,targetEdges:targeting.edges??0,targetMotion:targeting.motion??0,targetBias:targeting.bias??0,topologyType:['rect','shards','voronoi'].indexOf(topology.type),topologyJitter:topology.jitter??0,topologySkew:topology.skew??0,topologyWarp:topology.warpAmount??0,topologyWarpSpeed:topology.warpSpeed??0,infectionAmount:infection.amount??0,infectionRadius:infection.radius??0,infectionSpeed:infection.speed??0,infectionDecay:infection.decay??0,infectionMutation:infection.mutation??0,infectionDirection:['all','horizontal','vertical','route'].indexOf(infection.direction),historyHead:this.historyHead,historyCount:this.historyCount,temporalRange:temporal.range??1,temporalAmount:temporal.enabled?Math.max(temporal.hold??0,temporal.delay??0,temporal.stutter??0,temporal.reverse??0,temporal.smear??0):0,'opWeights[0]':ops.weights,'opStrengths[0]':ops.strengths,'opSettings[0]':ops.settings,opTotal:ops.total,amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,fractureDepth:this.params.fractureDepth??0,fractureAmount:this.params.fractureAmount??0.65,overlay:!bypass&&amount>0&&this.overlay?1:0});}
+ present(amount,bypass=false){if(!this.valid)return;const {grid,areas}=this.state(),temporal=this.extensions?.temporal??{},infection=this.extensions?.infection??{},topology=this.extensions?.topology??{},targeting=this.extensions?.targeting??{},ops=operatorData(this.extensions?.operators);const regions=new Float32Array(64),traits=new Float32Array(32);areas.forEach((a,i)=>{regions.set([a.x,a.y,a.width,a.height],i*4);traits.set([a.strength,a.tick%65536],i*2);});this.draw(this.display,null,{image:this.upload,history:this.history},{grid:[grid.columns,grid.rows],'regions[0]':regions,'traits[0]':traits,regionCount:areas.length,size:[this.width,this.height],timeline:this.time,targetUniform:targeting.uniform??1,targetBright:targeting.bright??0,targetDark:targeting.dark??0,targetEdges:targeting.edges??0,targetMotion:targeting.motion??0,targetBias:targeting.bias??0,topologyType:['rect','shards','voronoi'].indexOf(topology.type),topologyJitter:topology.jitter??0,topologySkew:topology.skew??0,topologyWarp:topology.warpAmount??0,topologyWarpSpeed:topology.warpSpeed??0,infectionAmount:infection.amount??0,infectionRadius:infection.radius??0,infectionSpeed:infection.speed??0,infectionDecay:infection.decay??0,infectionMutation:infection.mutation??0,infectionDirection:['all','horizontal','vertical','route'].indexOf(infection.direction),historyHead:this.historyHead,historyCount:this.historyCount,temporalRange:temporal.range??1,historyRate:this.historyRate,temporalModes:temporal.enabled?[temporal.hold??0,temporal.delay??0,temporal.stutter??0,temporal.reverse??0]:[0,0,0,0],temporalSmear:temporal.enabled?temporal.smear??0:0,'opWeights[0]':ops.weights,'opStrengths[0]':ops.strengths,'opSettings[0]':ops.settings,opTotal:ops.total,amount:bypass?0:amount,shift:this.params.shift,split:this.params.split,crush:this.params.crush,fractureDepth:this.params.fractureDepth??0,fractureAmount:this.params.fractureAmount??0.65,overlay:!bypass&&amount>0&&this.overlay?1:0});}
  destroy(){for(const t of this.textures)this.gl.deleteTexture(t);for(const p of this.programs)this.gl.deleteProgram(p.program);this.textures=[];this.programs=[];}
 }
