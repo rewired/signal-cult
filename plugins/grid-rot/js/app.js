@@ -1,12 +1,14 @@
 import {GridRenderer} from './renderer.js';
 import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
+import {TemporalDecoder} from './temporal.js';
 const $=id=>document.getElementById(id);
 const events=new AbortController();
 const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:events.signal});
 let params={...presets.find(p=>p.id==='random-drops').params},mode='drops',presetId='random-drops',presetName='Random Drops';
 let extensions=defaultExtensions();
 let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0;
+const temporalDecoder=new TemporalDecoder(status=>{const el=$('fps');if(el&&status.mode!=='spatial')el.title=status.message;});
 let generation=0,mediaFrame=0,needsFrame=true,sourceTime=0;
 let demoTime=0,lastRAF=0,lastDemo=-1,statsTime=0,statsFrames=0;
 const demo=document.createElement('canvas');demo.width=960;demo.height=540;
@@ -14,7 +16,7 @@ const ctx=demo.getContext('2d');source=demo;
 const controls=new Map();
 function showError(message=''){$('error').textContent=message;$('error').hidden=!message;}
 function custom(){presetId='custom';presetName='Untitled';$('preset-select').value='custom';$('preset-status').textContent='Current settings';$('preset-description').textContent='Custom spatial modulation.';}
-function present(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.present(params.amount,bypass);}syncGrid();}
+function present(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.extensions=extensions;renderer.present(params.amount,bypass);}syncGrid();}
 function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.reset();}needsFrame=true;present();}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
@@ -61,6 +63,7 @@ function useDemo(){
  generation++;release(source);if(objectURL)URL.revokeObjectURL(objectURL);objectURL='';source=demo;demoTime=0;lastDemo=-1;playing=true;sourceTime=0;
  $('filename').textContent='MOVING TEST SIGNAL';$('demo').classList.add('active');$('seek-control').hidden=true;configureSource(960,540);playbackUI();showError();
 }
+  if(video)void temporalDecoder.open(file);
 on($('demo'),'click',useDemo);
 async function loadMedia(file){
  if(!file||!started)return;
@@ -76,7 +79,7 @@ async function loadMedia(file){
   release(source);if(objectURL)URL.revokeObjectURL(objectURL);source=next;objectURL=url;playing=true;sourceTime=0;demoTime=0;lastDemo=-1;
   const video=source instanceof HTMLVideoElement;configureSource(video?source.videoWidth:source.naturalWidth,video?source.videoHeight:source.naturalHeight);
   $('filename').textContent=file.name;$('demo').classList.remove('active');$('seek-control').hidden=!video;
-  if(video){$('seek').max=Number.isFinite(source.duration)?source.duration:1;$('seek').value=0;watchVideo(source);on(source,'seeked',()=>{sourceTime=source.currentTime;needsFrame=true;});try{await source.play();}catch{playing=false;showError('Press Play to start playback.');}}
+  if(video){$('seek').max=Number.isFinite(source.duration)?source.duration:1;$('seek').value=0;watchVideo(source);on(source,'seeked',()=>{sourceTime=source.currentTime;temporalDecoder.seek(sourceTime,Math.min(3,params.dropLife));needsFrame=true;});try{await source.play();}catch{playing=false;showError('Press Play to start playback.');}}
   playbackUI();
  }catch(error){if(next instanceof HTMLVideoElement){next.removeAttribute('src');next.load();}URL.revokeObjectURL(url);if(id===generation&&!disposed)showError(error.message);}
 }
@@ -146,7 +149,7 @@ on(document,'visibilitychange',()=>{lastRAF=0;if(!document.hidden)resetMotion();
 const key='grid-rot.photosensitivity-warning.dismissed';let accepted=false;try{accepted=localStorage.getItem(key)==='true';}catch{}
 on($('warning-form'),'submit',event=>{event.preventDefault();if($('dismiss-warning').checked)try{localStorage.setItem(key,'true');}catch{}$('photosensitivity-warning').hidden=true;start();});
 if(accepted){$('photosensitivity-warning').hidden=true;start();}
-on(window,'pagehide',event=>{if(event.persisted)return;disposed=true;generation++;cancelAnimationFrame(raf);release(source);if(objectURL)URL.revokeObjectURL(objectURL);renderer?.destroy();events.abort();});
+on(window,'pagehide',event=>{if(event.persisted)return;disposed=true;generation++;cancelAnimationFrame(raf);release(source);temporalDecoder.destroy();if(objectURL)URL.revokeObjectURL(objectURL);renderer?.destroy();events.abort();});
 sync();$('preset-description').textContent=presets.find(p=>p.id===presetId).description;
 
 syncGrid();
