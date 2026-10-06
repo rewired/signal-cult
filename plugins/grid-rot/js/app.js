@@ -1,5 +1,5 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions,operatorDefinitions} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 import {TemporalDecoder} from './temporal.js';
 const $=id=>document.getElementById(id);
@@ -7,13 +7,14 @@ const events=new AbortController();
 const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:events.signal});
 let params={...presets.find(p=>p.id==='random-drops').params},mode='drops',presetId='random-drops',presetName='Random Drops';
 let extensions=defaultExtensions();
-let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0;
-const temporalDecoder=new TemporalDecoder(status=>{const el=$('fps');if(el&&status.mode!=='spatial')el.title=status.message;});
+let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0,temporalPending=false;
+const temporalDecoder=new TemporalDecoder(status=>{const badge=$('temporal-status'),detail=$('decoder-status');if(badge)badge.textContent=status.mode.toUpperCase();if(detail)detail.textContent=status.message+(renderer?' · History '+renderer.historyCount+' / 32':'');if(status.mode==='spatial'){temporalPending=false;needsFrame=true;}},frames=>{renderer?.loadHistoryFrames(frames);temporalPending=false;needsFrame=true;});
 let generation=0,mediaFrame=0,needsFrame=true,sourceTime=0;
 let demoTime=0,lastRAF=0,lastDemo=-1,statsTime=0,statsFrames=0;
 const demo=document.createElement('canvas');demo.width=960;demo.height=540;
 const ctx=demo.getContext('2d');source=demo;
 const controls=new Map();
+const extensionControls=[];
 function showError(message=''){$('error').textContent=message;$('error').hidden=!message;}
 function custom(){presetId='custom';presetName='Untitled';$('preset-select').value='custom';$('preset-status').textContent='Current settings';$('preset-description').textContent='Custom spatial modulation.';}
 function present(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.extensions=extensions;renderer.present(params.amount,bypass);}syncGrid();}
@@ -21,9 +22,10 @@ function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;re
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
  for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('cluster')?(mode!=='drops'||f.key!=='clusterAmount'&&params.clusterAmount===0):f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
+ extensionControls.forEach(update=>update());
 }
 function apply(preset,id='custom'){
- params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;const base=defaultExtensions();extensions=Object.fromEntries(Object.keys(base).map(k=>[k,preset[k]??base[k]]));
+ params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;const base=defaultExtensions();extensions=structuredClone(Object.fromEntries(Object.keys(base).map(k=>[k,preset[k]??base[k]])));
  $('preset-description').textContent=preset.description||'Imported spatial modulation.';
  $('preset-status').textContent=(id==='custom'?'Loaded: ':'Applied: ')+presetName;
  sync();resetMotion();
@@ -63,7 +65,6 @@ function useDemo(){
  generation++;release(source);if(objectURL)URL.revokeObjectURL(objectURL);objectURL='';source=demo;demoTime=0;lastDemo=-1;playing=true;sourceTime=0;
  $('filename').textContent='MOVING TEST SIGNAL';$('demo').classList.add('active');$('seek-control').hidden=true;configureSource(960,540);playbackUI();showError();
 }
-  if(video)void temporalDecoder.open(file);
 on($('demo'),'click',useDemo);
 async function loadMedia(file){
  if(!file||!started)return;
@@ -78,8 +79,9 @@ async function loadMedia(file){
   if(disposed||id!==generation){if(next instanceof HTMLVideoElement){next.removeAttribute('src');next.load();}URL.revokeObjectURL(url);return;}
   release(source);if(objectURL)URL.revokeObjectURL(objectURL);source=next;objectURL=url;playing=true;sourceTime=0;demoTime=0;lastDemo=-1;
   const video=source instanceof HTMLVideoElement;configureSource(video?source.videoWidth:source.naturalWidth,video?source.videoHeight:source.naturalHeight);
+  if(video)void temporalDecoder.open(file);
   $('filename').textContent=file.name;$('demo').classList.remove('active');$('seek-control').hidden=!video;
-  if(video){$('seek').max=Number.isFinite(source.duration)?source.duration:1;$('seek').value=0;watchVideo(source);on(source,'seeked',()=>{sourceTime=source.currentTime;temporalDecoder.seek(sourceTime,Math.min(3,params.dropLife));needsFrame=true;});try{await source.play();}catch{playing=false;showError('Press Play to start playback.');}}
+  if(video){$('seek').max=Number.isFinite(source.duration)?source.duration:1;$('seek').value=0;watchVideo(source);on(source,'seeked',()=>{sourceTime=source.currentTime;temporalPending=temporalDecoder.status.mode==='ready';temporalDecoder.seek(sourceTime,Math.min(3,params.dropLife));needsFrame=!temporalPending;});try{await source.play();}catch{playing=false;showError('Press Play to start playback.');}}
   playbackUI();
  }catch(error){if(next instanceof HTMLVideoElement){next.removeAttribute('src');next.load();}URL.revokeObjectURL(url);if(id===generation&&!disposed)showError(error.message);}
 }
@@ -132,8 +134,8 @@ function loop(now){
   if(source===demo){if(playing&&!document.hidden)demoTime+=dt;const frame=Math.floor(demoTime*30);if(frame!==lastDemo){drawDemo(frame/30);lastDemo=frame;needsFrame=true;sourceTime=frame/30;}}
   else if(source instanceof HTMLVideoElement&&!source.requestVideoFrameCallback&&!source.paused){const t=source.currentTime;if(t!==sourceTime){sourceTime=t;needsFrame=true;}}
   else if(source instanceof HTMLImageElement&&playing&&!document.hidden){demoTime+=dt;const frame=Math.floor(demoTime*30);if(frame!==lastDemo){sourceTime=frame/30;lastDemo=frame;needsFrame=true;}}
-  if(needsFrame&&!document.hidden&&!(source instanceof HTMLVideoElement&&source.seeking)){
-   renderer.update(source,params,mode,sourceTime);present();needsFrame=false;statsFrames++;
+  if(needsFrame&&!temporalPending&&!document.hidden&&!(source instanceof HTMLVideoElement&&source.seeking)){
+   renderer.update(source,params,mode,sourceTime);present();needsFrame=false;statsFrames++;if($('decoder-status'))$('decoder-status').textContent=temporalDecoder.status.message+' · History '+renderer.historyCount+' / 32';
    if(source instanceof HTMLVideoElement){$('seek').value=source.currentTime;const seconds=Math.floor(source.currentTime);$('timecode').textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');}
   }
   if(now-statsTime>1000){$('fps').textContent=playing?Math.round(statsFrames*1000/(now-statsTime))+' FPS':'PAUSED';statsFrames=0;statsTime=now;}
@@ -153,3 +155,32 @@ on(window,'pagehide',event=>{if(event.persisted)return;disposed=true;generation+
 sync();$('preset-description').textContent=presets.find(p=>p.id===presetId).description;
 
 syncGrid();
+function extensionChanged(){custom();present();}
+function addRange(container,section,key,label,min,max,step){
+ const wrap=document.createElement('div');wrap.className='extension-control control';const heading=document.createElement('div');heading.className='control-heading';const text=document.createElement('label');text.textContent=label;const number=document.createElement('input');number.type='number';const range=document.createElement('input');range.type='range';
+ for(const input of [number,range]){input.min=min;input.max=max;input.step=step;}const update=value=>{if(!Number.isFinite(value))return;extensions[section][key]=Math.max(min,Math.min(max,value));number.value=range.value=extensions[section][key];extensionChanged();};
+ on(range,'input',()=>update(Number(range.value)));on(number,'input',()=>update(number.valueAsNumber));heading.append(text,number);wrap.append(heading,range);container.append(wrap);extensionControls.push(()=>number.value=range.value=extensions[section][key]);
+}
+function addSelect(container,section,key,label,options){
+ const wrap=document.createElement('label');wrap.textContent=label;const select=document.createElement('select');for(const [value,name]of options)select.append(new Option(name,value));on(select,'change',()=>{extensions[section][key]=select.value;extensionChanged();});wrap.append(select);container.append(wrap);extensionControls.push(()=>select.value=extensions[section][key]);
+}
+function addCheck(container,section,key,label){
+ const wrap=document.createElement('label');wrap.className='route-toggle';const input=document.createElement('input');input.type='checkbox';wrap.append(input,document.createTextNode(label));on(input,'change',()=>{extensions[section][key]=input.checked;extensionChanged();});container.append(wrap);extensionControls.push(()=>input.checked=Boolean(extensions[section][key]));
+}
+const targetingControls=$('targeting-controls');for(const [key,label]of [['uniform','Uniform'],['bright','Bright'],['dark','Dark'],['edges','Edges'],['motion','Motion'],['bias','Bias strength']])addRange(targetingControls,'targeting',key,label,0,1,.01);
+const infectionControls=$('infection-controls');for(const [key,label,min,max,step]of [['amount','Amount',0,1,.01],['radius','Radius',0,32,.25],['speed','Speed',0,60,.1],['decay','Decay',0,10,.05],['mutation','Mutation',0,1,.01]])addRange(infectionControls,'infection',key,label,min,max,step);
+addSelect(infectionControls,'infection','direction','Direction',[['all','All'],['horizontal','Horizontal'],['vertical','Vertical'],['route','Route direction']]);
+const topologyControls=$('topology-controls');addSelect(topologyControls,'topology','type','Topology',[['rect','Rect grid'],['shards','Diagonal shards'],['voronoi','Voronoi']]);
+for(const [key,label,min,max,step]of [['jitter','Jitter',0,1,.01],['skew','Skew',-1,1,.01],['warpAmount','Warp amount',0,2,.01],['warpSpeed','Warp speed',0,10,.05]])addRange(topologyControls,'topology',key,label,min,max,step);
+const temporalControls=$('temporal-controls');addCheck(temporalControls,'temporal','enabled','Enable 32-frame cell memory');addRange(temporalControls,'temporal','range','Frame range',1,32,1);
+for(const [key,label]of [['hold','Hold'],['delay','Delay'],['stutter','Stutter'],['reverse','Reverse'],['smear','Time smear']])addRange(temporalControls,'temporal',key,label,0,1,.01);
+const operatorControls=$('operator-controls');
+for(const definition of operatorDefinitions){
+ const row=document.createElement('div');row.className='operator-row';const label=document.createElement('label'),enabled=document.createElement('input');enabled.type='checkbox';label.append(enabled,document.createTextNode(definition.label));
+ const weight=document.createElement('input'),strength=document.createElement('input');for(const [input,max,value]of [[weight,100,0],[strength,2,1]]){input.type='number';input.min=0;input.max=max;input.step=.05;input.value=value;}
+ const change=()=>{const operator=extensions.operators[definition.id];operator.enabled=enabled.checked;operator.weight=Math.max(0,Math.min(100,weight.valueAsNumber||0));operator.strength=Math.max(0,Math.min(2,strength.valueAsNumber||0));extensionChanged();};
+ on(enabled,'change',change);on(weight,'input',change);on(strength,'input',change);row.append(label,weight,strength);
+ for(const key of Object.keys(definition.settings)){const setting=document.createElement('div');setting.className='operator-settings';const title=document.createElement('span');title.textContent=key;const input=document.createElement('input');input.type='number';input.step=.1;input.min=-32;input.max=32;on(input,'input',()=>{if(Number.isFinite(input.valueAsNumber)){extensions.operators[definition.id].settings[key]=input.valueAsNumber;extensionChanged();}});setting.append(title,input);row.append(setting);extensionControls.push(()=>input.value=extensions.operators[definition.id].settings[key]??0);}
+ operatorControls.append(row);extensionControls.push(()=>{const operator=extensions.operators[definition.id];enabled.checked=operator.enabled;weight.value=operator.weight;strength.value=operator.strength;});
+}
+sync();

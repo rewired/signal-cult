@@ -20,10 +20,11 @@ returns to the route start. The small grid shows the actual affected area;
 Show grid adds an optional preview guide.
 
 Displacement, color separation and tone damage affect only that area.
-There is no frame history, feedback or delayed output. Amount 0 and View input
-show the current source without the guide. Local frame holds may be explored later.
+Optional cell memory, routing operators, infection, deformed topologies and
+content targeting extend that area while remaining deterministic by timeline time.
+Amount 0 and View input show the current source without the guide.
 
-Presets use their own grid-rot-preset version 1 format and the collection's
+Presets use the grid-rot-preset version 2 format and the collection's
 previous/next, JSON import/export workflow. BUCKET ROT and SIGNAL ROT are separate.
 
 Original code uses the collection [license](../../LICENSE).
@@ -87,3 +88,46 @@ round-trip in presets. Older presets load with clustering disabled.
 | Grid Crawl | A single steady moving patch |
 | Scatter | Small patches jumping across the grid |
 | Wide Wave | A broad oscillating area |
+
+## Extended renderer
+
+GRID ROT v2 adds five deterministic systems that can be combined:
+
+- Cell Memory keeps at most 32 RGBA8 preview frames and routes cells through Hold,
+  Delay, Stutter, Reverse and Time Smear. H.264 MP4 files are probed locally with
+  MP4Box.js and WebCodecs; unsupported files remain available in spatial-only mode.
+- The operator matrix assigns one weighted routing operator to every fine cell.
+  Zero total weight preserves the original GRID ROT renderer.
+- Infection expands from active regions using timeline-derived spread, decay,
+  direction and mutation. It does not depend on playback order.
+- Rect, diagonal-shard and Voronoi topologies share stable logical cell IDs.
+- Uniform, bright, dark, edge and motion targeting bias local damage from the
+  current source and the previous cached frame.
+
+The preview remains capped at 1920 × 1080. A full 32-frame 1080p RGBA8 history is
+about 253 MiB of GPU storage. All media, history textures and decoder workers are
+released when media changes or the page closes.
+
+## Preset format and native port
+
+New exports use `grid-rot-preset` version 2 with `temporal`, `infection`,
+`topology`, `targeting` and `operators` sections. Version 1 imports receive
+neutral defaults and retain their original spatial render.
+
+Simulation hashes and flat numeric controls deliberately avoid browser-only state.
+A CUDA/OpenFX port should mirror the same cell hashes and request the necessary
+timeline frames from the host rather than preserving render-order state.
+
+### Extended presets
+
+| Preset | Character |
+| --- | --- |
+| Frozen Infection | Held cells spread through a decaying infection |
+| Time Mosaic | Fractured cells sample different moments |
+| Memory Collapse | Large temporal blocks collapse backward |
+| Cellular Burn | Mutating noise and blackout wave |
+| Operator Storm | Broad weighted spatial operator bank |
+| Shard Current | Warped diagonal cells |
+| Voronoi Decay | Irregular delayed infection |
+| Edge Parasite | Damage biased toward contrast edges |
+| Motion Eater | Delay and blackout biased toward movement |

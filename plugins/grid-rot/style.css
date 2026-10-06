@@ -4,3 +4,10 @@
 .route-toggle {display:flex!important;align-items:center;gap:8px;margin:14px 0!important;}
 .route-toggle input {accent-color:var(--accent);}
 .wide-button {width:100%;margin-top:10px;}
+.operator-row {border-top:1px solid #263633;padding:10px 0;display:grid;grid-template-columns:minmax(105px,1fr) 72px 72px;gap:7px;align-items:center;}
+.operator-row label {display:flex!important;align-items:center;gap:6px;margin:0!important;}
+.operator-row input[type=number] {width:100%;}
+.operator-settings {grid-column:1/-1;display:grid;grid-template-columns:1fr 90px;gap:8px;color:var(--muted);font-size:.68rem;}
+.extension-control {margin:9px 0;}
+.extension-control .control-heading {display:flex;justify-content:space-between;gap:8px;}
+#temporal-status {margin-right:9px;color:var(--accent);}

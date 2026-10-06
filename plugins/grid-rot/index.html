@@ -11,7 +11,7 @@
  <div class="photosensitivity-card">
   <p class="photosensitivity-kicker">Health &amp; safety</p><h1 id="warning-title">Photosensitivity / epilepsy warning</h1>
   <p id="warning-description">GRID ROT can produce flashing lights, rapid contrast changes and moving patterns that may trigger seizures or discomfort in people with photosensitive epilepsy or other visual sensitivities.</p>
-  <p class="photosensitivity-advice">Stop using the application if you feel unwell.</p>
+  <p class="photosensitivity-advice">Temporal strobing and rapid local frame changes can intensify these effects. Stop using the application if you feel unwell.</p>
   <form id="warning-form"><label class="photosensitivity-choice"><input id="dismiss-warning" type="checkbox">Do not show again on this device</label><button id="photosensitivity-continue" type="submit">I understand — continue</button></form>
  </div>
 </section>
@@ -30,7 +30,7 @@
   <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
   <span id="preset-status" class="preset-status" role="status">Applied: Random Drops</span>
  </div>
- <div class="header-status"><span id="fps" class="perf">READY</span></div>
+ <div class="header-status"><span id="temporal-status" class="perf">SPATIAL</span><span id="fps" class="perf">READY</span></div>
 </header>
 <main id="app">
  <section class="preview-panel" aria-label="Preview">
@@ -49,7 +49,12 @@
   </section>
   <section><h2>Movement</h2><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label>
    <p class="interaction-note">Random drops appear independently across the image. Step routes move row by row. Pause and Step motion inspect changes on a frozen frame.</p></section>
-  <section id="parameters"><h2>Grid, area &amp; damage</h2></section>
+  <section><h2>Targeting</h2><div id="targeting-controls"></div></section>
+  <section><h2>Infection</h2><div id="infection-controls"></div></section>
+  <section><h2>Topology</h2><div id="topology-controls"></div></section>
+  <section><h2>Operator matrix</h2><div id="temporal-controls"></div><div id="operator-controls"></div></section>
+  <section id="parameters"><h2>Grid, area &amp; post damage</h2></section>
+  <section><h2>Decoder</h2><p id="decoder-status" class="section-note">Spatial processing · History 0 / 32</p></section>
   <section><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
    <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>
    <p class="interaction-note">Drop a video or image anywhere. The grid follows the source aspect. Damage affects the current frame immediately.</p>
