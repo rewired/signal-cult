@@ -1,10 +1,11 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 const $=id=>document.getElementById(id);
 const events=new AbortController();
 const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:events.signal});
 let params={...presets.find(p=>p.id==='random-drops').params},mode='drops',presetId='random-drops',presetName='Random Drops';
+let extensions=defaultExtensions();
 let renderer,source,objectURL='',playing=true,bypass=false,started=false,disposed=false,raf=0;
 let generation=0,mediaFrame=0,needsFrame=true,sourceTime=0;
 let demoTime=0,lastRAF=0,lastDemo=-1,statsTime=0,statsFrames=0;
@@ -20,7 +21,7 @@ function sync(){
  for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('cluster')?(mode!=='drops'||f.key!=='clusterAmount'&&params.clusterAmount===0):f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
 }
 function apply(preset,id='custom'){
- params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;
+ params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;const base=defaultExtensions();extensions=Object.fromEntries(Object.keys(base).map(k=>[k,preset[k]??base[k]]));
  $('preset-description').textContent=preset.description||'Imported spatial modulation.';
  $('preset-status').textContent=(id==='custom'?'Loaded: ':'Applied: ')+presetName;
  sync();resetMotion();
@@ -87,7 +88,7 @@ on($('preset-file'),'change',async event=>{
  try{if(file.size>65536)throw new Error('Preset file is too large (maximum 64 KB).');apply(parsePreset(await file.text()));showError();}catch(error){showError('Could not load preset: '+error.message);}
 });
 on($('save-preset'),'click',()=>{
- const preset=parsePreset(JSON.stringify({format:'grid-rot-preset',version:1,name:presetName,mode,params}));
+ const preset=parsePreset(JSON.stringify({format:'grid-rot-preset',version:2,name:presetName,mode,params,...extensions}));
  const url=URL.createObjectURL(new Blob([JSON.stringify(preset,null,2)+'\n'],{type:'application/json'}));
  const a=document.createElement('a');a.href=url;a.download=(presetName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'grid-rot')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('preset-status').textContent='Saved: '+presetName;
 });

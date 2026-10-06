@@ -19,6 +19,20 @@ export const fields = [
 ];
 export const defaults=Object.fromEntries(fields.map(f=>[f.key,f.value]));
 export const modes=['step-right','step-left','random','lfo','drops'];
+export const temporalDefaults={enabled:false,range:12,hold:0,delay:0,stutter:0,reverse:0,smear:0};
+export const infectionDefaults={amount:0,radius:0,speed:4,decay:.5,mutation:0,direction:'all'};
+export const topologyDefaults={type:'rect',jitter:0,skew:0,warpAmount:0,warpSpeed:0};
+export const targetingDefaults={uniform:1,bright:0,dark:0,edges:0,motion:0,bias:0};
+export const operatorDefinitions=[
+ {id:'offset',label:'Offset',settings:{distance:1,angle:0}},{id:'mirror',label:'Mirror',settings:{axis:0}},
+ {id:'rotate',label:'Rotate',settings:{turns:1}},{id:'zoom',label:'Zoom',settings:{scale:1.25}},
+ {id:'neighbor',label:'Neighbor cell',settings:{radius:1}},{id:'channel',label:'Channel permute',settings:{permutation:1}},
+ {id:'blackout',label:'Blackout',settings:{level:0}},{id:'noise',label:'Noise',settings:{scale:8}},
+ {id:'hold',label:'Hold',settings:{}},{id:'delay',label:'Delay',settings:{frames:8}},{id:'stutter',label:'Stutter',settings:{frames:3}},
+ {id:'reverse',label:'Reverse',settings:{frames:12}},{id:'smear',label:'Time smear',settings:{frames:12}}
+];
+export const operatorDefaults=Object.fromEntries(operatorDefinitions.map(d=>[d.id,{enabled:false,weight:0,strength:1,settings:{...d.settings}}]));
+export function defaultExtensions(){return {temporal:{...temporalDefaults},infection:{...infectionDefaults},topology:{...topologyDefaults},targeting:{...targetingDefaults},operators:Object.fromEntries(Object.entries(operatorDefaults).map(([id,o])=>[id,{...o,settings:{...o.settings}}]))};}
 export const presets=[
  {"id":"pin-pricks","name":"Pin Pricks","description":"Small, distinct punctures with sharp color edges and irregular flicker.","mode":"drops","params":{...defaults,"density":2,"spanX":1,"spanY":2,"dropCount":8,"dropLife":0.5,"dropSpread":0.45,"shift":1.1,"split":0.8,"crush":0.75,"amount":1}},
  {"id":"digital-dust","name":"Digital Dust","description":"Fine, short-lived fragments scattered across the image.","mode":"drops","params":{...defaults,"density":4,"spanX":3,"spanY":3,"dropCount":16,"dropLife":0.15,"dropSpread":0.8,"fractureDepth":2,"fractureAmount":0.9,"shift":0.7,"split":0.6,"crush":0.65}},
@@ -102,6 +116,20 @@ export function fractureScale(x,y,params,tick){
  return scale;
 }
 export function containsCell(x,y,area,grid){return wrap(x-area.x,grid.columns)<area.width&&wrap(y-area.y,grid.rows)<area.height;}
-export function parsePreset(text){const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||p.version!==1)throw new Error('Expected a GRID ROT version 1 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');const params={};for(const f of fields){const n=p.params?.[f.key]===undefined&&(f.key.startsWith('drop')||f.key.startsWith('fracture')||f.key.startsWith('cluster'))?defaults[f.key]:p.params?.[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}return {format:p.format,version:1,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params};}
+const number=(value,min,max,label)=>{if(typeof value!=='number'||!Number.isFinite(value)||value<min||value>max)throw new Error('Invalid parameter: '+label);return value;};
+const enumValue=(value,values,label)=>{if(!values.includes(value))throw new Error('Invalid '+label+'.');return value;};
+export function parsePreset(text){
+ const p=JSON.parse(text);if(p?.format!=='grid-rot-preset'||![1,2].includes(p.version))throw new Error('Expected a GRID ROT version 1 or 2 preset.');if(!modes.includes(p.mode))throw new Error('Invalid movement.');
+ const params={};for(const f of fields){const n=p.params?.[f.key]===undefined?defaults[f.key]:p.params[f.key];if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max||(f.step===1&&!Number.isInteger(n)))throw new Error('Invalid parameter: '+f.label);params[f.key]=n;}
+ const ext=defaultExtensions();
+ if(p.version===2){
+  Object.assign(ext.temporal,p.temporal);ext.temporal.enabled=Boolean(ext.temporal.enabled);number(ext.temporal.range,1,32,'temporal range');for(const k of ['hold','delay','stutter','reverse','smear'])number(ext.temporal[k],0,1,'temporal '+k);
+  Object.assign(ext.infection,p.infection);number(ext.infection.amount,0,1,'infection amount');number(ext.infection.radius,0,32,'infection radius');number(ext.infection.speed,0,60,'infection speed');number(ext.infection.decay,0,10,'infection decay');number(ext.infection.mutation,0,1,'infection mutation');enumValue(ext.infection.direction,['all','horizontal','vertical','route'],'infection direction');
+  Object.assign(ext.topology,p.topology);enumValue(ext.topology.type,['rect','shards','voronoi'],'topology');number(ext.topology.jitter,0,1,'topology jitter');number(ext.topology.skew,-1,1,'topology skew');number(ext.topology.warpAmount,0,2,'warp amount');number(ext.topology.warpSpeed,0,10,'warp speed');
+  Object.assign(ext.targeting,p.targeting);for(const k of ['uniform','bright','dark','edges','motion','bias'])number(ext.targeting[k],0,1,'targeting '+k);
+  for(const d of operatorDefinitions){const input=p.operators?.[d.id];if(!input)continue;const target=ext.operators[d.id];target.enabled=Boolean(input.enabled);target.weight=number(input.weight,0,100,d.id+' weight');target.strength=number(input.strength,0,2,d.id+' strength');if(input.settings&&typeof input.settings==='object')Object.assign(target.settings,input.settings);}
+ }
+ return {format:p.format,version:2,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params,...ext};
+}
 export {nextPreset} from '../../signal-rot/js/params.js';
 export function previewSize(width,height){const scale=Math.min(1,1920/width,1080/height);return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};}

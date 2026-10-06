@@ -1,4 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {clusterCenter,fractureScale,baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,parsePreset,presets} from '../js/params.js';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {clusterCenter,fractureScale,baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,defaultExtensions,parsePreset,presets} from '../js/params.js';
 test('source ratios and independent integer density',()=>{for(const [w,h,c,r] of [[1920,1080,16,9],[1080,1920,9,16],[1440,1080,4,3],[1000,1000,1,1]]){const g=gridFor(w,h,3);assert.equal(g.columns,c*3);assert.equal(g.rows,r*3);}const b=baseGrid(2048,1080);assert.ok(b.columns<=24&&b.rows<=24);assert.ok(Math.abs(b.columns/b.rows-2048/1080)<.02);assert.throws(()=>baseGrid(0,10));});
 test('footprint wraps without altering grid density',()=>{const g=gridFor(1920,1080,1);const a=activeArea(g,{...defaults,spanX:4,spanY:3},'step-left',1/8);assert.equal(a.x,15);assert.equal(a.y,8);assert.ok(containsCell(0,0,a,g));assert.ok(!containsCell(4,0,a,g));assert.equal(activeArea(g,{...defaults,spanX:32},'step-right',0).width,16);});
 test('motion is bounded and reproducible',()=>{const g=gridFor(1080,1920,2);for(const mode of ['step-right','step-left','random','lfo'])for(const t of [0,.3,12,1000]){const a=activeArea(g,defaults,mode,t);assert.deepEqual(a,activeArea(g,defaults,mode,t));assert.ok(a.x>=0&&a.x<g.columns&&a.y>=0&&a.y<g.rows);}assert.equal(activeArea(g,defaults,'step-right',0,1).x,1);});
@@ -46,4 +46,11 @@ test('clusters are reproducible, compact and optional',()=>{
 test('preset collection has unique IDs and distinct parameter snapshots',()=>{
  assert.equal(new Set(presets.map(p=>p.id)).size,presets.length);
  assert.equal(new Set(presets.map(p=>JSON.stringify([p.mode,p.params]))).size,presets.length);
+});
+test('version 2 presets round-trip and version 1 receives neutral extensions',()=>{
+ const legacy=parsePreset(JSON.stringify({format:'grid-rot-preset',version:1,name:'Legacy',mode:'drops',params:{...defaults}}));
+ assert.equal(legacy.version,2);assert.deepEqual(legacy.temporal,defaultExtensions().temporal);assert.deepEqual(legacy.operators,defaultExtensions().operators);
+ const source={format:'grid-rot-preset',version:2,name:'V2',mode:'drops',params:{...defaults},...defaultExtensions()};
+ source.temporal={...source.temporal,enabled:true,range:24};source.operators.delay={...source.operators.delay,enabled:true,weight:50};
+ const parsed=parsePreset(JSON.stringify(source));assert.equal(parsed.temporal.range,24);assert.equal(parsed.operators.delay.weight,50);assert.deepEqual(parsePreset(JSON.stringify(parsed)),parsed);
 });
