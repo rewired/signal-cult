@@ -16,7 +16,11 @@ test('OFX requests deterministic source history without rolling render state',()
  assert.match(host,/kOfxImageEffectPropTemporalClipAccess,1/);assert.match(host,/kOfxImageEffectActionGetFramesNeeded/);assert.match(host,/requiredPastFrames/);assert.match(host,/time-requiredPastFrames/);
  assert.doesNotMatch(host,/feedbackFrame|previous_feedback|std::mutex/);assert.match(host,/std::max\(first,time-i\)/);
 });
-test('Resolve page exposes direct controls and stores Companion controls secretly',()=>{
+test('OFX boolean parameters only receive properties valid for boolean descriptors',()=>{
+ const body=host.match(/static void range\([\s\S]+?static const char\*type/)[0];
+ assert.match(body,/ParameterKind::Boolean\)\{integer\(p,kOfxParamPropDefault,int\(d\.initial\)\);return;\}/);
+ assert.ok(body.indexOf('ParameterKind::Boolean')<body.indexOf('kOfxParamPropMin'));
+});test('Resolve page exposes direct controls and stores Companion controls secretly',()=>{
  assert.match(host,/ParameterSurface::Companion\)\{integer\(v,kOfxParamPropSecret,1\)/);
  assert.match(host,/if\(d\.surface==ParameterSurface::Direct\)text\(page,kOfxParamPropPageChild/);
  assert.match(host,/\{"preset","mode","bypass","useCuda"\}/);
