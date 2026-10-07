@@ -72,7 +72,7 @@ fn validate_preset(text: &str) -> Result<Value, String> {
     for def in contract["parameters"].as_array().ok_or("invalid contract")? {
         let id=def["id"].as_str().ok_or("invalid parameter ID")?;
         let Some(n)=params.get(id).and_then(Value::as_f64) else {
-            if matches!(id, "pixelColorR" | "pixelColorG" | "pixelColorB") { continue; }
+            if matches!(id, "outputMix" | "pixelColorR" | "pixelColorG" | "pixelColorB" | "ignoreCurvature") { continue; }
             return Err(format!("missing parameter: {id}"));
         };
         if !n.is_finite() || n < def["min"].as_f64().unwrap() || n > def["max"].as_f64().unwrap()

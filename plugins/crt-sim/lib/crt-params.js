@@ -39,10 +39,11 @@ export const noiseTypes = [
 export const pixelPatterns = [{"id":0,"name":"Dots","description":"Luminance-responsive raster anchored to the image."},{"id":1,"name":"Square Cells","description":"Luminance-responsive raster anchored to the image."},{"id":2,"name":"Diamonds","description":"Luminance-responsive raster anchored to the image."},{"id":3,"name":"Vertical Bars","description":"Luminance-responsive raster anchored to the image."},{"id":4,"name":"Horizontal Bars","description":"Luminance-responsive raster anchored to the image."},{"id":5,"name":"Cross Matrix","description":"Luminance-responsive raster anchored to the image."},{"id":6,"name":"Rings","description":"Luminance-responsive raster anchored to the image."},{"id":7,"name":"Segment Display","description":"Luminance-responsive raster anchored to the image."}];
 export const pixelPalettes = [{"id":0,"name":"Source Color","description":"Preserve the source colors."},{"id":1,"name":"Phosphor Green","description":"Stylized monitor palette."},{"id":2,"name":"Amber","description":"Stylized monitor palette."},{"id":3,"name":"Ice Blue","description":"Stylized monitor palette."},{"id":4,"name":"Magenta / Cyan","description":"Stylized monitor palette."},{"id":5,"name":"Warm White","description":"Stylized monitor palette."},{"id":6,"name":"Custom Color","description":"Use the shared Sci-Fi color picker."}];
 export const choiceTypes = {noiseType:noiseTypes,pixelPattern:pixelPatterns,pixelPalette:pixelPalettes};
-export const toggleIds = ['pixelEnabled','tubeEnabled'];
+export const toggleIds = ['pixelEnabled','tubeEnabled','ignoreCurvature'];
 export const integerIds = ['noiseSeed'];
 export const colorIds = ['pixelColorR','pixelColorG','pixelColorB'];
 export const controls = [
+    ["Output","outputMix","Mix with Input",0,1,0.01,1],
     ["Signal","noiseSeed","Seed",0,16777215,1,0],
     ["Pixel / Sci-Fi","pixelEnabled","Enable Pixel / Sci-Fi",0,1,1,1],
     ["CRT","tubeEnabled","Enable CRT",0,1,1,1],
@@ -77,6 +78,7 @@ export const controls = [
     ["Light & Color","black","Black Level",0,0.15,0.001,0.005],
     ["Light & Color","gamma","CRT Gamma",1.5,3,0.01,2.2],
     ["Optics","curve","Curvature",0,0.3,0.001,0.06],
+    ["Optics","ignoreCurvature","Ignore Curvature",0,1,1,0],
     ["Optics","vignette","Vignette",0,1,0.01,0.25],
     ["Optics","convergence","RGB Convergence (px)",0,8,0.1,0.6],
     ["Chroma & Signal","chromaBleed","Chroma Bleed",0,1,0.01,0],
@@ -113,7 +115,7 @@ export const controls = [
 
 ];
 export const defaults = Object.fromEntries(controls.map(c => [c[1], c[6]]));
-const compatibilityDefaults=new Set(['pixelColorR','pixelColorG','pixelColorB','bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift']);
+const compatibilityDefaults=new Set(['outputMix','ignoreCurvature','pixelColorR','pixelColorG','pixelColorB','bloomThreshold','bloomKnee','bloomRadius','bloomSpread','highlightDiffusion','tubeGlow','chromaBleed','chromaDelay','lumaSharpness','chromaSharpness','hueDrift','hueDriftSpeed','monochrome','tintHue','tintSaturation','phosphorResponse','lumaMix','verticalRoll','rollSpeed','shutterScan','shutterWidth','shutterSpeed','shakeX','shakeY','shakeSpeed','syncDrift']);
 export const presets=Object.fromEntries(presetData.map(p=>[p.name,{...defaults,...p.params}]));
 export const presetStyles=Object.fromEntries(presetData.map(p=>[p.name,{maskType:p.maskType,description:p.description}]));
 export function getBuiltInPreset(name) {

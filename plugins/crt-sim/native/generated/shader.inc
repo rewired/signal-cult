@@ -247,12 +247,13 @@ HD vec4 shade(vec2 uv,vec2 gl_FragCoord){
  vec2 p=uv;
  if(bypass>.5||(tubeEnabled<.5&&(pixelEnabled<.5||pixelMix<=0.))||(split>0.&&uv.x<split)){return texture(source,p);}
  if(tubeEnabled<.5){return managed?vec4(sampleLinear(p),1):vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);}
- vec2 q=p*2.-1.;q*=1.+curve*dot(q,q);p=q*.5+.5;
+ float effectiveCurve=ignoreCurvature>.5?0.:curve;
+ vec2 q=p*2.-1.;q*=1.+effectiveCurve*dot(q,q);p=q*.5+.5;
  if(any(lessThan(p,vec2(0)))||any(greaterThan(p,vec2(1)))){return vec4(0,0,0,0);}
  // Inverse-map the complete tube surface before evaluating its layers.
  // Keep the physical raster separate from horizontal signal displacement.
  vec2 surfaceUV=p;
- vec2 surfacePixel=curve==0.?gl_FragCoord:surfaceUV*resolution;
+ vec2 surfacePixel=effectiveCurve==0.?gl_FragCoord:surfaceUV*resolution;
  if(shakeX>0.||shakeY>0.){
   float shakePhase=time*shakeSpeed;
   vec2 shake=vec2(signalField(vec2(shakePhase*.73,17.),1709)-.5,signalField(vec2(shakePhase*.61,31.),1811)-.5)*2.;

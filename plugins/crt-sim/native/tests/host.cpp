@@ -60,7 +60,7 @@ int main(int argc,char**argv){if(argc!=2)return 1;auto dll=LoadLibraryA(argv[1])
  param["inputGamut"]->iv=1;param["inputGamma"]->iv=3;param["preset"]->iv=13;Store change;ss(ph(change),kOfxPropName,0,"preset");ss(ph(change),kOfxPropChangeReason,0,kOfxChangeUserEdited);
  if(plugin->mainEntry(kOfxActionInstanceChanged,&effect,ph(change),nullptr)!=kOfxStatOK||param["encoding"]->iv!=2||param["inputGamut"]->iv!=1||param["inputGamma"]->iv!=3)return 11;
  ss(ph(source),kOfxImageClipPropColourspace,0,"unknown");param["bypass"]->iv=1;if(render()!=kOfxStatOK||src!=dst)return 12;
- param["bypass"]->iv=0;param["tubeEnabled"]->iv=0;param["pixelEnabled"]->iv=0;if(render()!=kOfxStatOK||src!=dst)return 13;
+ param["bypass"]->iv=0;param["outputMix"]->dv=1;param["tubeEnabled"]->iv=0;param["pixelEnabled"]->iv=0;if(render()!=kOfxStatOK||src!=dst)return 13;
  plugin->mainEntry(kOfxActionDestroyInstance,&effect,nullptr,nullptr);plugin->mainEntry(kOfxActionUnload,nullptr,nullptr,nullptr);FreeLibrary(dll);
  std::cout<<"Host: manual/auto render, unknown metadata rejection, preset isolation and bypass passed\n";
 }

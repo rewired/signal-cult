@@ -7,6 +7,7 @@ int main(int argc,char** argv){
  for(const auto& p:presets)validateCompanionPreset({{"version",1},{"maskType",p["maskType"]},{"params",p["params"]}});
  nlohmann::json valid={{"version",1},{"maskType",0},{"params",presets[0]["params"]}};
  auto compatible=validateCompanionPreset(valid);if(compatible.values.size()!=std::size(parameterDefs))return 9;
+ if(compatible.values[0]!=1)return 10;
  auto rejects=[](const nlohmann::json& p){try{validateCompanionPreset(p);return false;}catch(...){return true;}};
  auto p=valid;p["params"].erase("scan");if(!rejects(p))return 2;
  p=valid;p["params"]["noiseSeed"]=.5;if(!rejects(p))return 3;

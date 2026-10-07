@@ -5,6 +5,16 @@
   "mask_count": 12,
   "parameters": [
     {
+      "id": "outputMix",
+      "label": "Mix with Input",
+      "group": "Output",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 1,
+      "type": "double"
+    },
+    {
       "id": "noiseSeed",
       "label": "Seed",
       "group": "Signal",
@@ -343,6 +353,16 @@
       "step": 0.001,
       "default": 0.06,
       "type": "double"
+    },
+    {
+      "id": "ignoreCurvature",
+      "label": "Ignore Curvature",
+      "group": "Optics",
+      "min": 0,
+      "max": 1,
+      "step": 1,
+      "default": 0,
+      "type": "boolean"
     },
     {
       "id": "vignette",

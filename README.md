@@ -107,7 +107,7 @@ No npm install or frontend build is required. From PowerShell:
 ./scripts/test.ps1
 ```
 
-Tests and native/Companion builds use Node.js. CRT SIM follows BROKEN FM as the
-UI and Companion master.
+Tests and native/Companion builds use Node.js. All four native products share
+the compact SIGNAL CULT application shell and rewired-vfx website design tokens.
 
 Packaging remains plugin-specific. GRID ROT now builds its Companion beside the OFX bundle; a combined collection installer and full multi-plugin Resolve coexistence validation remain release work.

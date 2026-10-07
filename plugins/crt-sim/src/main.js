@@ -35,7 +35,7 @@ function sciFiColorPicker(parent){
 const select=$('preset-select');select.append(new Option('Current / custom','custom'));
 for(const name of Object.keys(presets))select.append(new Option(name,name));
 const syncTypes=[];
-for(const [index,group] of ['CRT','Signal','Chroma & Signal','Glow','Monochrome','Motion','Light & Color','Optics','Pixel / Sci-Fi'].entries()){
+for(const [index,group] of ['Output','CRT','Signal','Chroma & Signal','Glow','Monochrome','Motion','Light & Color','Optics','Pixel / Sci-Fi'].entries()){
  const details=document.createElement('section');
  const summary=document.createElement('h2');const label=document.createElement('span');const small=document.createElement('small');small.textContent=`0${index+1}`;label.append(group);summary.append(label);details.append(summary);
  for(const [,id,title] of controls.filter(c=>c[0]===group&&toggleIds.includes(c[1]))){

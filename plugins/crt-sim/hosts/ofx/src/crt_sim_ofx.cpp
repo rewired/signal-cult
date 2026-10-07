@@ -34,7 +34,7 @@ static void real(OfxPropertySetHandle p,const char* name,double value){check(pro
 static Instance* instance(OfxImageEffectHandle effect){OfxPropertySetHandle p;check(effects->getPropertySet(effect,&p));void* ptr=nullptr;check(props->propGetPointer(p,kOfxPropInstanceData,0,&ptr));if(!ptr)throw kOfxStatErrBadHandle;return static_cast<Instance*>(ptr);}
 static OfxPropertySetHandle define(OfxParamSetHandle set,const char* type,const char* id,const char* label){OfxPropertySetHandle p;check(parameters->paramDefine(set,type,id,&p));text(p,kOfxPropLabel,label);return p;}
 static OfxStatus describe(OfxImageEffectHandle effect){
- OfxPropertySetHandle p;check(effects->getPropertySet(effect,&p));text(p,kOfxPropLabel,"CRT SIM");text(p,kOfxImageEffectPluginPropGrouping,"rewired-vfx");
+ OfxPropertySetHandle p;check(effects->getPropertySet(effect,&p));text(p,kOfxPropLabel,"CRT SIM");text(p,kOfxImageEffectPluginPropGrouping,"rewired-vfx / SIGNAL CULT");
  text(p,kOfxImageEffectPropSupportedContexts,kOfxImageEffectContextFilter,0);text(p,kOfxImageEffectPropSupportedContexts,kOfxImageEffectContextGeneral,1);
  text(p,kOfxImageEffectPropSupportedPixelDepths,kOfxBitDepthFloat);text(p,kOfxImageEffectPluginRenderThreadSafety,kOfxImageEffectRenderFullySafe);
  integer(p,kOfxImageEffectPropSupportsTiles,0);integer(p,kOfxImageEffectPropSupportsMultiResolution,0);integer(p,kOfxImageEffectPropTemporalClipAccess,0);
@@ -50,7 +50,7 @@ static OfxStatus context(OfxImageEffectHandle effect){
  OfxPropertySetHandle clip;for(const char* name:{"Source","Output"}){check(effects->clipDefine(effect,name,&clip));text(clip,kOfxImageEffectPropSupportedComponents,kOfxImageComponentRGBA);integer(clip,kOfxImageEffectPropSupportsTiles,0);}
  OfxParamSetHandle set;check(effects->getParamSet(effect,&set));
  auto page=define(set,kOfxParamTypePage,"controlsPage","Controls");int pageIndex=0;
- for(const char* child:{"crtSimEdit","crtSimStatus","preset","bypass","colorManagement","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"})text(page,kOfxParamPropPageChild,child,pageIndex++);
+ for(const char* child:{"crtSimEdit","crtSimStatus","preset","bypass","output","colorManagement","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"})text(page,kOfxParamPropPageChild,child,pageIndex++);
 
  auto edit=define(set,kOfxParamTypePushButton,"crtSimEdit","Open CRT SIM Editor");text(edit,kOfxParamPropHint,"Edit a working copy in the CRT SIM Companion. Apply commits the look; Cancel leaves this instance unchanged.");
  auto status=define(set,kOfxParamTypeString,"crtSimStatus","Editor Status");text(status,kOfxParamPropDefault,"Ready");integer(status,kOfxParamPropEnabled,0);integer(status,kOfxParamPropAnimates,0);integer(status,kOfxParamPropPersistant,0);
@@ -65,12 +65,14 @@ static OfxStatus context(OfxImageEffectHandle effect){
  for(const auto& entry:{std::pair<const char*,const char*>{"referenceWhite","HDR Reference White (nits)"},{"hlgPeak","HLG Peak Luminance (nits)"}}){p=define(set,kOfxParamTypeDouble,entry.first,entry.second);text(p,kOfxParamPropParent,"colorManagement");bool peak=!std::strcmp(entry.first,"hlgPeak");real(p,kOfxParamPropDefault,peak?1000:100);real(p,kOfxParamPropMin,peak?400:1);real(p,kOfxParamPropMax,10000);real(p,kOfxParamPropDisplayMin,peak?400:80);real(p,kOfxParamPropDisplayMax,peak?4000:1000);integer(p,kOfxParamPropAnimates,0);}
  p=define(set,kOfxParamTypeString,"colorInfo","Host Color Space");text(p,kOfxParamPropParent,"colorManagement");text(p,kOfxParamPropStringMode,kOfxParamStringIsSingleLine);text(p,kOfxParamPropDefault,"Not reported; set Input Color Space and Input Gamma manually.");integer(p,kOfxParamPropEnabled,0);integer(p,kOfxParamPropAnimates,0);integer(p,kOfxParamPropPersistant,0);
 
- const char* groups[]={"CRT","Signal","Chroma & Signal","Glow","Monochrome","Motion","Light & Color","Optics","Pixel / Sci-Fi"};const char* ids[]={"tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"};
+ const char* groups[]={"Output","CRT","Signal","Chroma & Signal","Glow","Monochrome","Motion","Light & Color","Optics","Pixel / Sci-Fi"};const char* ids[]={"output","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"};
  for(size_t i=0;i<std::size(groups);i++){p=define(set,kOfxParamTypeGroup,ids[i],groups[i]);integer(p,kOfxParamPropGroupOpen,1);}
  p=define(set,kOfxParamTypeChoice,"maskType","Mask Type");text(p,kOfxParamPropParent,"tube");idx=0;for(const char* name:maskNames)text(p,kOfxParamPropChoiceOption,name,idx++);integer(p,kOfxParamPropDefault,0);
  for(const auto& def:parameterDefs){
   p=define(set,def.integer?kOfxParamTypeInteger:def.toggle?kOfxParamTypeBoolean:(def.choice?kOfxParamTypeChoice:kOfxParamTypeDouble),def.id,def.label);
   for(size_t i=0;i<std::size(groups);i++)if(!std::strcmp(def.group,groups[i]))text(p,kOfxParamPropParent,ids[i]);
+  if(!std::strcmp(def.id,"outputMix"))text(p,kOfxParamPropHint,"Blend between the unchanged input at 0 and the complete CRT SIM result at 1.");
+  if(!std::strcmp(def.id,"ignoreCurvature"))text(p,kOfxParamPropHint,"Render the tube surface flat without changing the stored Curvature value.");
   if(def.integer){integer(p,kOfxParamPropDefault,int(def.initial));integer(p,kOfxParamPropMin,int(def.min));integer(p,kOfxParamPropMax,int(def.max));integer(p,kOfxParamPropDisplayMin,int(def.min));integer(p,kOfxParamPropDisplayMax,int(def.max));integer(p,kOfxParamPropAnimates,0);text(p,kOfxParamPropHint,"Deterministic signal seed. Same seed, settings and source time reproduce the same pattern. Zero preserves the original pattern.");}
   else if(def.toggle){integer(p,kOfxParamPropDefault,int(def.initial));}
   else if(def.choice){idx=0;if(!std::strcmp(def.id,"pixelPattern")){for(const char* name:pixelPatternNames)text(p,kOfxParamPropChoiceOption,name,idx++);}else if(!std::strcmp(def.id,"pixelPalette")){for(const char* name:pixelPaletteNames)text(p,kOfxParamPropChoiceOption,name,idx++);}else{for(const char* name:noiseNames)text(p,kOfxParamPropChoiceOption,name,idx++);}integer(p,kOfxParamPropDefault,int(def.initial));}
@@ -172,7 +174,7 @@ static OfxStatus render(OfxImageEffectHandle effect,OfxPropertySetHandle in){
  int mask=0,bypass=0,encoding=0;check(parameters->paramGetValueAtTime(data->mask,time,&mask));check(parameters->paramGetValueAtTime(data->bypass,time,&bypass));check(parameters->paramGetValueAtTime(data->encoding,time,&encoding));job.params.maskType=float(std::clamp(mask,0,11));job.params.bypass=float(bypass);job.linear=encoding==1;
  job.managed=encoding>=2;
  OfxPropertySetHandle clipProps;double fps=24;check(effects->clipGetPropertySet(data->source,&clipProps));props->propGetDouble(clipProps,kOfxImageEffectPropFrameRate,0,&fps);if(!std::isfinite(fps)||fps<=0)fps=24;job.params.time=float(time/fps);
- if(job.managed && job.params.bypass<.5f && (job.params.tubeEnabled>=.5f||(job.params.pixelEnabled>=.5f&&job.params.pixelMix>0))){
+ if(job.managed && job.params.bypass<.5f && job.params.outputMix>0 && (job.params.tubeEnabled>=.5f||(job.params.pixelEnabled>=.5f&&job.params.pixelMix>0))){
   int gamut=0,transfer=0;double white=100,peak=1000;
   check(parameters->paramGetValue(data->inputGamut,&gamut));check(parameters->paramGetValue(data->inputGamma,&transfer));check(parameters->paramGetValue(data->referenceWhite,&white));check(parameters->paramGetValue(data->hlgPeak,&peak));
   if(gamut<0||gamut>5||transfer<0||transfer>8||!std::isfinite(white)||white<1||white>10000||!std::isfinite(peak)||peak<400||peak>10000)return colorError(effect,"Invalid color-management parameters.");
@@ -211,5 +213,5 @@ static OfxStatus entry(const char* action,const void* handle,OfxPropertySetHandl
  return kOfxStatReplyDefault;
 }catch(OfxStatus status){return status;}catch(const std::bad_alloc&){return kOfxStatErrMemory;}catch(...){return kOfxStatFailed;}}
 static void setHost(OfxHost* h){host=h;}
-static OfxPlugin plugin={kOfxImageEffectPluginApi,1,"com.rewiredvfx.crtlab",0,8,setHost,entry};
+static OfxPlugin plugin={kOfxImageEffectPluginApi,1,"com.rewired-vfx.crt-sim",0,8,setHost,entry};
 extern "C" {OfxExport int OfxGetNumberOfPlugins(){return 1;}OfxExport OfxPlugin* OfxGetPlugin(int index){return index==0?&plugin:nullptr;}}

@@ -44,6 +44,26 @@ function apply(preset,id='custom'){
  $('preset-status').textContent=(id==='custom'?'Loaded: ':'Applied: ')+presetName;
  sync();resetMotion();
 }
+async function renderPresetBrowser(){
+ const dialog=$('preset-browser-dialog'),grid=$('preset-grid'),openButton=$('open-preset-browser');
+ grid.replaceChildren();dialog.showModal();openButton.disabled=true;$('preset-browser-status').textContent='Rendering current frame...';
+ let thumbRenderer;
+ try{
+  const thumbnail=document.createElement('canvas');thumbnail.width=240;thumbnail.height=Math.max(90,Math.round(240*(renderer?.sourceHeight||540)/(renderer?.sourceWidth||960)));
+  thumbRenderer=new GridRenderer(thumbnail);thumbRenderer.sourceWidth=renderer?.sourceWidth||960;thumbRenderer.sourceHeight=renderer?.sourceHeight||540;thumbRenderer.resize(thumbnail.width,thumbnail.height);
+  for(const [index,preset] of presets.entries()){
+   const base=defaultExtensions();const presetExtensions=structuredClone(Object.fromEntries(Object.keys(base).map(key=>[key,preset[key]??base[key]])));
+   thumbRenderer.extensions=presetExtensions;thumbRenderer.update(source,preset.params,preset.mode,sourceTime);thumbRenderer.present(preset.params.amount,false);
+   const button=document.createElement('button');button.type='button';button.className='preset-card';button.dataset.preset=preset.id;
+   const image=document.createElement('img');image.alt='';image.src=thumbnail.toDataURL('image/jpeg',.82);
+   const copy=document.createElement('span'),title=document.createElement('strong'),description=document.createElement('small');title.textContent=preset.name;description.textContent=preset.description;copy.append(title,description);button.append(image,copy);
+   on(button,'click',()=>{apply(preset,preset.id);dialog.close();});grid.append(button);
+   if(index%4===3)await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
+  $('preset-browser-status').textContent=`${presets.length} looks rendered from the current frame`;
+ }catch(error){showError('Could not render preset previews: '+error.message);dialog.close();}
+ finally{thumbRenderer?.destroy();openButton.disabled=false;}
+}
 for(const f of fields){
  const wrap=document.createElement('div');wrap.className='control';
  const heading=document.createElement('div');heading.className='control-heading';
@@ -61,6 +81,8 @@ for(const button of document.querySelectorAll('[data-open-modal]'))on(button,'cl
 for(const dialog of document.querySelectorAll('.parameter-modal')){const close=dialog.querySelector('[data-close-modal]');if(close)on(close,'click',()=>dialog.close());on(dialog,'click',event=>{if(event.target===dialog)dialog.close();});}
 for(const p of presets)$('preset-select').append(new Option(p.name,p.id));
 on($('preset-select'),'change',()=>{const p=presets.find(p=>p.id===$('preset-select').value);if(p)apply(p,p.id);});
+on($('open-preset-browser'),'click',()=>{void renderPresetBrowser();});
+on($('close-preset-browser'),'click',()=>$('preset-browser-dialog').close());
 for(const [id,delta]of [['preset-previous',-1],['preset-next',1]])on($(id),'click',()=>{const id=nextPreset(presets.map(p=>p.id),$('preset-select').value,delta);apply(presets.find(p=>p.id===id),id);});
 on($('mode'),'change',()=>{mode=$('mode').value;custom();sync();resetMotion();});
 on($('reset-motion'),'click',resetMotion);

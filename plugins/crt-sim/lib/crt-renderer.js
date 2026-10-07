@@ -257,13 +257,14 @@ vec3 tintColor(){
 void main(){
  vec2 p=uv;
  if(bypass>.5||(tubeEnabled<.5&&(pixelEnabled<.5||pixelMix<=0.))||(split>0.&&uv.x<split)){color=texture(source,p);return;}
- if(tubeEnabled<.5){color=vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);return;}
- vec2 q=p*2.-1.;q*=1.+curve*dot(q,q);p=q*.5+.5;
- if(any(lessThan(p,vec2(0)))||any(greaterThan(p,vec2(1)))){color=vec4(0,0,0,1);return;}
+ if(tubeEnabled<.5){vec4 processed=vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);color=mix(texture(source,p),processed,outputMix);return;}
+ float effectiveCurve=ignoreCurvature>.5?0.:curve;
+ vec2 q=p*2.-1.;q*=1.+effectiveCurve*dot(q,q);p=q*.5+.5;
+ if(any(lessThan(p,vec2(0)))||any(greaterThan(p,vec2(1)))){color=mix(texture(source,uv),vec4(0,0,0,1),outputMix);return;}
  // Inverse-map the complete tube surface before evaluating its layers.
  // Keep the physical raster separate from horizontal signal displacement.
  vec2 surfaceUV=p;
- vec2 surfacePixel=curve==0.?gl_FragCoord.xy:surfaceUV*resolution;
+ vec2 surfacePixel=effectiveCurve==0.?gl_FragCoord.xy:surfaceUV*resolution;
  if(shakeX>0.||shakeY>0.){
   float shakePhase=time*shakeSpeed;
   vec2 shake=vec2(signalField(vec2(shakePhase*.73,17.),1709)-.5,signalField(vec2(shakePhase*.61,31.),1811)-.5)*2.;
@@ -310,7 +311,8 @@ void main(){
  c*=1.-flicker*(.5+.5*sin(time*113.));
 
 
- color=vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);
+ vec4 processed=vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);
+ color=mix(texture(source,uv),processed,outputMix);
 }`;
 export class CRTRenderer {
     canvas;

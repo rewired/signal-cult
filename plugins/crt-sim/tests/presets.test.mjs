@@ -75,11 +75,19 @@ test('Sci-Fi presets and legacy compatibility',()=>{
   for(const value of values)assert.throws(()=>validatePreset({version:1,params:{...defaults,[key]:value}}));
 });
 
-test('stage switches round-trip and old files preserve their render',()=>{
+test('stage switches round-trip and old files preserve their defaults',()=>{
  const legacy={...defaults};delete legacy.pixelEnabled;delete legacy.tubeEnabled;
  const restored=validatePreset({version:1,params:legacy});assert.equal(restored.pixelEnabled,1);assert.equal(restored.tubeEnabled,1);
  for(const pixelEnabled of [0,1])for(const tubeEnabled of [0,1]){const p={...defaults,pixelEnabled,tubeEnabled};assert.deepEqual(validatePreset({version:1,params:p}),p);}
  for(const key of ['pixelEnabled','tubeEnabled'])assert.throws(()=>validatePreset({version:1,params:{...defaults,[key]:.5}}));
+});
+
+test('output mix and curvature override load compatibly and validate their ranges',()=>{
+ const legacy={...defaults};delete legacy.outputMix;delete legacy.ignoreCurvature;
+ const restored=validatePreset({version:1,params:legacy});assert.equal(restored.outputMix,1);assert.equal(restored.ignoreCurvature,0);
+ for(const outputMix of [0,.35,1])assert.equal(validatePreset({version:1,params:{...defaults,outputMix}}).outputMix,outputMix);
+ for(const ignoreCurvature of [0,1])assert.equal(validatePreset({version:1,params:{...defaults,ignoreCurvature}}).ignoreCurvature,ignoreCurvature);
+ for(const [id,value] of [['outputMix',-1],['outputMix',1.1],['ignoreCurvature',.5]])assert.throws(()=>validatePreset({version:1,params:{...defaults,[id]:value}}));
 });
 
 test('R&D modules default compatibly and validate their full ranges',()=>{

@@ -107,7 +107,7 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   OfxPropertySetHandle props = nullptr;
   if (effects->getPropertySet(effect, &props) != kOfxStatOK) return kOfxStatErrBadHandle;
   properties->propSetString(props, kOfxPropLabel, 0, "BROKEN FM");
-  properties->propSetString(props, kOfxImageEffectPluginPropGrouping, 0, "rewired-vfx");
+  properties->propSetString(props, kOfxImageEffectPluginPropGrouping, 0, "rewired-vfx / SIGNAL CULT");
   properties->propSetString(props, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextFilter);
   properties->propSetString(props, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthFloat);
   properties->propSetInt(props, kOfxImageEffectPropSupportsTiles, 0, 0);

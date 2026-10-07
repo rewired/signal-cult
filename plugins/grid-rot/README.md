@@ -27,7 +27,9 @@ content targeting extend that area while remaining deterministic by timeline tim
 Amount 0 and View input show the current source without the guide.
 
 Presets use the grid-rot-preset version 2 format and the collection's
-previous/next, JSON import/export workflow. BUCKET ROT and SIGNAL ROT are separate.
+previous/next, JSON import/export workflow. Browse looks renders every factory preset
+against the current source frame and applies a look directly from its thumbnail.
+BUCKET ROT and SIGNAL ROT are separate.
 
 Original code uses the collection [license](../../LICENSE).
 

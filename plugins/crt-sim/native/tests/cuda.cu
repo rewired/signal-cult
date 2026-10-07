@@ -32,7 +32,7 @@ int main(){
   if(!pixel&&!tube&&gpu!=src)return 11;
  }
  // Repeat the same seeded frame after an unrelated render, on the real GPU.
- job.managed=false;job.params.tubeEnabled=1;job.params.noise=.5f;
+ job.managed=false;job.params.noise=.5f;
  for(float seed:{1.f,1234567.f,16777215.f}){
   job.params.noiseSeed=seed;job.params.time=.73f;renderCPU(job);RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;
   if(renderCUDA(device,stream,true))return 15;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));auto reference=gpu;
@@ -47,7 +47,7 @@ int main(){
  renderCPU(job);{RenderJob device=job;device.input.data=deviceIn;device.output.data=deviceOut;if(renderCUDA(device,stream,true))return 20;ok(cudaStreamSynchronize(stream));ok(cudaMemcpy(gpu.data(),deviceOut,bytes,cudaMemcpyDeviceToHost));for(size_t i=0;i<gpu.size();i++){if(!std::isfinite(gpu[i])||!std::isfinite(cpu[i]))return 21;worst=std::fmax(worst,std::fabs(gpu[i]-cpu[i]));}}
  job.params=Parameters{};job.params.time=.73f;job.params.noise=.4f;
  // Full managed rendering on CUDA, including signed/HDR inputs and every transfer.
- job.managed=true;job.params.tubeEnabled=1;job.params.pixelEnabled=1;job.params.pixelMix=.4f;job.params.noise=0;job.params.jitter=0;job.params.flicker=0;
+  job.managed=true;job.params.pixelEnabled=1;job.params.pixelMix=.4f;job.params.noise=0;job.params.jitter=0;job.params.flicker=0;
  float colorWorst=0,colorWorstCpu=0,colorWorstGpu=0;int colorWorstGamut=-1,colorWorstTransfer=-1;size_t colorWorstIndex=0;
  for(int gamut=0;gamut<6;gamut++)for(int transfer=0;transfer<9;transfer++){
   if(transfer==6&&gamut!=3)continue;job.color={gamut,transfer,100,1000};

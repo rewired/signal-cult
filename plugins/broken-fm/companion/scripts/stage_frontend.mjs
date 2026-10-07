@@ -10,9 +10,11 @@ for (const entry of ['index.html', 'css', 'js', 'shaders', 'presets']) {
   fs.cpSync(path.join(root, entry), path.join(destination, entry), { recursive: true });
 }
 
+const familyRoot = path.resolve(root, '..');
+for (const asset of ['signal-cult-shell.css', 'signal-cult-signet.svg']) fs.copyFileSync(path.join(familyRoot, asset), path.join(destination, asset));
 const stagedIndex = path.join(destination, 'index.html');
 const companionMarker = '  <meta name="broken-fm-runtime" content="companion">';
-const stagedHtml = fs.readFileSync(stagedIndex, 'utf8');
+const stagedHtml = fs.readFileSync(stagedIndex, 'utf8').replaceAll('../signal-cult-', 'signal-cult-');
 if (!stagedHtml.includes(companionMarker)) {
   fs.writeFileSync(stagedIndex, stagedHtml.replace('<head>', `<head>\n${companionMarker}`));
 }

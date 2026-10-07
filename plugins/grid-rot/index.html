@@ -5,6 +5,7 @@
 <title>GRID ROT — SIGNAL CULT</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../signal-cult-shell.css">
 </head>
 <body>
 <section id="photosensitivity-warning" class="photosensitivity-warning" role="alertdialog" aria-modal="true" aria-labelledby="warning-title" aria-describedby="warning-description">
@@ -17,7 +18,7 @@
 </section>
 <section id="host-session" class="host-session" hidden><strong>Editing Resolve instance</strong><span id="host-preview-status">Source snapshot loaded · Apply commits every advanced package</span><button id="host-cancel">Cancel</button><button id="host-apply">Apply to Resolve</button></section>
 <header class="topbar">
- <div class="brand"><a href="../" aria-label="Back to SIGNAL CULT">SIGNAL CULT / 05</a><h1>GRID ROT</h1></div>
+ <div class="brand"><a class="brand-mark" href="../" aria-label="Back to SIGNAL CULT"><img src="../signal-cult-signet.svg" alt=""></a><div class="brand-copy"><span class="collection-label">SIGNAL CULT · REWIRED VFX</span><h1>GRID ROT</h1><p>Spatial and temporal grid destruction</p></div></div>
  <div class="source-toolbar web-only" aria-label="Source">
   <label class="file-control toolbar-button">Load media<input id="media-file" type="file" accept="video/*,image/*"></label>
   <button id="play" class="toolbar-button" aria-label="Pause" aria-pressed="false">Pause</button>
@@ -27,12 +28,17 @@
   <button id="preset-previous" class="icon-button preset-step" aria-label="Previous preset">«</button>
   <select id="preset-select" aria-label="Current preset"><option value="custom">Current / custom</option></select>
   <button id="preset-next" class="icon-button preset-step" aria-label="Next preset">»</button>
+  <button id="open-preset-browser" class="toolbar-button">Browse looks</button>
   <label class="file-control icon-button" aria-label="Load JSON" title="Load JSON">↑<input id="preset-file" type="file" accept="application/json,.json"></label>
   <button id="save-preset" class="icon-button" aria-label="Save JSON" title="Save JSON">↓</button>
   <span id="preset-status" class="preset-status" role="status">Applied: Random Drops</span>
  </div>
  <div class="header-status"><span id="temporal-status" class="perf">SPATIAL</span><span id="fps" class="perf">READY</span></div>
 </header>
+<dialog id="preset-browser-dialog" class="preset-browser-dialog" aria-labelledby="preset-browser-title">
+ <div class="preset-browser-header"><span><h2 id="preset-browser-title">Preset browser</h2><small id="preset-browser-status" role="status">Rendering current frame...</small></span><button id="close-preset-browser" class="toolbar-button">Close</button></div>
+ <div id="preset-grid" class="preset-grid"></div>
+</dialog>
 <main id="app">
  <section class="preview-panel" aria-label="Preview">
   <canvas id="preview" width="960" height="540" aria-label="GRID ROT output"></canvas>

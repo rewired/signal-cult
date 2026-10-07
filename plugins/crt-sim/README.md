@@ -13,7 +13,7 @@ BROKEN FM is the UI and architecture master. CRT SIM uses its dark/mint layout, 
 | Off | On | CRT only |
 | On | On | Pixel / Sci-Fi followed by CRT |
 
-Use **Enable Pixel / Sci-Fi** and **Enable CRT** in either interface. Switching a stage off preserves its settings. The tube switch controls the entire CRT stage, including signal noise, optics, bloom and color adjustments. Pixel strength must be above zero for its enabled stage to have an effect.
+Use **Enable Pixel / Sci-Fi** and **Enable CRT** in either interface. Switching a stage off preserves its settings. The tube switch controls the entire CRT stage, including signal noise, optics, bloom and color adjustments. Pixel strength must be above zero for its enabled stage to have an effect. Global comparison and blending use Bypass and Mix with Input.
 
 - **CRT:** 12 phosphor masks, scanlines, beam width, exposure, gamma, saturation, curvature, vignette and RGB convergence.
 - **Signal:** 10 noise types, adjustable grain structure, animated clustering with its own speed, interference bands, jitter, tracking and flicker.
@@ -23,6 +23,7 @@ Use **Enable Pixel / Sci-Fi** and **Enable CRT** in either interface. Switching 
 - **Motion:** vertical roll, traveling shutter scan, independent horizontal/vertical shake and horizontal sync drift.
 
 - **Pixel / Sci-Fi:** 8 procedural raster forms and 7 palettes, including a shared custom-color picker, with cell size, aspect, luminance response, fill, edge softness, tonal steps and background light.
+- **Output:** Mix with Input blends continuously from the untouched source at 0 to the processed result at 1. Ignore Curvature temporarily evaluates curvature as zero without overwriting its value.
 - **Presets:** 26 complete JSON snapshots: 12 CRT looks and 14 Sci-Fi looks, with a current-frame thumbnail browser.
 
 ## Start
@@ -51,7 +52,7 @@ See [the native README](native/README.md) for build commands, the local update s
 
 Pixel / Sci-Fi is sampled into the CRT signal. Screen motion moves the signal inside the fixed tube surface, then luma/chroma reconstruction, RGB convergence, reception noise, shutter scan, scanlines/beam and the phosphor mask are applied. Glow 2.0 collects thresholded source highlights at three spatial scales; highlight diffusion and ambient tube emission are added before monochrome tinting, saturation, exposure and black level. Vignette and flicker precede output gamma.
 
-Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Signal jitter, shake, roll and sync drift move the signal within that surface; they do not move the physical phosphor mask. Turning CRT off also disables curvature and all CRT-owned signal, glow, motion and monochrome processing.
+Curvature applies to the complete tube surface, including the pixel raster, scanlines and phosphor mask. The renderer implements this through inverse-mapped coordinates in one pass. Ignore Curvature temporarily evaluates this mapping as flat while retaining the Curvature setting. Signal jitter, shake, roll and sync drift move the signal within that surface; they do not move the physical phosphor mask. Turning CRT off also disables curvature and all CRT-owned signal, glow, motion and monochrome processing. Mix with Input is applied last and preserves the exact input at zero.
 
 ## Deterministic seed
 

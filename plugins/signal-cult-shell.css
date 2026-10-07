@@ -1,0 +1,299 @@
+/* Shared, compact SIGNAL CULT shell derived from the rewired-vfx website. */
+:root {
+  --bg: #101212;
+  --panel: #1d1d1c;
+  --panel-raised: #242423;
+  --line: #444441;
+  --line-strong: #62625d;
+  --text: #f4f3ef;
+  --muted: #b4b2a9;
+  --accent: #e5334b;
+  --accent-strong: #c8102e;
+  --accent-soft: #33181d;
+  --warning: #f2c94c;
+  color-scheme: dark;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body,
+button,
+select,
+input,
+textarea {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+button,
+select,
+input[type="number"],
+.file-control {
+  border-color: var(--line);
+  border-radius: 4px;
+  background-color: var(--panel);
+  color: var(--text);
+}
+
+button,
+.file-control {
+  font-size: inherit;
+  font-weight: 500;
+}
+
+button:hover:not(:disabled),
+.file-control:hover {
+  border-color: var(--line-strong);
+  background-color: var(--panel-raised);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+.file-control:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button[aria-pressed="true"],
+.icon-button.active,
+.toolbar-button.active,
+.package-button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+input[type="range"],
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.topbar {
+  background: #141414;
+  border-bottom-color: var(--line);
+  box-shadow: none;
+}
+
+.brand {
+  display: grid;
+  grid-template-columns: 28px auto;
+  align-items: center;
+  column-gap: 10px;
+  min-width: 164px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 28px;
+  height: 42px;
+  place-items: center;
+  border-radius: 2px;
+}
+
+.brand-mark img {
+  display: block;
+  width: 23px;
+  height: 36px;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.brand-mark:hover img {
+  opacity: .78;
+  transform: translateY(-1px);
+}
+
+.brand-mark:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand .collection-label {
+  display: block;
+  margin: 0 0 2px;
+  color: var(--accent);
+  font: 600 9px/12px Inter, "Segoe UI", sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.brand h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: Oxanium, Bahnschrift, "Segoe UI", sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: -.01em;
+}
+
+.brand p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.preset-toolbar {
+  border-left-color: var(--line);
+}
+
+.source-status,
+.preset-status,
+.perf,
+.preview-tag,
+.view-label {
+  color: var(--muted);
+}
+
+.controls {
+  background: #181818;
+  border-left-color: var(--line);
+}
+
+.controls section {
+  border-bottom-color: var(--line);
+}
+
+.controls h2,
+.section-heading h2,
+.routing-header h2,
+.preset-browser-header h2,
+.modal-shell h2,
+.operator-modal-grid h3 {
+  color: var(--accent);
+  font-family: Inter, "Segoe UI", sans-serif;
+  font-weight: 600;
+}
+
+.preview-panel,
+#monitor,
+#preview {
+  background-color: #101212;
+}
+
+.preset-browser-dialog,
+.routing-dialog,
+.parameter-modal,
+.photosensitivity-card {
+  border-color: var(--line-strong);
+  border-radius: 4px;
+  background: #171717;
+}
+
+.preset-browser-header,
+.routing-header,
+.modal-shell > header {
+  background: #171717f2;
+  border-bottom-color: var(--line);
+}
+
+.preset-card,
+.lfo-card,
+.audio-monitor-row,
+.matrix-row,
+.package-button {
+  border-color: var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+
+.preset-card:hover,
+.preset-card:focus-visible {
+  border-color: var(--accent);
+}
+
+.preset-card strong,
+.perf,
+.view-label,
+.surface-badge,
+#temporal-status {
+  color: var(--accent);
+}
+
+.surface-badge {
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent-soft);
+}
+
+.photosensitivity-warning {
+  background: rgba(0, 0, 0, .86);
+}
+
+.photosensitivity-kicker,
+.modal-kicker {
+  color: var(--accent);
+}
+
+.photosensitivity-card button[type="submit"],
+#host-apply {
+  border-color: var(--accent);
+  background: var(--accent-strong);
+  color: var(--text);
+}
+
+.host-session {
+  background: #211719;
+  border-bottom-color: #71313b;
+  color: var(--text);
+}
+
+.host-session strong,
+.host-session span {
+  color: var(--text);
+}
+
+@media (max-width: 700px) {
+  .brand {
+    min-width: 142px;
+  }
+}
+
+/* Keep the full tool row on common laptop widths without increasing its height. */
+@media (max-width: 1500px) and (min-width: 1151px) {
+  .topbar {
+    min-height: 64px;
+    padding: 10px 14px;
+    gap: 10px;
+    flex-wrap: nowrap !important;
+  }
+
+  .brand {
+    min-width: 140px;
+  }
+
+  .brand p,
+  .source-status,
+  .preset-status,
+  .perf {
+    display: none;
+  }
+
+  .preset-toolbar {
+    padding-left: 8px;
+  }
+
+  .preset-toolbar select {
+    flex-basis: 180px;
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+  }
+
+  .toolbar-button,
+  .icon-button {
+    height: 32px;
+  }
+}

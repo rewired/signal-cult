@@ -20,11 +20,11 @@ shader=shader.replace(/float maskCoverage\(float distanceToEdge\)\{[\s\S]*?\n\}/
  float aa=max(.35/max(pitch,1.),.001);
  return 1.-smoothstep(-aa,aa,distanceToEdge);
 }`);
-shader=shader.replace('color=vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);return;','return vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);');
+shader=shader.replace('vec4 processed=vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);color=mix(texture(source,p),processed,outputMix);return;','return vec4(pow(max(sampleLinear(p),vec3(0)),vec3(1./2.2)),1);');
 shader=shader.replace('void main(){','vec4 shade(vec2 uv,vec2 gl_FragCoord){');
 shader=shader.replaceAll('gl_FragCoord.xy','gl_FragCoord').replaceAll('.rgb','.rgb()');
-shader=shader.replace('color=texture(source,p);return;','return texture(source,p);').replace('color=vec4(0,0,0,1);return;','return vec4(0,0,0,0);');
-shader=shader.replace('color=vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);','return vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);');
+shader=shader.replace('color=texture(source,p);return;','return texture(source,p);').replace('color=mix(texture(source,uv),vec4(0,0,0,1),outputMix);return;','return vec4(0,0,0,0);');
+shader=shader.replace('vec4 processed=vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);\n color=mix(texture(source,uv),processed,outputMix);','return vec4(pow(max(c,vec3(0)),vec3(1./gamma)),1);');
 shader=shader.replace(/^(float|vec[234]) (\w+)\(/gm,'HD $1 $2(');
 // Native color-managed modes operate directly in signed linear working RGB.
 shader=shader.replace('return pow(max(texture(source,clamp(p,0.,1.)).rgb(),vec3(0)),vec3(2.2));','if(managed)return texture(source,clamp(p,0.,1.)).rgb();return pow(max(texture(source,clamp(p,0.,1.)).rgb(),vec3(0)),vec3(2.2));');

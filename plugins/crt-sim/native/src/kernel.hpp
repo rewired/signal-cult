@@ -33,13 +33,13 @@ HD inline void renderPixel(const RenderJob& job,int x,int y){
  Kernel kernel(job);
  vec2 uv=vec2(float(x-job.input.x1)+.5f,float(y-job.input.y1)+.5f)/kernel.resolution;
  vec4 original=kernel.pixel(x,y),result=original;
- if(job.params.bypass<.5f && (job.params.tubeEnabled>=.5f || (job.params.pixelEnabled>=.5f && job.params.pixelMix>0))){
+ if(job.params.bypass<.5f && job.params.outputMix>0 && (job.params.tubeEnabled>=.5f || (job.params.pixelEnabled>=.5f && job.params.pixelMix>0))){
   result=kernel.shade(uv,vec2(float(x-job.input.x1)+.5f,float(y-job.input.y1)+.5f));
-  vec2 q=uv*2.f-1.f;q*=1.f+(job.params.tubeEnabled>=.5f?job.params.curve:0.f)*dot(q,q);vec2 warped=q*.5f+.5f;
+  float effectiveCurve=job.params.tubeEnabled>=.5f&&job.params.ignoreCurvature<.5f?job.params.curve:0.f;vec2 q=uv*2.f-1.f;q*=1.f+effectiveCurve*dot(q,q);vec2 warped=q*.5f+.5f;
   result.a=(warped.x<0||warped.y<0||warped.x>1||warped.y>1)?0:kernel.texture(job.input,warped).a;
   if(job.managed){vec3 rgb=encodeColor(result.rgb(),job.color);result.r=rgb.r;result.g=rgb.g;result.b=rgb.b;}
   else if(job.linear){vec3 rgb=pow(max(result.rgb(),vec3(0)),vec3(2.2f));result.r=rgb.r;result.g=rgb.g;result.b=rgb.b;}
-  if(job.output.premult){result.r*=result.a;result.g*=result.a;result.b*=result.a;}
+  if(job.output.premult){result.r*=result.a;result.g*=result.a;result.b*=result.a;}result=vec4(mix(original.rgb(),result.rgb(),job.params.outputMix),mix(original.a,result.a,job.params.outputMix));
  }
  float* out=reinterpret_cast<float*>(reinterpret_cast<char*>(job.output.data)+ptrdiff_t(y-job.output.y1)*job.output.rowBytes)+4*(x-job.output.x1);
  out[0]=result.r;out[1]=result.g;out[2]=result.b;out[3]=result.a;

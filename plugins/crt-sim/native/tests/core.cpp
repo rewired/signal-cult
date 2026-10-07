@@ -43,6 +43,11 @@ int main(){
  featureParams=job.params;featureParams.verticalRoll=.2f;featureParams.shakeX=6;featureParams.syncDrift=12;if(int code=feature(featureParams,26))return code;
 
  job.params=Parameters{};
+ // Output mix is exact at both endpoints; Ignore Curvature preserves the stored
+ // value while producing the same pixels as an explicitly flat surface.
+ job.params.outputMix=0;renderCPU(job);if(dst!=src)return 28;
+ job.params.outputMix=1;job.params.curve=.24f;job.params.ignoreCurvature=1;renderCPU(job);auto ignoredCurve=dst;
+ job.params.curve=0;job.params.ignoreCurvature=0;renderCPU(job);if(dst!=ignoredCurve)return 29;
  // Disabled new stage must ignore its other controls exactly.
  job.params.pixelMix=0;renderCPU(job);auto legacy=dst;
  job.params.pixelPattern=7;job.params.pixelPalette=4;job.params.pixelSize=27;renderCPU(job);if(legacy!=dst)return 8;

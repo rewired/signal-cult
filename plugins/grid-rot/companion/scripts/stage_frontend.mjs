@@ -13,6 +13,8 @@ for(const entry of ['index.html','style.css','favicon.svg','js','vendor'])
 fs.copyFileSync(path.resolve(root,'../broken-fm/js/controls.js'),path.join(destination,'js/controls.js'));
 const app=path.join(destination,'js/app.js');
 fs.writeFileSync(app,fs.readFileSync(app,'utf8').replace("../../broken-fm/js/controls.js","./controls.js"));
+const familyRoot = path.resolve(root, '..');
+for (const asset of ['signal-cult-shell.css', 'signal-cult-signet.svg']) fs.copyFileSync(path.join(familyRoot, asset), path.join(destination, asset));
 const index=path.join(destination,'index.html');
-fs.writeFileSync(index,fs.readFileSync(index,'utf8').replace('<head>','<head>\n<meta name="grid-rot-runtime" content="companion">'));
+fs.writeFileSync(index,fs.readFileSync(index,'utf8').replaceAll('../signal-cult-', 'signal-cult-').replace('<head>','<head>\n<meta name="grid-rot-runtime" content="companion">'));
 console.log('Staged GRID ROT frontend for Tauri.');

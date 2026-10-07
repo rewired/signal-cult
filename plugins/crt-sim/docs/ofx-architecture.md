@@ -10,7 +10,7 @@ BROKEN FM is the master for product structure, visual styling and Companion work
 - Master CSS and Ctrl-drag controls are synced from BROKEN FM at web/Companion build.
   CRT-specific markup and layout additions stay in this plugin.
 
-The plugin ID com.rewiredvfx.crtlab, bundle name RewiredCRT.ofx.bundle, parameter IDs,
+The plugin ID com.rewired-vfx.crt-sim, bundle name RewiredCRT.ofx.bundle, parameter IDs,
 24 creative presets and renderer math are preserved. The displayed name is CRT SIM
 in the rewired-vfx group. Static CRT runtimes and precise shader math are retained;
 master conventions do not require changing numerical behavior or removing CPU fallback.

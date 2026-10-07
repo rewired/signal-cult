@@ -28,7 +28,7 @@ Resolve lists the core CRT groups first on the **Controls** page and keeps the o
 The 26 factory presets use all ten noise types with individually tuned strength, scale, clustering, motion, chroma and seeds. Clean monitor looks remain subtle (PC VGA is noise-free); tape, reception and Sci-Fi looks feature distinct signal textures. The original preset names and indices remain unchanged, with the two LED display looks appended. Saved project settings and exported presets keep their stored values.
 
 - **Enable Pixel / Sci-Fi** independently enables the pixel stage: 8 raster forms, 7 palettes and 14 dedicated presets. The Custom Color palette is driven by the shared Sci-Fi picker in the Companion.
-- **Enable CRT** enables the complete CRT stage: phosphor masks, scanlines, signal noise, optics, color and the R&D modules below.
+- **Enable CRT** enables the complete CRT stage: phosphor masks, scanlines, signal noise, optics, color and the R&D modules below. Global Bypass and Mix with Input remain available for comparison and blending.
 - **Glow** provides threshold/knee control, three spatial scales, radius/spread, highlight diffusion and ambient tube glow.
 - **Chroma & Signal** separates luma/chroma sharpness, chroma bleed and delay, plus static or animated hue drift.
 - **Monochrome** provides arbitrary tint hue/saturation, luminance-model blending and phosphor response.
@@ -72,7 +72,7 @@ The CPU, CUDA, color-conversion and OFX load/descriptor tests passed locally for
 
 ## Curvature (0.5.0)
 
-The phosphor mask now uses the same curved tube surface as the image and scanlines. Signal jitter remains independent of the physical mask. This uses inverse coordinate mapping in the shared shader, without an additional render pass. Zero curvature keeps the mask in its original pixel coordinates. A regression check compares the curved output against flat rendering sampled at the corresponding surface position, across all twelve masks with and without the pixel stage.
+The phosphor mask now uses the same curved tube surface as the image and scanlines. Signal jitter remains independent of the physical mask. This uses inverse coordinate mapping in the shared shader, without an additional render pass. Zero curvature, or enabling Ignore Curvature, keeps the mask in its original pixel coordinates without overwriting the stored Curvature value. Mix with Input is applied after processing; zero returns the exact source and one returns the complete effect. A regression check compares the curved output against flat rendering sampled at the corresponding surface position, across all twelve masks with and without the pixel stage.
 
 ## Color, GPU and current limits
 
@@ -123,7 +123,7 @@ along with the OFX bundle. The older `install-ofx.ps1` remains a native-only upd
 
 The effect core is in `native/src`; host, exchange and preview code are in
 `hosts/ofx/src`. Creative JSON remains version 1 and the plugin ID remains
-`com.rewiredvfx.crtlab`. Only the display name/group changes to CRT SIM / rewired-vfx.
+`com.rewired-vfx.crt-sim`. The display name/group is CRT SIM / rewired-vfx / SIGNAL CULT.
 The new editor/status parameters do not replace existing controls.
 
 Apply is a host-owned edit; color-management controls and global bypass are not

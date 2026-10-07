@@ -23,7 +23,7 @@ static OfxPropertySuiteV1 properties{};static OfxImageEffectSuiteV1 images{};sta
 static const void* fetch(OfxPropertySetHandle,const char* name,int version){if(version!=1)return nullptr;if(!strcmp(name,kOfxPropertySuite))return &properties;if(!strcmp(name,kOfxImageEffectSuite))return &images;if(!strcmp(name,kOfxParameterSuite))return &params;return nullptr;}
 int main(int argc,char** argv){if(argc!=2)return 1;HMODULE module=LoadLibraryA(argv[1]);if(!module){std::cerr<<"LoadLibrary error "<<GetLastError()<<"\n";return 2;}
  auto count=reinterpret_cast<int(*)()>(GetProcAddress(module,"OfxGetNumberOfPlugins"));auto get=reinterpret_cast<OfxPlugin*(*)(int)>(GetProcAddress(module,"OfxGetPlugin"));if(!count||!get||count()!=1||get(-1)||get(1))return 3;
- auto plugin=get(0);if(strcmp(plugin->pluginIdentifier,"com.rewiredvfx.crtlab"))return 4;
+ auto plugin=get(0);if(strcmp(plugin->pluginIdentifier,"com.rewired-vfx.crt-sim"))return 4;
  properties.propSetString=setString;properties.propSetInt=setInt;properties.propSetDouble=setDouble;images.getPropertySet=getProps;images.getParamSet=getParams;images.clipDefine=clipDefine;params.paramDefine=paramDefine;
  OfxHost host{handle(&effectStore),fetch};plugin->setHost(&host);
  if(plugin->mainEntry(kOfxActionLoad,nullptr,nullptr,nullptr)!=kOfxStatOK)return 5;
@@ -32,7 +32,7 @@ int main(int argc,char** argv){if(argc!=2)return 1;HMODULE module=LoadLibraryA(a
  if(paramStores["preset"]->strings[kOfxParamPropChoiceOption].size()!=27||paramStores["maskType"]->strings[kOfxParamPropChoiceOption].size()!=12||paramStores["noiseType"]->strings[kOfxParamPropChoiceOption].size()!=10)return 8;
  if(paramStores["pixelPattern"]->strings[kOfxParamPropChoiceOption].size()!=8||paramStores["pixelPalette"]->strings[kOfxParamPropChoiceOption].size()!=7||!paramStores.count("noiseClumpSpeed"))return 9;
  if(paramStores["encoding"]->strings[kOfxParamPropChoiceOption].size()!=4||paramStores["inputGamut"]->strings[kOfxParamPropChoiceOption].size()!=6||paramStores["inputGamma"]->strings[kOfxParamPropChoiceOption].size()!=9)return 10;
- const std::vector<std::string> expectedPage={"crtSimEdit","crtSimStatus","preset","bypass","colorManagement","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"};
+ const std::vector<std::string> expectedPage={"crtSimEdit","crtSimStatus","preset","bypass","output","colorManagement","tube","signal","chroma","glow","monochromeGroup","motion","light","optics","pixel"};
  if(paramStores["controlsPage"]->strings[kOfxParamPropPageChild]!=expectedPage)return 12;
  Store output;if(plugin->mainEntry(kOfxImageEffectActionGetOutputColourspace,&effectStore,nullptr,handle(&output))!=kOfxStatOK||output.strings[kOfxImageClipPropColourspace][0]!="OfxColourspace_Source")return 11;
  plugin->mainEntry(kOfxActionUnload,nullptr,nullptr,nullptr);FreeLibrary(module);
