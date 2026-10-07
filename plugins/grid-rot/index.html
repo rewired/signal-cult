@@ -47,13 +47,19 @@
    <div class="button-row"><button id="reset-motion">Reset motion</button><button id="step-clock" disabled>Step motion</button></div>
    <button id="bypass" class="wide-button" aria-pressed="false">View input</button>
   </section>
-  <section><h2>Movement</h2><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label>
-   <p class="interaction-note">Random drops appear independently across the image. Step routes move row by row. Pause and Step motion inspect changes on a frozen frame.</p></section>
-  <section><h2>Targeting</h2><div id="targeting-controls"></div></section>
-  <section><h2>Infection</h2><div id="infection-controls"></div></section>
-  <section><h2>Topology</h2><div id="topology-controls"></div></section>
-  <section><h2>Operator matrix</h2><div id="temporal-controls"></div><div id="operator-controls"></div></section>
-  <section id="parameters"><h2>Grid, area &amp; post damage</h2></section>
+  <section id="core-controls"><div class="section-heading"><h2>Core controls</h2><span class="surface-badge">OFX</span></div><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label></section>
+  <section id="post-controls"><div class="section-heading"><h2>Post damage</h2><span class="surface-badge">OFX</span></div></section>
+  <section><div class="section-heading"><h2>Advanced packages</h2><span class="surface-badge companion">Companion</span></div>
+   <p class="package-intro">Complex, occasional controls live in the Companion. Presets still carry their complete state into the OFX render.</p>
+   <div class="package-list">
+    <button class="package-button" data-open-modal="drop-pattern-modal"><span><strong>Pattern &amp; fracture</strong><small id="drop-pattern-summary"></small></span><b>›</b></button>
+    <button class="package-button" data-open-modal="targeting-modal"><span><strong>Targeting</strong><small id="targeting-summary"></small></span><b>›</b></button>
+    <button class="package-button" data-open-modal="infection-modal"><span><strong>Infection</strong><small id="infection-summary"></small></span><b>›</b></button>
+    <button class="package-button" data-open-modal="topology-modal"><span><strong>Topology</strong><small id="topology-summary"></small></span><b>›</b></button>
+    <button class="package-button" data-open-modal="operators-modal"><span><strong>Operators &amp; memory</strong><small id="operators-summary"></small></span><b>›</b></button>
+   </div>
+   <p class="surface-note"><strong>Surface split:</strong> Core and Post Damage remain directly accessible in OFX. Advanced packages are Companion-only. Source and diagnostics below are web-only.</p>
+  </section>
   <section><h2>Decoder</h2><p id="decoder-status" class="section-note">Spatial processing · History 0 / 32</p></section>
   <section><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
    <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>
@@ -62,5 +68,10 @@
   <p class="scope-note">Browser preview · Local processing</p>
  </aside>
 </main>
+<dialog id="drop-pattern-modal" class="parameter-modal" aria-labelledby="drop-pattern-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="drop-pattern-title">Pattern &amp; fracture</h2><p>Variation, reproducible placement, clustering and cell subdivision. Drop count and lifetime remain in the direct OFX controls.</p></div><button class="modal-close" data-close-modal aria-label="Close Drop pattern">×</button></header><div id="drop-controls" class="modal-controls"></div></div></dialog>
+<dialog id="targeting-modal" class="parameter-modal" aria-labelledby="targeting-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="targeting-title">Content targeting</h2><p>Bias damage toward luminance, edges or movement in the source.</p></div><button class="modal-close" data-close-modal aria-label="Close Targeting">×</button></header><div id="targeting-controls" class="modal-controls"></div></div></dialog>
+<dialog id="infection-modal" class="parameter-modal" aria-labelledby="infection-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="infection-title">Infection</h2><p>Spread and mutate damage beyond each original area.</p></div><button class="modal-close" data-close-modal aria-label="Close Infection">×</button></header><div id="infection-controls" class="modal-controls"></div></div></dialog>
+<dialog id="topology-modal" class="parameter-modal" aria-labelledby="topology-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="topology-title">Topology</h2><p>Change the underlying cell geometry and animate its deformation.</p></div><button class="modal-close" data-close-modal aria-label="Close Topology">×</button></header><div id="topology-controls" class="modal-controls"></div></div></dialog>
+<dialog id="operators-modal" class="parameter-modal parameter-modal-wide" aria-labelledby="operators-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="operators-title">Operators &amp; memory</h2><p>Choose how cells reroute pixels and which moments of frame history they use.</p></div><button class="modal-close" data-close-modal aria-label="Close Operators">×</button></header><div class="operator-modal-grid"><section><h3>Temporal memory</h3><div id="temporal-controls" class="modal-controls"></div></section><section><div class="operator-column-heading"><h3>Operator matrix</h3><span>Enabled · Weight · Strength</span></div><div id="operator-controls"></div></section></div></div></dialog>
 <script type="module" src="js/app.js"></script>
 </body></html>

@@ -118,6 +118,20 @@ Simulation hashes and flat numeric controls deliberately avoid browser-only stat
 A CUDA/OpenFX port should mirror the same cell hashes and request the necessary
 timeline frames from the host rather than preserving render-order state.
 
+### Control-surface split
+
+The web client prototypes the intended native workflow. The split is explicit and
+is exported as `surfaceContract` from `js/params.js`:
+
+| Surface | Controls |
+| --- | --- |
+| Direct OFX | Preset, movement route, bypass, amount, grid multiplier, area width/height, motion speed, drop count/lifetime, displacement, color separation and tone damage |
+| Companion only | Pattern variation and seed, clustering, fracture, content targeting, infection, topology, temporal memory and the operator matrix |
+| Web only | Media loading, transport, decoder diagnostics and the grid-map preview |
+
+Companion-only values remain part of every V2 preset and the native render state.
+The OFX can therefore render advanced presets without exposing their full editing
+surface. Opening the Companion is only required to edit those advanced values.
 ### Extended presets
 
 | Preset | Character |

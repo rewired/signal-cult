@@ -1,5 +1,5 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions,operatorDefinitions} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions,operatorDefinitions,surfaceContract} from './params.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 import {TemporalDecoder} from './temporal.js';
 const $=id=>document.getElementById(id);
@@ -19,10 +19,23 @@ function showError(message=''){$('error').textContent=message;$('error').hidden=
 function custom(){presetId='custom';presetName='Untitled';$('preset-select').value='custom';$('preset-status').textContent='Current settings';$('preset-description').textContent='Custom spatial modulation.';}
 function present(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.extensions=extensions;renderer.present(params.amount,bypass);}syncGrid();}
 function resetMotion(){if(renderer){renderer.params=params;renderer.mode=mode;renderer.reset();}needsFrame=true;present();}
+function setPackageSummary(modalId,text,active){const summary=$(modalId.replace('-modal','-summary')),button=document.querySelector(`[data-open-modal="${modalId}"]`);if(summary)summary.textContent=text;if(button)button.classList.toggle('is-active',active);}
+function syncPackageSummaries(){
+ const varied=params.dropSpread>0||params.clusterAmount>0||params.fractureDepth>0;
+ setPackageSummary('drop-pattern-modal',(params.dropSpread?Math.round(params.dropSpread*100)+'% variation':'Fixed')+(params.clusterAmount?' · clustered':'')+(params.fractureDepth?' · fracture '+(2**params.fractureDepth)+'×':''),varied);
+ const targets=[['bright','Bright'],['dark','Dark'],['edges','Edges'],['motion','Motion']].filter(([key])=>extensions.targeting[key]>0).map(([,label])=>label);
+ setPackageSummary('targeting-modal',extensions.targeting.bias>0?(targets.join(' + ')||'Uniform')+' · '+Math.round(extensions.targeting.bias*100)+'% bias':'Uniform · neutral',extensions.targeting.bias>0);
+ const infected=extensions.infection.amount>0&&extensions.infection.radius>0;
+ setPackageSummary('infection-modal',infected?'Radius '+extensions.infection.radius+' · '+extensions.infection.direction:'Off',infected);
+ const topology=extensions.topology,deformed=topology.type!=='rect'||topology.jitter>0||topology.skew!==0||topology.warpAmount>0;
+ setPackageSummary('topology-modal',topology.type[0].toUpperCase()+topology.type.slice(1)+(topology.warpAmount?' · warp '+topology.warpAmount:''),deformed);
+ const enabled=Object.entries(extensions.operators).filter(([,operator])=>operator.enabled&&operator.weight>0);
+ setPackageSummary('operators-modal',(enabled.length?enabled.length+' active':'No routing')+(extensions.temporal.enabled?' · memory on':' · spatial'),enabled.length>0||extensions.temporal.enabled);
+}
 function sync(){
  $('preset-select').value=presetId;$('mode').value=mode;
  for(const f of fields){const c=controls.get(f.key);c.range.value=c.number.value=params[f.key];const inactive=f.key.startsWith('cluster')?(mode!=='drops'||f.key!=='clusterAmount'&&params.clusterAmount===0):f.key.startsWith('drop')?mode!=='drops':(f.key==='rate'&&mode==='drops'||f.key==='fractureAmount'&&params.fractureDepth===0);c.wrap.classList.toggle('inactive',inactive);c.range.disabled=c.number.disabled=inactive;}
- extensionControls.forEach(update=>update());
+ extensionControls.forEach(update=>update());syncPackageSummaries();
 }
 function apply(preset,id='custom'){
  params={...preset.params};mode=preset.mode;presetName=preset.name;presetId=id;const base=defaultExtensions();extensions=structuredClone(Object.fromEntries(Object.keys(base).map(k=>[k,preset[k]??base[k]])));
@@ -41,8 +54,10 @@ for(const f of fields){
  on(range,'input',()=>update(Number(range.value)));on(number,'input',()=>{if(number.value!=='')update(number.valueAsNumber);});on(number,'blur',()=>number.value=params[f.key]);on(range,'dblclick',()=>update(f.value));
  range.dataset.snapStep=String(f.step*10);enableCtrlDragSnapping(range);
  const hint=document.createElement('p');hint.className='hint';hint.textContent=f.hint;
- heading.append(label,number);wrap.append(heading,range,hint);$('parameters').append(wrap);controls.set(f.key,{wrap,number,range});
+ heading.append(label,number);wrap.append(heading,range,hint);const direct=surfaceContract.ofx.params.includes(f.key)&&!['shift','split','crush'].includes(f.key),post=['shift','split','crush'].includes(f.key);$(direct?'core-controls':post?'post-controls':'drop-controls').append(wrap);controls.set(f.key,{wrap,number,range});
 }
+for(const button of document.querySelectorAll('[data-open-modal]'))on(button,'click',()=>$(button.dataset.openModal)?.showModal());
+for(const dialog of document.querySelectorAll('.parameter-modal')){const close=dialog.querySelector('[data-close-modal]');if(close)on(close,'click',()=>dialog.close());on(dialog,'click',event=>{if(event.target===dialog)dialog.close();});}
 for(const p of presets)$('preset-select').append(new Option(p.name,p.id));
 on($('preset-select'),'change',()=>{const p=presets.find(p=>p.id===$('preset-select').value);if(p)apply(p,p.id);});
 for(const [id,delta]of [['preset-previous',-1],['preset-next',1]])on($(id),'click',()=>{const id=nextPreset(presets.map(p=>p.id),$('preset-select').value,delta);apply(presets.find(p=>p.id===id),id);});
@@ -160,7 +175,7 @@ on(window,'pagehide',event=>{if(event.persisted)return;disposed=true;generation+
 sync();$('preset-description').textContent=presets.find(p=>p.id===presetId).description;
 
 syncGrid();
-function extensionChanged(){custom();present();}
+function extensionChanged(){custom();syncPackageSummaries();present();}
 function addRange(container,section,key,label,min,max,step){
  const wrap=document.createElement('div');wrap.className='extension-control control';const heading=document.createElement('div');heading.className='control-heading';const text=document.createElement('label');text.textContent=label;const number=document.createElement('input');number.type='number';const range=document.createElement('input');range.type='range';
  for(const input of [number,range]){input.min=min;input.max=max;input.step=step;}const update=value=>{if(!Number.isFinite(value))return;extensions[section][key]=Math.max(min,Math.min(max,value));number.value=range.value=extensions[section][key];extensionChanged();};

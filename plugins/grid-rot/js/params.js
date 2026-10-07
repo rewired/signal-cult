@@ -18,6 +18,11 @@ export const fields = [
  {key:'amount',label:'Amount',min:0,max:1,step:0.01,value:1,hint:'Blend the local damage with the current input.'}
 ];
 export const defaults=Object.fromEntries(fields.map(f=>[f.key,f.value]));
+export const surfaceContract={
+ ofx:{params:['density','spanX','spanY','rate','dropCount','dropLife','amount','shift','split','crush'],controls:['preset','mode','bypass']},
+ companion:{params:['dropSpread','dropSeed','clusterAmount','clusterCount','clusterRadius','fractureDepth','fractureAmount'],sections:['targeting','infection','topology','temporal','operators']},
+ webOnly:['source','transport','decoder','gridMap']
+};
 export const modes=['step-right','step-left','random','lfo','drops'];
 export const temporalDefaults={enabled:false,range:12,hold:0,delay:0,stutter:0,reverse:0,smear:0};
 export const infectionDefaults={amount:0,radius:0,speed:4,decay:.5,mutation:0,direction:'all'};

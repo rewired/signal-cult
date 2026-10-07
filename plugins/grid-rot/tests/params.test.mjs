@@ -1,4 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {clusterCenter,fractureScale,baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,defaultExtensions,parsePreset,presets} from '../js/params.js';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {fields,clusterCenter,fractureScale,baseGrid,gridFor,activeArea,activeAreas,containsCell,defaults,defaultExtensions,parsePreset,presets,surfaceContract} from '../js/params.js';
 test('source ratios and independent integer density',()=>{for(const [w,h,c,r] of [[1920,1080,16,9],[1080,1920,9,16],[1440,1080,4,3],[1000,1000,1,1]]){const g=gridFor(w,h,3);assert.equal(g.columns,c*3);assert.equal(g.rows,r*3);}const b=baseGrid(2048,1080);assert.ok(b.columns<=24&&b.rows<=24);assert.ok(Math.abs(b.columns/b.rows-2048/1080)<.02);assert.throws(()=>baseGrid(0,10));});
 test('footprint wraps without altering grid density',()=>{const g=gridFor(1920,1080,1);const a=activeArea(g,{...defaults,spanX:4,spanY:3},'step-left',1/8);assert.equal(a.x,15);assert.equal(a.y,8);assert.ok(containsCell(0,0,a,g));assert.ok(!containsCell(4,0,a,g));assert.equal(activeArea(g,{...defaults,spanX:32},'step-right',0).width,16);});
 test('motion is bounded and reproducible',()=>{const g=gridFor(1080,1920,2);for(const mode of ['step-right','step-left','random','lfo'])for(const t of [0,.3,12,1000]){const a=activeArea(g,defaults,mode,t);assert.deepEqual(a,activeArea(g,defaults,mode,t));assert.ok(a.x>=0&&a.x<g.columns&&a.y>=0&&a.y<g.rows);}assert.equal(activeArea(g,defaults,'step-right',0,1).x,1);});
@@ -62,4 +62,11 @@ test('ZASH presets are vivid, unique and valid version 2 looks',()=>{
   assert.equal(parsed.name,preset.name);assert.ok(Object.values(parsed.operators).filter(operator=>operator.enabled&&operator.weight>0).length>=3);
   assert.ok(parsed.infection.amount>.7);assert.ok(parsed.params.amount===1&&parsed.params.fractureDepth>=2);
  }
+});
+test('control surface partitions every parameter between OFX and Companion',()=>{
+ const direct=new Set(surfaceContract.ofx.params),advanced=new Set(surfaceContract.companion.params);
+ assert.deepEqual([...direct].filter(key=>advanced.has(key)),[]);
+ assert.deepEqual(new Set([...direct,...advanced]),new Set(fields.map(field=>field.key)));
+ assert.deepEqual(surfaceContract.companion.sections,['targeting','infection','topology','temporal','operators']);
+ assert.deepEqual(surfaceContract.webOnly,['source','transport','decoder','gridMap']);
 });
