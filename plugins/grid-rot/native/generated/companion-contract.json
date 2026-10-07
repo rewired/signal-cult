@@ -1,0 +1,943 @@
+{
+  "format": "grid-rot-companion-contract",
+  "version": 1,
+  "modes": [
+    "step-right",
+    "step-left",
+    "random",
+    "lfo",
+    "drops"
+  ],
+  "parameters": [
+    {
+      "id": "density",
+      "label": "Grid multiplier",
+      "min": 1,
+      "max": 8,
+      "initial": 1,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Direct"
+    },
+    {
+      "id": "spanX",
+      "label": "Area width",
+      "min": 1,
+      "max": 32,
+      "initial": 4,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Direct"
+    },
+    {
+      "id": "spanY",
+      "label": "Area height",
+      "min": 1,
+      "max": 32,
+      "initial": 3,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Direct"
+    },
+    {
+      "id": "rate",
+      "label": "Motion speed",
+      "min": 0,
+      "max": 30,
+      "initial": 8,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "dropCount",
+      "label": "Drop count",
+      "min": 1,
+      "max": 16,
+      "initial": 6,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Direct"
+    },
+    {
+      "id": "dropLife",
+      "label": "Drop lifetime",
+      "min": 0.1,
+      "max": 3,
+      "initial": 0.8,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "dropSpread",
+      "label": "Drop variation",
+      "min": 0,
+      "max": 1,
+      "initial": 0.75,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "dropSeed",
+      "label": "Random seed",
+      "min": 0,
+      "max": 9999,
+      "initial": 7,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "clusterAmount",
+      "label": "Cluster strength",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "clusterCount",
+      "label": "Cluster centers",
+      "min": 1,
+      "max": 6,
+      "initial": 2,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "clusterRadius",
+      "label": "Cluster radius",
+      "min": 0,
+      "max": 16,
+      "initial": 3,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "fractureDepth",
+      "label": "Fracture depth",
+      "min": 0,
+      "max": 3,
+      "initial": 0,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "fractureAmount",
+      "label": "Fracture spread",
+      "min": 0,
+      "max": 1,
+      "initial": 0.65,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "shift",
+      "label": "Displacement",
+      "min": 0,
+      "max": 2,
+      "initial": 0.5,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "split",
+      "label": "Color separation",
+      "min": 0,
+      "max": 1,
+      "initial": 0.25,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "crush",
+      "label": "Tone damage",
+      "min": 0,
+      "max": 1,
+      "initial": 0.35,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "amount",
+      "label": "Amount",
+      "min": 0,
+      "max": 1,
+      "initial": 1,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Direct"
+    },
+    {
+      "id": "temporalEnabled",
+      "label": "Temporal memory",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalRange",
+      "label": "Frame range",
+      "min": 1,
+      "max": 32,
+      "initial": 12,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalHold",
+      "label": "Hold",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalDelay",
+      "label": "Delay",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalStutter",
+      "label": "Stutter",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalReverse",
+      "label": "Reverse",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "temporalSmear",
+      "label": "Time smear",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionAmount",
+      "label": "Infection amount",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionRadius",
+      "label": "Infection radius",
+      "min": 0,
+      "max": 32,
+      "initial": 0,
+      "step": 0.25,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionSpeed",
+      "label": "Infection speed",
+      "min": 0,
+      "max": 60,
+      "initial": 4,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionDecay",
+      "label": "Infection decay",
+      "min": 0,
+      "max": 10,
+      "initial": 0.5,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionMutation",
+      "label": "Infection mutation",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "infectionDirection",
+      "label": "Infection direction",
+      "min": 0,
+      "max": 3,
+      "initial": 0,
+      "step": 1,
+      "kind": "Choice",
+      "surface": "Companion"
+    },
+    {
+      "id": "topologyType",
+      "label": "Topology",
+      "min": 0,
+      "max": 2,
+      "initial": 0,
+      "step": 1,
+      "kind": "Choice",
+      "surface": "Companion"
+    },
+    {
+      "id": "topologyJitter",
+      "label": "Topology jitter",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "topologySkew",
+      "label": "Topology skew",
+      "min": -1,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "topologyWarpAmount",
+      "label": "Warp amount",
+      "min": 0,
+      "max": 2,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "topologyWarpSpeed",
+      "label": "Warp speed",
+      "min": 0,
+      "max": 10,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingUniform",
+      "label": "Target uniform",
+      "min": 0,
+      "max": 1,
+      "initial": 1,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingBright",
+      "label": "Target bright",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingDark",
+      "label": "Target dark",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingEdges",
+      "label": "Target edges",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingMotion",
+      "label": "Target motion",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "targetingBias",
+      "label": "Target bias",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opOffsetEnabled",
+      "label": "opOffsetEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opOffsetWeight",
+      "label": "opOffsetWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opOffsetStrength",
+      "label": "opOffsetStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opOffsetDistance",
+      "label": "opOffsetDistance",
+      "min": -32,
+      "max": 32,
+      "initial": 1,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opOffsetAngle",
+      "label": "opOffsetAngle",
+      "min": -6.283185,
+      "max": 6.283185,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opMirrorEnabled",
+      "label": "opMirrorEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opMirrorWeight",
+      "label": "opMirrorWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opMirrorStrength",
+      "label": "opMirrorStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opMirrorAxis",
+      "label": "opMirrorAxis",
+      "min": 0,
+      "max": 2,
+      "initial": 0,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opRotateEnabled",
+      "label": "opRotateEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opRotateWeight",
+      "label": "opRotateWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opRotateStrength",
+      "label": "opRotateStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opRotateTurns",
+      "label": "opRotateTurns",
+      "min": 0,
+      "max": 3,
+      "initial": 1,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opZoomEnabled",
+      "label": "opZoomEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opZoomWeight",
+      "label": "opZoomWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opZoomStrength",
+      "label": "opZoomStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opZoomScale",
+      "label": "opZoomScale",
+      "min": 0.1,
+      "max": 64,
+      "initial": 1.25,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNeighborEnabled",
+      "label": "opNeighborEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNeighborWeight",
+      "label": "opNeighborWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNeighborStrength",
+      "label": "opNeighborStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNeighborRadius",
+      "label": "opNeighborRadius",
+      "min": 0,
+      "max": 32,
+      "initial": 1,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opChannelEnabled",
+      "label": "opChannelEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opChannelWeight",
+      "label": "opChannelWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opChannelStrength",
+      "label": "opChannelStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opChannelPermutation",
+      "label": "opChannelPermutation",
+      "min": 0,
+      "max": 5,
+      "initial": 1,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opBlackoutEnabled",
+      "label": "opBlackoutEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opBlackoutWeight",
+      "label": "opBlackoutWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opBlackoutStrength",
+      "label": "opBlackoutStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opBlackoutLevel",
+      "label": "opBlackoutLevel",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 0.01,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNoiseEnabled",
+      "label": "opNoiseEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNoiseWeight",
+      "label": "opNoiseWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNoiseStrength",
+      "label": "opNoiseStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opNoiseScale",
+      "label": "opNoiseScale",
+      "min": 0.1,
+      "max": 64,
+      "initial": 8,
+      "step": 0.1,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opHoldEnabled",
+      "label": "opHoldEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opHoldWeight",
+      "label": "opHoldWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opHoldStrength",
+      "label": "opHoldStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opDelayEnabled",
+      "label": "opDelayEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opDelayWeight",
+      "label": "opDelayWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opDelayStrength",
+      "label": "opDelayStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opDelayFrames",
+      "label": "opDelayFrames",
+      "min": 1,
+      "max": 32,
+      "initial": 8,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opStutterEnabled",
+      "label": "opStutterEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opStutterWeight",
+      "label": "opStutterWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opStutterStrength",
+      "label": "opStutterStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opStutterFrames",
+      "label": "opStutterFrames",
+      "min": 1,
+      "max": 32,
+      "initial": 3,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opReverseEnabled",
+      "label": "opReverseEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opReverseWeight",
+      "label": "opReverseWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opReverseStrength",
+      "label": "opReverseStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opReverseFrames",
+      "label": "opReverseFrames",
+      "min": 1,
+      "max": 32,
+      "initial": 12,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    },
+    {
+      "id": "opSmearEnabled",
+      "label": "opSmearEnabled",
+      "min": 0,
+      "max": 1,
+      "initial": 0,
+      "step": 1,
+      "kind": "Boolean",
+      "surface": "Companion"
+    },
+    {
+      "id": "opSmearWeight",
+      "label": "opSmearWeight",
+      "min": 0,
+      "max": 100,
+      "initial": 0,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opSmearStrength",
+      "label": "opSmearStrength",
+      "min": 0,
+      "max": 2,
+      "initial": 1,
+      "step": 0.05,
+      "kind": "Double",
+      "surface": "Companion"
+    },
+    {
+      "id": "opSmearFrames",
+      "label": "opSmearFrames",
+      "min": 1,
+      "max": 32,
+      "initial": 12,
+      "step": 1,
+      "kind": "Integer",
+      "surface": "Companion"
+    }
+  ]
+}

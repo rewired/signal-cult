@@ -129,9 +129,27 @@ Build from the repository root with:
 ./scripts/build-native.ps1 -Plugin grid-rot -CpuOnly
 ```
 
+### Resolve Companion
+
+The Resolve Controls page contains **Open GRID ROT Companion** and a read-only
+status line. Opening the editor creates an isolated working copy of the current
+instance and includes a bounded source-frame snapshot when one has already been
+rendered. **Apply to Resolve** validates the complete state and commits it as one
+host edit; **Cancel** closes the editor without changing the instance.
+
+The Companion reuses the browser renderer and the five Advanced package modals.
+Direct OFX controls and browser-only media/decoder controls are hidden there.
+All exchange files stay in a per-session directory under Local AppData and are
+removed when the editor closes. The executable path is registered per user by
+`scripts/install-windows-user.ps1`.
+
+The common native build places `GridRotCompanion.exe` next to
+`GridRot.ofx.bundle` in `dist/build/windows-x64-grid-rot/bundle/`. The
+plugin-local build stages both files in `plugins/grid-rot/dist/windows-x64/`.
+
 ### Control-surface split
 
-The web client prototypes the intended native workflow. The split is explicit and
+The web client and Companion share the same Advanced-package workflow. The split is explicit and
 is exported as `surfaceContract` from `js/params.js`:
 
 | Surface | Controls |

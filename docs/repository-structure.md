@@ -13,7 +13,7 @@ The main branch starts from one consolidated source snapshot of both effects.
 - `plugins/signal-rot/` owns a browser-only motion-feedback prototype. It has no native build or Companion.
 - `plugins/bucket-rot/` owns a browser-only 64-stage video delay and modulation matrix.
 - `plugins/grid-rot/` owns GRID ROT sources, browser UI, generated parameter contract,
-  CPU/CUDA core, OFX adapter, presets and tests. Its Companion transport is planned.
+  CPU/CUDA core, OFX adapter, Tauri Companion, presets and tests.
 - Each native plugin has a top-level CMake entry and can build independently.
 - `scripts/` contains collection-wide commands. Product packaging and installation
   scripts stay with their plugin.

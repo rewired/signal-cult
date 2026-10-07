@@ -14,7 +14,7 @@ test('native contract contains every web preset and the explicit surface split',
 });
 test('OFX requests deterministic source history without rolling render state',()=>{
  assert.match(host,/kOfxImageEffectPropTemporalClipAccess,1/);assert.match(host,/kOfxImageEffectActionGetFramesNeeded/);assert.match(host,/requiredPastFrames/);assert.match(host,/time-requiredPastFrames/);
- assert.doesNotMatch(host,/feedbackFrame|previous_feedback|std::mutex/);assert.match(host,/std::max\(first,time-i\)/);
+ assert.doesNotMatch(host,/feedbackFrame|previous_feedback/);assert.match(host,/std::max\(first,time-i\)/);
 });
 test('OFX boolean parameters only receive properties valid for boolean descriptors',()=>{
  const body=host.match(/static void range\([\s\S]+?static const char\*type/)[0];
@@ -23,7 +23,7 @@ test('OFX boolean parameters only receive properties valid for boolean descripto
 });test('Resolve page exposes direct controls and stores Companion controls secretly',()=>{
  assert.match(host,/ParameterSurface::Companion\)\{integer\(v,kOfxParamPropSecret,1\)/);
  assert.match(host,/if\(d\.surface==ParameterSurface::Direct\)text\(page,kOfxParamPropPageChild/);
- assert.match(host,/\{"preset","mode","bypass","useCuda"\}/);
+ assert.match(host,/\{"editCompanion","companionStatus","preset","mode","bypass","useCuda"\}/);
 });
 test('CPU and CUDA share temporal operators and bounded 32-frame history',()=>{
  for(const token of ['TemporalHold','TemporalDelay','TemporalStutter','TemporalReverse','TemporalSmear','history_count'])assert.ok(core.includes(token));

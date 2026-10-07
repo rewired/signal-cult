@@ -1,5 +1,6 @@
 import {GridRenderer} from './renderer.js';
-import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions,operatorDefinitions,surfaceContract} from './params.js';
+import {fields,defaults,presets,parsePreset,nextPreset,previewSize,gridFor,activeAreas,containsCell,fractureScale,defaultExtensions,operatorDefinitions,surfaceContract,presetToCompanionState,companionStateToPreset} from './params.js';
+import {initializeCompanion} from './companion-adapter.js';
 import {enableCtrlDragSnapping} from '../../broken-fm/js/controls.js';
 import {TemporalDecoder} from './temporal.js';
 const $=id=>document.getElementById(id);
@@ -204,3 +205,16 @@ for(const definition of operatorDefinitions){
  operatorControls.append(row);extensionControls.push(()=>{const operator=extensions.operators[definition.id];enabled.checked=operator.enabled;weight.value=operator.weight;strength.value=operator.strength;});
 }
 sync();
+void initializeCompanion({
+ applyStateText(text){apply(companionStateToPreset(text));},
+ currentStateText(){
+  return JSON.stringify(presetToCompanionState({format:'grid-rot-preset',version:2,name:presetName,mode,params,...extensions}));
+ },
+ applyPreview(image){
+  generation++;release(source);temporalDecoder.close();if(objectURL)URL.revokeObjectURL(objectURL);objectURL='';
+  source=image;playing=false;sourceTime=0;lastDemo=-1;
+  $('filename').textContent='RESOLVE SOURCE SNAPSHOT';$('demo').classList.remove('active');$('seek-control').hidden=true;
+  configureSource(image.naturalWidth,image.naturalHeight);playbackUI();needsFrame=true;
+ },
+ showError
+}).catch(error=>showError('Companion could not start: '+error));

@@ -2,7 +2,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {fields,presets,defaultExtensions,operatorDefinitions,surfaceContract} from '../js/params.js';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),out=path.join(root,'native','generated','parameters.hpp');
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),out=path.join(root,'native','generated','parameters.hpp'),contractOut=path.join(root,'native','generated','companion-contract.json');
 const ident=s=>s.replace(/[^a-zA-Z0-9]+(.)?/g,(_,c)=>c?c.toUpperCase():'').replace(/^./,c=>c.toUpperCase());
 const f=n=>Number(n).toPrecision(9).replace(/e\+/,'e')+'f';
 const q=s=>'"'+String(s).replaceAll('\\','\\\\').replaceAll('"','\\"')+'"';
@@ -23,3 +23,4 @@ lines.push('struct ParameterDescriptor { const char* id; const char* label; floa
 lines.push('inline constexpr std::array<ParameterDescriptor,static_cast<std::size_t>(ParameterId::Count)> kParameterDescriptors{{');for(const d of descriptors)lines.push(` {${q(d.id)},${q(d.label)},${f(d.min)},${f(d.max)},${f(d.value)},${f(d.step)},ParameterKind::${d.kind},ParameterSurface::${d.surface}},`);lines.push('}};');
 lines.push('struct FactoryPreset { const char* name; int mode; std::array<float,static_cast<std::size_t>(ParameterId::Count)> values; };',`inline constexpr std::array<FactoryPreset,${presets.length}> kFactoryPresets{{`);for(const p of presets)lines.push(` {${q(p.name)},${modes.indexOf(p.mode)},{{${values(p).map(f).join(',')}}}},`);lines.push('}};','} // namespace grid_rot','');
 await mkdir(path.dirname(out),{recursive:true});await writeFile(out,lines.join('\n'));
+await writeFile(contractOut,JSON.stringify({format:'grid-rot-companion-contract',version:1,modes,parameters:descriptors.map(({id,label,min,max,value:initial,step,kind,surface})=>({id,label,min,max,initial,step,kind,surface}))},null,2)+'\n');

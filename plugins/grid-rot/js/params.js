@@ -136,6 +136,43 @@ export function parsePreset(text){
  }
  return {format:p.format,version:2,name:typeof p.name==='string'&&p.name.trim()?p.name.trim().slice(0,80):'Untitled',mode:p.mode,params,...ext};
 }
+const companionDirections=['all','horizontal','vertical','route'];
+const companionTopologies=['rect','shards','voronoi'];
+const companionIdent=value=>value.replace(/[^a-zA-Z0-9]+(.)?/g,(_,c)=>c?c.toUpperCase():'').replace(/^./,c=>c.toUpperCase());
+
+export function presetToCompanionState(input){
+ const source=input?.format?input:{format:'grid-rot-preset',version:2,...input};
+ const preset=parsePreset(JSON.stringify(source)),values={};
+ for(const field of fields)values[field.key]=preset.params[field.key];
+ for(const [key,value] of Object.entries(preset.temporal))values['temporal'+companionIdent(key)]=Number(value);
+ for(const [key,value] of Object.entries(preset.infection))values['infection'+companionIdent(key)]=key==='direction'?companionDirections.indexOf(value):Number(value);
+ for(const [key,value] of Object.entries(preset.topology))values['topology'+companionIdent(key)]=key==='type'?companionTopologies.indexOf(value):Number(value);
+ for(const [key,value] of Object.entries(preset.targeting))values['targeting'+companionIdent(key)]=Number(value);
+ for(const definition of operatorDefinitions){
+  const operator=preset.operators[definition.id],prefix='op'+companionIdent(definition.id);
+  values[prefix+'Enabled']=Number(operator.enabled);values[prefix+'Weight']=operator.weight;values[prefix+'Strength']=operator.strength;
+  for(const [key,value] of Object.entries(operator.settings))values[prefix+companionIdent(key)]=value;
+ }
+ return {format:'grid-rot-companion-state',version:1,name:preset.name,mode:modes.indexOf(preset.mode),values};
+}
+
+export function companionStateToPreset(text){
+ const state=typeof text==='string'?JSON.parse(text):text;
+ if(state?.format!=='grid-rot-companion-state'||state.version!==1||!Number.isInteger(state.mode)||!modes[state.mode]||!state.values||typeof state.values!=='object')throw new Error('Invalid GRID ROT Companion state.');
+ const read=id=>{const value=state.values[id];if(typeof value!=='number'||!Number.isFinite(value))throw new Error('Missing Companion parameter: '+id);return value;};
+ const readBoolean=id=>{const value=read(id);if(value!==0&&value!==1)throw new Error('Invalid Companion switch: '+id);return Boolean(value);};
+ const params=Object.fromEntries(fields.map(field=>[field.key,read(field.key)])),extension=defaultExtensions();
+ for(const key of Object.keys(extension.temporal)){const id='temporal'+companionIdent(key);extension.temporal[key]=key==='enabled'?readBoolean(id):read(id);}
+ for(const key of Object.keys(extension.infection)){const id='infection'+companionIdent(key);extension.infection[key]=key==='direction'?companionDirections[read(id)]:read(id);}
+ for(const key of Object.keys(extension.topology)){const id='topology'+companionIdent(key);extension.topology[key]=key==='type'?companionTopologies[read(id)]:read(id);}
+ for(const key of Object.keys(extension.targeting))extension.targeting[key]=read('targeting'+companionIdent(key));
+ for(const definition of operatorDefinitions){
+  const operator=extension.operators[definition.id],prefix='op'+companionIdent(definition.id);
+  operator.enabled=readBoolean(prefix+'Enabled');operator.weight=read(prefix+'Weight');operator.strength=read(prefix+'Strength');
+  for(const key of Object.keys(operator.settings))operator.settings[key]=read(prefix+companionIdent(key));
+ }
+ return parsePreset(JSON.stringify({format:'grid-rot-preset',version:2,name:typeof state.name==='string'?state.name:'Resolve Instance',mode:modes[state.mode],params,...extension}));
+}
 export {nextPreset} from '../../signal-rot/js/params.js';
 export function previewSize(width,height){const scale=Math.min(1,1920/width,1080/height);return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};}
 const featurePreset=(id,name,description,params,configure)=>{const extension=defaultExtensions();configure(extension);return {id,name,description,mode:'drops',params:{...defaults,...params},...extension};};

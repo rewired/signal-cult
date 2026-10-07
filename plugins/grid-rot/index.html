@@ -15,9 +15,10 @@
   <form id="warning-form"><label class="photosensitivity-choice"><input id="dismiss-warning" type="checkbox">Do not show again on this device</label><button id="photosensitivity-continue" type="submit">I understand — continue</button></form>
  </div>
 </section>
+<section id="host-session" class="host-session" hidden><strong>Editing Resolve instance</strong><span id="host-preview-status">Source snapshot loaded · Apply commits every advanced package</span><button id="host-cancel">Cancel</button><button id="host-apply">Apply to Resolve</button></section>
 <header class="topbar">
  <div class="brand"><a href="../" aria-label="Back to SIGNAL CULT">SIGNAL CULT / 05</a><h1>GRID ROT</h1></div>
- <div class="source-toolbar" aria-label="Source">
+ <div class="source-toolbar web-only" aria-label="Source">
   <label class="file-control toolbar-button">Load media<input id="media-file" type="file" accept="video/*,image/*"></label>
   <button id="play" class="toolbar-button" aria-label="Pause" aria-pressed="false">Pause</button>
   <button id="demo" class="toolbar-button active">Test signal</button>
@@ -47,8 +48,8 @@
    <div class="button-row"><button id="reset-motion">Reset motion</button><button id="step-clock" disabled>Step motion</button></div>
    <button id="bypass" class="wide-button" aria-pressed="false">View input</button>
   </section>
-  <section id="core-controls"><div class="section-heading"><h2>Core controls</h2><span class="surface-badge">OFX</span></div><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label></section>
-  <section id="post-controls"><div class="section-heading"><h2>Post damage</h2><span class="surface-badge">OFX</span></div></section>
+  <section class="direct-only" id="core-controls"><div class="section-heading"><h2>Core controls</h2><span class="surface-badge">OFX</span></div><label>Route<select id="mode"><option value="drops">Random drops</option><option value="step-right">Step →</option><option value="step-left">Step ←</option><option value="random">RND</option><option value="lfo">LFO · sine</option></select></label></section>
+  <section class="direct-only" id="post-controls"><div class="section-heading"><h2>Post damage</h2><span class="surface-badge">OFX</span></div></section>
   <section><div class="section-heading"><h2>Advanced packages</h2><span class="surface-badge companion">Companion</span></div>
    <p class="package-intro">Complex, occasional controls live in the Companion. Presets still carry their complete state into the OFX render.</p>
    <div class="package-list">
@@ -60,12 +61,12 @@
    </div>
    <p class="surface-note"><strong>Surface split:</strong> Core and Post Damage remain directly accessible in OFX. Advanced packages are Companion-only. Source and diagnostics below are web-only.</p>
   </section>
-  <section><h2>Decoder</h2><p id="decoder-status" class="section-note">Spatial processing · History 0 / 32</p></section>
-  <section><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
+  <section class="web-only"><h2>Decoder</h2><p id="decoder-status" class="section-note">Spatial processing · History 0 / 32</p></section>
+  <section class="web-only"><h2>Source</h2><p id="filename" class="source-name">MOVING TEST SIGNAL</p><p id="dimensions" class="section-note">960 × 540</p>
    <label id="seek-control" hidden>Position<output id="timecode">0:00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0"></label>
    <p class="interaction-note">Drop a video or image anywhere. The grid follows the source aspect. Damage affects the current frame immediately.</p>
   </section>
-  <p class="scope-note">Browser preview · Local processing</p>
+  <p class="scope-note web-only">Browser preview · Local processing</p>
  </aside>
 </main>
 <dialog id="drop-pattern-modal" class="parameter-modal" aria-labelledby="drop-pattern-title"><div class="modal-shell"><header><div><span class="modal-kicker">Companion-only package</span><h2 id="drop-pattern-title">Pattern &amp; fracture</h2><p>Variation, reproducible placement, clustering and cell subdivision. Drop count and lifetime remain in the direct OFX controls.</p></div><button class="modal-close" data-close-modal aria-label="Close Drop pattern">×</button></header><div id="drop-controls" class="modal-controls"></div></div></dialog>

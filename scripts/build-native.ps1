@@ -20,6 +20,19 @@ if ($fm -eq "ON") {
   & node (Join-Path $root "plugins/broken-fm/tools/generate-parameter-contract.mjs")
   if ($LASTEXITCODE -ne 0) { throw "BROKEN FM parameter generation failed." }
 }
+if ($gridRot -eq "ON") {
+  & node (Join-Path $root "plugins/grid-rot/companion/scripts/stage_frontend.mjs")
+  if ($LASTEXITCODE -ne 0) { throw "GRID ROT frontend staging failed." }
+  $gridCargoTarget = Join-Path $buildRoot "grid-rot-cargo-target"
+  $previousCargoTarget = $env:CARGO_TARGET_DIR
+  try {
+    $env:CARGO_TARGET_DIR = $gridCargoTarget
+    & cargo test --release --offline --manifest-path (Join-Path $root "plugins/grid-rot/companion/src-tauri/Cargo.toml")
+    if ($LASTEXITCODE -ne 0) { throw "GRID ROT Companion tests failed." }
+    & cargo build --release --offline --manifest-path (Join-Path $root "plugins/grid-rot/companion/src-tauri/Cargo.toml")
+    if ($LASTEXITCODE -ne 0) { throw "GRID ROT Companion build failed." }
+  } finally { $env:CARGO_TARGET_DIR = $previousCargoTarget }
+}
 $arguments = @("-S", $root, "-B", $buildRoot, "-G", $Generator, "-A", "x64",
   "-DREWIRED_BUILD_BROKEN_FM=$fm", "-DREWIRED_BUILD_CRT_SIM=$crt", "-DREWIRED_BUILD_RASTER_RUPTURE=$raster", "-DREWIRED_BUILD_GRID_ROT=$gridRot",
   "-DCRT_ENABLE_CUDA=$cuda", "-DRASTER_RUPTURE_ENABLE_CUDA=$cuda", "-DGRID_ROT_ENABLE_CUDA=$cuda")
@@ -32,4 +45,5 @@ if ($LASTEXITCODE -ne 0) { throw "Native configuration failed." }
 if ($LASTEXITCODE -ne 0) { throw "Native build failed." }
 & ctest --test-dir $buildRoot -C $Configuration --output-on-failure
 if ($LASTEXITCODE -ne 0) { throw "Native tests failed." }
+if ($gridRot -eq "ON") { Copy-Item -LiteralPath (Join-Path $gridCargoTarget "release/grid-rot-companion.exe") -Destination (Join-Path $buildRoot "bundle/GridRotCompanion.exe") -Force }
 Write-Host "Native bundles: $buildRoot/bundle (not an installer)."
