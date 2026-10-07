@@ -72,4 +72,7 @@ test('OFX Companion launch is registered, validated and staged without remote as
  assert.match(exchange,/CreateProcessW/);
  assert.match(stage,/grid-rot-runtime/);
  assert.match(stage,/controls\.js/);
+ assert.match(stage,/signal-rot-params\.js/);
+ assert.match(stage,/broken-fm-base\.css/);
+ assert.match(stage,/signal-rot-style\.css/);
 });
