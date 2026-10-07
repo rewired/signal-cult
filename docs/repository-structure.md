@@ -12,6 +12,8 @@ The main branch starts from one consolidated source snapshot of both effects.
   Companion, source generators, presets, tests and dependency notices.
 - `plugins/signal-rot/` owns a browser-only motion-feedback prototype. It has no native build or Companion.
 - `plugins/bucket-rot/` owns a browser-only 64-stage video delay and modulation matrix.
+- `plugins/grid-rot/` owns GRID ROT sources, browser UI, generated parameter contract,
+  CPU/CUDA core, OFX adapter, presets and tests. Its Companion transport is planned.
 - Each native plugin has a top-level CMake entry and can build independently.
 - `scripts/` contains collection-wide commands. Product packaging and installation
   scripts stay with their plugin.
@@ -46,6 +48,7 @@ Both editors use the same preset toolbar workflow and explicit Apply/Cancel mode
 Each plugin keeps its compatible preset format and independent native rendering.
 See [CRT architecture](../plugins/crt-sim/docs/ofx-architecture.md).
 
-GRID ROT (`plugins/grid-rot/`) owns its spatial grid model, current-frame renderer,
-media UI, presets and tests. It shares the existing control styling and slider
-helper. It has no delay buffers or native OFX target.
+GRID ROT (`plugins/grid-rot/`) owns its deterministic spatial/temporal grid model,
+media UI, presets, generated native contract, CPU/CUDA renderer and OpenFX target.
+Its OFX page exposes the compact direct surface; Companion-only values are stored
+as secret project parameters. The browser modals prototype the future Companion.

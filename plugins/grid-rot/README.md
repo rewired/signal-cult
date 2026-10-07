@@ -1,8 +1,10 @@
 # GRID ROT
 
-A separate browser study of moving spatial damage on the current source image.
-Open http://localhost:8080/grid-rot/ after running the collection start.bat.
-Requires WebGL 2. Media stays in the browser. No OFX build yet.
+A spatial and temporal cell-damage effect with a WebGL 2 look-development client
+and a Windows x64 OpenFX implementation for DaVinci Resolve. Open
+http://localhost:8080/grid-rot/ after running the collection start.bat. Browser
+media stays local. The native development bundle has CPU and CUDA 12.8 paths;
+live Resolve host validation and Companion transport remain release work.
 
 ## Controls
 
@@ -108,15 +110,24 @@ The preview remains capped at 1920 × 1080. A full 32-frame 1080p RGBA8 history 
 about 253 MiB of GPU storage. All media, history textures and decoder workers are
 released when media changes or the page closes.
 
-## Preset format and native port
+## Preset format and native implementation
 
 New exports use `grid-rot-preset` version 2 with `temporal`, `infection`,
 `topology`, `targeting` and `operators` sections. Version 1 imports receive
 neutral defaults and retain their original spatial render.
 
-Simulation hashes and flat numeric controls deliberately avoid browser-only state.
-A CUDA/OpenFX port should mirror the same cell hashes and request the necessary
-timeline frames from the host rather than preserving render-order state.
+Simulation hashes and flat numeric controls avoid browser-only state. The native
+CPU/CUDA renderer mirrors those hashes. Its OpenFX adapter declares temporal clip
+access, requests up to 31 earlier source frames and never preserves render-order
+state. Play, seek, reverse navigation and export therefore resolve the same source
+taps for the same timeline time and preset.
+
+Build from the repository root with:
+
+```powershell
+./scripts/build-native.ps1 -Plugin grid-rot
+./scripts/build-native.ps1 -Plugin grid-rot -CpuOnly
+```
 
 ### Control-surface split
 

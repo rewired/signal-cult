@@ -21,7 +21,7 @@ their own licenses.
 Canonical repository: [rewired/signal-cult](https://github.com/rewired/signal-cult).
 The collection is maintained here; the former standalone repositories are no longer required.
 
-Three Windows OpenFX plugins and four browser effect studies:
+Four Windows OpenFX plug-ins and two additional browser-only effect studies:
 
 | Plugin | Sources and documentation | Processing |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ Three Windows OpenFX plugins and four browser effect studies:
 | CRT SIM | [plugins/crt-sim](plugins/crt-sim/README.md) | CRT and Pixel / Sci-Fi, CUDA with CPU fallback |
 | SIGNAL ROT | [plugins/signal-rot](plugins/signal-rot/README.md) | Motion-driven feedback, WebGL 2 browser preview |
 | BUCKET ROT | [plugins/bucket-rot](plugins/bucket-rot/README.md) | 64-stage delay and modulation matrix, browser preview |
-| GRID ROT | [plugins/grid-rot](plugins/grid-rot/README.md) | Source-aspect grid with immediate spatial damage, browser preview |
+| GRID ROT | [plugins/grid-rot](plugins/grid-rot/README.md) | Deterministic spatial/temporal cell damage, WebGL preview plus CUDA/CPU OFX |
 | RASTER RUPTURE | [plugins/raster-rupture](plugins/raster-rupture/README.md) | Raster tears, float mask routing and temporal feedback, WebGL 2 preview plus CUDA/CPU OFX |
 
 ## Repository structure
@@ -40,7 +40,7 @@ plugins/
   crt-sim/         # Renderer, OFX host, reference web UI, presets and tests
   signal-rot/      # Browser-only motion-feedback study
   bucket-rot/      # Browser-only 64-stage delay matrix
-  grid-rot/        # Browser-only spatial modulation grid
+  grid-rot/        # Spatial/temporal grid plus standalone CUDA/CPU OFX
   raster-rupture/  # Raster destruction study plus standalone CUDA/CPU OFX
 scripts/
   build-native.ps1 # Build and test one or all native plugins
@@ -68,6 +68,8 @@ Node.js >=22.13.0, and CUDA 12.8 for GPU builds. From this directory:
 ./scripts/build-native.ps1 -Plugin broken-fm
 ./scripts/build-native.ps1 -Plugin crt-sim
 ./scripts/build-native.ps1 -Plugin crt-sim -CpuOnly
+./scripts/build-native.ps1 -Plugin grid-rot
+./scripts/build-native.ps1 -Plugin grid-rot -CpuOnly
 ```
 
 Each command builds and runs the selected native tests. Output is
@@ -78,8 +80,9 @@ The script uses `CUDA_PATH` as the CUDA toolset location when set.
 
 These outputs are native bundles, not a complete collection installer.
 BROKEN FM's companion packaging and installers live in
-`plugins/broken-fm/scripts/`; CRT installation is documented in
-[its native README](plugins/crt-sim/native/README.md).
+[plugins/broken-fm/scripts](plugins/broken-fm/scripts/); GRID ROT build/install
+helpers live in [plugins/grid-rot/scripts](plugins/grid-rot/scripts/); CRT
+installation is documented in [its native README](plugins/crt-sim/native/README.md).
 
 ## Start all tools
 
@@ -107,4 +110,4 @@ No npm install or frontend build is required. From PowerShell:
 Tests and native/Companion builds use Node.js. CRT SIM follows BROKEN FM as the
 UI and Companion master.
 
-Each plugin has its own package/installer and Companion. A combined installer and live Resolve coexistence validation remain release work.
+Packaging remains plugin-specific. GRID ROT's Companion transport, a combined installer and live Resolve coexistence validation remain release work.
